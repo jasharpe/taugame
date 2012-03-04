@@ -32,13 +32,14 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
     if self in game_to_sockets[self.game_id]:
       game_to_sockets[self.game_id].remove(self)
 
+  def send_update_to_all(self):
+    for socket in game_to_sockets[self.game_id]:
+      socket.send_update()
+
   def send_update(self):
     game = socket_to_game[self]
     time = game.total_time if game.ended else game.get_total_time()
    
-    print game.board
-    print len(game.board)
-
     self.write_message(json.dumps({
         'type' : 'update',
         'board' : game.board,
@@ -49,19 +50,18 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
 
   def on_message(self, message_json):
     message = json.loads(message_json)
-    print message
     if message['type'] == 'start':
       if not socket_to_game[self].started:
         socket_to_game[self].start()
-      self.send_update()
+      self.send_update_to_all()
     elif message['type'] == 'update':
       if socket_to_game[self].started:
         self.send_update()
     elif message['type'] == 'submit':
       game = socket_to_game[self]
       if game.started:
-        game.submit_tau(map(tuple, message['cards']), self.get_cookie("name"))
-        self.send_update()
+        if game.submit_tau(map(tuple, message['cards']), self.get_cookie("name")):
+          self.send_update_to_all()
 
 class MainHandler(tornado.web.RequestHandler):
   def get(self):
