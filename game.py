@@ -92,16 +92,14 @@ def create_deck():
   return deck
 
 def is_tau(cards):
-  return not any(sum(zipped) % 3 for zipped in zip(*cards))
+  is_tau_basic = not any(sum(zipped) % 3 for zipped in zip(*cards))
+  if len(cards) == 3:
+    return is_tau_basic
+  elif len(cards) == 6:
+    return is_tau_basic and no_subset_is_tau(cards, 3)
 
 def no_subset_is_tau(cards, subset_size):
   for card_subset in itertools.combinations(cards, subset_size):
     if is_tau(card_subset):
       return False
   return True
-
-def is_six_tau(cards):
-  if len(cards) != 6:
-    raise ValueError("cards must have length 6, was " + str(cards))
-
-  return is_tau(cards) and no_subset_is_tau(cards, 3)

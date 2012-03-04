@@ -6,12 +6,16 @@
     <link rel="stylesheet" type="text/css" href="{{ static_url("styles.css") }}" />
   </head>
   <body>
-    <form name="new_game" action="/new_game" method="post">
-      <input type="submit" value="New game" />
+    <form name="new_game" action="/new_game/3tau" method="post">
+      <input type="submit" value="New 3 Tau game" />
+    </form>
+
+    <form name="new_game" action="/new_game/6tau" method="post">
+      <input type="submit" value="New 6 Tau game" />
     </form>
 
     {% for game in games %}
-    <li><a href="/game/{{ game[0] }}">Game {{ game[0] }}</a></li>
+    <li><a href="/game/{{ game[0] }}">Game {{ game[0] }}</a> ({{ game[1].size }} Tau)</li>
     {% end %}
 
     <a href="/choose_name">Change name</a>

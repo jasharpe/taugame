@@ -81,15 +81,15 @@ $(document).ready(function() {
     index = model.indexOf(card_index);
     
     if (index == -1) {
-      if (model.length == 3) {
-        select_card(model[2]);
+      if (model.length == game_size) {
+        select_card(model[game_size - 1]);
       }
 
       selection_model['selected'].push(card_index);
       card_div.removeClass("unselectedCard");
       card_div.addClass("selectedCard");
 
-      if (model.length == 3) {
+      if (model.length == game_size) {
         var cards = [];
         for (var submit_index in model) {
           cards.push(card_index_to_card_map[model[submit_index]]);
@@ -133,16 +133,15 @@ $(document).ready(function() {
     last_server_time_browser_time = new Date().getTime() / 1000;
     $("#time").html('');
     var time_display = $("<span id=\"time_display\">");
-    time_display.html((Math.round((last_server_time + (new Date().getTime() / 1000 - last_server_time_browser_time)) * 100) / 100) + " seconds");
+    time_display.html((Math.round((last_server_time + (new Date().getTime() / 1000 - last_server_time_browser_time)))) + " seconds");
     if (ended) {
       $("#time").append($("<span>TOTAL TIME:</span>"));
     } else {
       $("#time").append($("<span>ELAPSED TIME:</span>"));
       clearInterval(current_time_updater);
       current_time_updater = setInterval(function() {
-        time_display.html((Math.round((last_server_time + (new Date().getTime() / 1000 - last_server_time_browser_time)) * 100) / 100) + " seconds");
-        console.log("UPDATING");
-      }, 1000);
+        time_display.html((Math.round((last_server_time + (new Date().getTime() / 1000 - last_server_time_browser_time)))) + " seconds");
+      }, 500);
     }
     $("#time").append(time_display);
 

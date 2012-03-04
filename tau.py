@@ -80,12 +80,13 @@ class ChooseNameHandler(tornado.web.RequestHandler):
     self.redirect("/")
 
 class NewGameHandler(tornado.web.RequestHandler):
-  def post(self):
+  def post(self, type):
+    print type
     if len(games.keys()) == 0:
       next_id = 0
     else:
       next_id = max(games.keys()) + 1
-    games[next_id] = Game(3)
+    games[next_id] = Game(3 if type == "3tau" else 6)
     game_to_sockets[next_id] = []
     self.redirect("/game/%d" % next_id)
 
@@ -94,15 +95,17 @@ class GameHandler(tornado.web.RequestHandler):
     if not int(game_id) in games:
       self.redirect("/")
       return
+    game = games[int(game_id)]
     self.render(
         "game.html",
         game_id=game_id,
-        game=games[int(game_id)])
+        game_type=("6 Tau" if game.size == 6 else "3 Tau"),
+        game=game)
 
 application = tornado.web.Application([
   (r"/", MainHandler),
   (r"/choose_name", ChooseNameHandler),
-  (r"/new_game", NewGameHandler),
+  (r"/new_game/(3tau|6tau)", NewGameHandler),
   (r"/game/(\d*)", GameHandler),
   (r"/websocket/(\d*)", TauWebSocketHandler),
 ], **settings)

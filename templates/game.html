@@ -3,6 +3,7 @@
   <head>
     <script type="text/javascript">
       var game_id = "{{ game_id }}";
+      var game_size = {{ game.size }};
     </script>
     <script type="text/javascript" src="{{ static_url("jquery.js") }}"></script>
     <script type="text/javascript" src="{{ static_url("tau.js") }}"></script>
@@ -11,7 +12,7 @@
   </head>
   <body>
     <h2>Tau</h2>
-    <h3>Game: {{ game_id }}</h3>
+    <h3>Game {{ game_id }} ({{ game_type }})</h3>
     <div>
       <div id="scores">
         <h4>Scores</h4>
