@@ -67,6 +67,7 @@ class MainHandler(tornado.web.RequestHandler):
   def get(self):
     if not self.get_cookie("name"):
       self.redirect("/choose_name")
+      return
     self.render(
         "game_list.html",
         games=sorted(games.items(), None, lambda game: game[0]))
