@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script type="text/javascript">
+      var game_id = "{{ game_id }}";
+    </script>
+    <script type="text/javascript" src="{{ static_url("jquery.js") }}"></script>
+    <script type="text/javascript" src="{{ static_url("tau.js") }}"></script>
+    <link rel="stylesheet" type="text/css" href="{{ static_url("reset.css") }}" />
+    <link rel="stylesheet" type="text/css" href="{{ static_url("styles.css") }}" />
+  </head>
+  <body>
+    <h2>Tau</h2>
+    <h3>Game: {{ game_id }}</h3>
+    <div>
+      <div id="scores">
+        <h4>Scores</h4>
+        <table id="score_list"></table>
+      </div>
+      <div id="playing_area">
+        {% if not game.started %}
+          <a id="start" href="javascript:void(0);">Start</a>
+        {% end %}
+      </div>
+      <div id="time"></div>
+    </div>
+    <div>
+      <a href="/">Back to games</a>
+    </div>
+  </body>
+</html> 

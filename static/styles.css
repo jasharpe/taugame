@@ -1,0 +1,38 @@
+table {
+  border-collapse:collapse;
+  border-style:none;
+}
+
+/* have to include border in width/height */
+.fakeCard {
+  width:82px;
+  height:122px;
+}
+
+.realCard {
+  height:120px;
+  width:80px;
+  background:url('/static/cards.png') no-repeat scroll 0 0 transparent;
+  -webkit-border-radius:5px;
+  -moz-border-radius:5px;
+  margin-right:6px;
+  margin-bottom:6px;
+}
+
+.selectedCard {
+  -moz-box-shadow:2px 2px 2px #fbb;
+  -webkit-box-shadow:2px 2px 2px #fbb;
+  box-shadow:2px 2px 2px #fbb;
+  border-color:red;
+  border-width:1px;
+  border-style:solid;
+}
+
+.unselectedCard {
+  -moz-box-shadow:2px 2px 2px #ddd;
+  -webkit-box-shadow:2px 2px 2px #ddd;
+  box-shadow:2px 2px 2px #ddd;
+  border-color:#bbb;
+  border-width:1px;
+  border-style:solid;
+}

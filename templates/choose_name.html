@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script type="text/javascript" src="{{ static_url("jquery.js") }}"></script>
+    <link rel="stylesheet" type="text/css" href="{{ static_url("reset.css") }}" />
+    <link rel="stylesheet" type="text/css" href="{{ static_url("styles.css") }}" />
+  </head>
+    Choose a name:
+    <form name="choose_name" action="/choose_name" method="post">
+      <input type="text" name="name" />
+      <input type="submit" value="Choose" />
+    </form>
+  </body>
+</html>
