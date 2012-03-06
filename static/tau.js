@@ -40,7 +40,7 @@ $(document).ready(function() {
   $(document).keypress(function(e) {
     var key = String.fromCharCode(e.keyCode);
     if (key_map.hasOwnProperty(key)) {
-      select_card(key_map[key]);
+      select_card(parseInt(key_map[key]));
     }
   });
 
@@ -60,6 +60,10 @@ $(document).ready(function() {
         'type' : 'submit',
         'cards' : cards
     }));
+  };
+
+  function get_card_number(card) {
+    return card[0] + 3 * card[1] + 9 * card[2] + 27 * card[3];
   };
 
   var current_time_updater = undefined;
@@ -85,7 +89,7 @@ $(document).ready(function() {
         select_card(model[game_size - 1]);
       }
 
-      selection_model['selected'].push(card_index);
+      model.push(card_index);
       card_div.removeClass("unselectedCard");
       card_div.addClass("selectedCard");
 
@@ -94,19 +98,16 @@ $(document).ready(function() {
         for (var submit_index in model) {
           cards.push(card_index_to_card_map[model[submit_index]]);
         }
-        console.log(cards);
         submit_tau(cards);
       }
     } else {
-      selection_model['selected'].splice(index, 1);
+      model.splice(index, 1);
       card_div.addClass("unselectedCard");
       card_div.removeClass("selectedCard");
     }
   };
 
-  function update(board, scores, time, ended) {
-    console.log(scores);
-    // update scores
+  function update_scores(scores, ended) {
     score_list_table = $("#score_list");
     score_list_table.html('');
     var winner = undefined;
@@ -122,11 +123,23 @@ $(document).ready(function() {
     for (var player in scores) {
       var extra = "";
       if (ended && scores[player].length >= max_score) {
-        extra = "(WINNER)";
+        extra = " (WINNER)";
       }
-      score = $("<tr><td>" + player + " " + extra + "</td><td>" + scores[player].length + "</td></tr>");
+      score = $("<tr><td>" + player + extra + "</td><td>" + scores[player].length + "</td></tr>");
       score_list_table.append(score);
     }
+  };
+
+  function update(board, scores, time, ended, hint) {
+    var processed_hint = []
+    if (hint !== null) {
+      for (var card_index in hint) {
+        processed_hint.push(get_card_number(hint[card_index]));
+      }
+    }
+
+    // update scores
+    update_scores(scores, ended);
     
     // update time
     last_server_time = time;
@@ -153,6 +166,8 @@ $(document).ready(function() {
     playing_area.append(table);
     var max_row = 3;
     var max_col = board.length / max_row;
+    card_index_to_div_map = {};
+    card_index_to_card_map = {};
     for (var row_index = 0; row_index < max_row; row_index++) {
       var row = $('<tr>');
       for (var col_index = 0; col_index < max_col; col_index++) {
@@ -166,14 +181,17 @@ $(document).ready(function() {
           var div = $('<div class="realCard unselectedCard" data-card-index="' + card_index + '" data-card="' + card + '">');
           card_index_to_div_map[card_index] = div;
           card_index_to_card_map[card_index] = card;
-          console.log(card_index_to_card_map);
+
+          if (processed_hint.indexOf(get_card_number(card)) != -1) {
+            div.addClass("hint");
+          }
 
           div.click(function(e) {
-            select_card($(this).attr("data-card-index"));
+            select_card(parseInt($(this).attr("data-card-index")));
             return false;
           });
 
-          var card_number = card[0] + 3 * card[1] + 9 * card[2] + 27 * card[3];
+          var card_number = get_card_number(card);
           var offset = card_number * 80;
 
           div.css("background-position", "-" + offset + "px 0");
@@ -190,11 +208,14 @@ $(document).ready(function() {
   ws.onmessage = function (e) {
     var data = JSON.parse(e.data);
     if (data.type == "update") {
-      update(data.board, data.scores, data.time, data.ended);
+      update(data.board, data.scores, data.time, data.ended, data.hint);
+    } else if (data.type == "scores") {
+      update_scores(data.scores, data.ended);
     }
   };
 
   ws.onclose = function() {
-    // attempt to reconnect?
+    $("body").prepend($("<span>DISCONNECTED - REFRESH</span>"));
+    $("body").css("background-color", "red");
   };
 });

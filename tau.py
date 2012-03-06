@@ -24,6 +24,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
     sockets.append(self)
     socket_to_game[self] = games[self.game_id]
     game_to_sockets[self.game_id].append(self)
+    self.send_scores_update_to_all()
 
   def on_close(self):
     sockets.remove(self)
@@ -31,6 +32,32 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
       del socket_to_game[self]
     if self in game_to_sockets[self.game_id]:
       game_to_sockets[self.game_id].remove(self)
+    self.send_scores_update_to_all()
+
+  def send_scores_update_to_all(self):
+    for socket in game_to_sockets[self.game_id]:
+      socket.send_scores_update()
+
+  def send_scores_update(self):
+    game = socket_to_game[self]
+    
+    scores = {}
+    for socket in game_to_sockets[self.game_id]:
+      name = socket.get_cookie("name")
+      if name in game.scores.keys():
+        scores[name] = game.scores[name]
+      else:
+        scores[name] = []
+    for (name, score) in game.scores.items():
+      if not name in scores.keys():
+        scores[name + " (ABSENT)"] = score
+    print scores
+
+    self.write_message(json.dumps({
+        'type' : 'scores',
+        'scores' : scores,
+        'ended' : game.ended
+    }))
 
   def send_update_to_all(self):
     for socket in game_to_sockets[self.game_id]:
@@ -40,16 +67,29 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
     game = socket_to_game[self]
     time = game.total_time if game.ended else game.get_total_time()
    
+    scores = dict(game.scores)
+    for socket in game_to_sockets[self.game_id]:
+      name = socket.get_cookie("name")
+      if name in game.scores.keys():
+        scores[name] = game.scores[name]
+      else:
+        scores[name] = []
+    print scores
+
+    hint = False
+
     self.write_message(json.dumps({
         'type' : 'update',
         'board' : game.board,
-        'scores' : game.scores,
+        'scores' : scores,
         'time' : time,
+        'hint' : game.get_tau() if hint else None,
         'ended' : game.ended
     }))
 
   def on_message(self, message_json):
     message = json.loads(message_json)
+    print message
     if message['type'] == 'start':
       if not socket_to_game[self].started:
         socket_to_game[self].start()

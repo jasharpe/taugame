@@ -46,11 +46,15 @@ class Game(object):
         break
       to_add = self.size
       for i in range(0, len(self.board)):
+        if not self.deck:
+          break
         if to_add > 0 and self.board[i] is None:
           self.board[i] = self.deck.pop()
           to_add -= 1
 
       for i in range(0, to_add):
+        if not self.deck:
+          break
         self.board.append(self.deck.pop())
 
     # add Nones at the end as necessary
