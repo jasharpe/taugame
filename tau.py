@@ -92,7 +92,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
     game = socket_to_game[self]
     time = game.total_time if game.ended else game.get_total_time()
 
-    hint = True
+    hint = False
 
     self.write_message(json.dumps({
         'type' : 'update',
