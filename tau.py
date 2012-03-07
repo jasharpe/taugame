@@ -34,11 +34,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
       game_to_sockets[self.game_id].remove(self)
     self.send_scores_update_to_all()
 
-  def send_scores_update_to_all(self):
-    for socket in game_to_sockets[self.game_id]:
-      socket.send_scores_update()
-
-  def send_scores_update(self):
+  def get_scores(self):
     game = socket_to_game[self]
     
     scores = {}
@@ -51,11 +47,18 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
     for (name, score) in game.scores.items():
       if not name in scores.keys():
         scores[name + " (ABSENT)"] = score
-    print scores
+    return scores
+
+  def send_scores_update_to_all(self):
+    for socket in game_to_sockets[self.game_id]:
+      socket.send_scores_update()
+
+  def send_scores_update(self):
+    game = socket_to_game[self]
 
     self.write_message(json.dumps({
         'type' : 'scores',
-        'scores' : scores,
+        'scores' : self.get_scores(),
         'ended' : game.ended
     }))
 
@@ -66,22 +69,13 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
   def send_update(self):
     game = socket_to_game[self]
     time = game.total_time if game.ended else game.get_total_time()
-   
-    scores = dict(game.scores)
-    for socket in game_to_sockets[self.game_id]:
-      name = socket.get_cookie("name")
-      if name in game.scores.keys():
-        scores[name] = game.scores[name]
-      else:
-        scores[name] = []
-    print scores
 
     hint = False
 
     self.write_message(json.dumps({
         'type' : 'update',
         'board' : game.board,
-        'scores' : scores,
+        'scores' : self.get_scores(),
         'time' : time,
         'hint' : game.get_tau() if hint else None,
         'ended' : game.ended
