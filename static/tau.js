@@ -211,11 +211,42 @@ $(document).ready(function() {
       update(data.board, data.scores, data.time, data.ended, data.hint);
     } else if (data.type == "scores") {
       update_scores(data.scores, data.ended);
+    } else if (data.type == "chat") {
+      var text_area = $("#chat");
+      if (text_area.text()) {
+        text_area.text(text_area.text() + "\n" + data.message);
+      } else {
+        text_area.text(data.message);
+      }
+    } else if (data.type == "history") {
+      var text_area = $("#chat");
+      text_area.text("");
+      data.messages.forEach(function(chat_message) {
+        if (text_area.text()) {
+          text_area.text(text_area.text() + "\n" + chat_message);
+        } else {
+          text_area.text(chat_message);
+        }
+      });
+      $("#chat_box").attr("disabled", "");
     }
-  };
+  }
 
   ws.onclose = function() {
     $("body").prepend($("<span>DISCONNECTED - REFRESH</span>"));
     $("body").css("background-color", "red");
   };
+
+  // CHAT
+
+  var chat_box = $("#chat_box");
+  chat_box.keypress(function(e) {
+    if (event.keyCode == '13') {
+      ws.send(JSON.stringify({
+        'type' : 'chat',
+        'message' : chat_box.val()
+      }));
+      chat_box.val("");
+    }
+  });
 });
