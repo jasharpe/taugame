@@ -27,12 +27,18 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
     self.send_scores_update_to_all()
 
   def on_close(self):
+    game = socket_to_game[self]
+    
     sockets.remove(self)
     if self in socket_to_game.keys():
       del socket_to_game[self]
     if self in game_to_sockets[self.game_id]:
       game_to_sockets[self.game_id].remove(self)
     self.send_scores_update_to_all()
+    
+    if not game_to_sockets[self.game_id] and game.ended:
+      del game_to_sockets[self.game_id]
+      del games[self.game_id]
 
   def get_scores(self):
     game = socket_to_game[self]
@@ -70,7 +76,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
     game = socket_to_game[self]
     time = game.total_time if game.ended else game.get_total_time()
 
-    hint = False
+    hint = True
 
     self.write_message(json.dumps({
         'type' : 'update',
