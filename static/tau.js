@@ -39,7 +39,7 @@ $(document).ready(function() {
 
   $(document).keypress(function(e) {
     var key = String.fromCharCode(e.keyCode);
-    if (key_map.hasOwnProperty(key)) {
+    if (!in_chat_box && key_map.hasOwnProperty(key)) {
       select_card(parseInt(key_map[key]));
     }
   });
@@ -66,6 +66,7 @@ $(document).ready(function() {
     return card[0] + 3 * card[1] + 9 * card[2] + 27 * card[3];
   };
 
+  var in_chat_box = false;
   var current_time_updater = undefined;
   var card_index_to_div_map = {};
   var card_index_to_card_map = {};
@@ -125,12 +126,13 @@ $(document).ready(function() {
       if (ended && scores[player].length >= max_score) {
         extra = " (WINNER)";
       }
-      score = $("<tr><td>" + player + extra + "</td><td>" + scores[player].length + "</td></tr>");
+      score = $("<tr><td class=\"score_name\">" + player + extra + ":</td><td>" + scores[player].length + "</td></tr>");
       score_list_table.append(score);
     }
   };
 
-  function update(board, scores, time, ended, hint) {
+  var prev_board = []
+  function update_board(board, hint) {
     var processed_hint = []
     if (hint !== null) {
       for (var card_index in hint) {
@@ -138,7 +140,63 @@ $(document).ready(function() {
       }
     }
 
-    // update scores
+    var playing_area = $("#playing_area");
+    selection_model['selected'] = [];
+    playing_area.html('');
+    var table = $('<table>');
+    playing_area.append(table);
+    var max_row = 3;
+    var max_col = board.length / max_row;
+    card_index_to_div_map = {};
+    card_index_to_card_map = {};
+    var this_board = [];
+    for (var row_index = 0; row_index < max_row; row_index++) {
+      var row = $('<tr>');
+      for (var col_index = 0; col_index < max_col; col_index++) {
+        var card_index = row_index + col_index * max_row;
+        var card = board[card_index];
+        var col = $('<td>');
+        if (card === null) {
+          var div = $('<div class="fakeCard">');
+          col.append(div);
+        } else {
+          var div = $('<div class="realCard unselectedCard" data-card-index="' + card_index + '" data-card="' + card + '">');
+          card_index_to_div_map[card_index] = div;
+          card_index_to_card_map[card_index] = card;
+
+          if (processed_hint.indexOf(get_card_number(card)) != -1) {
+            div.addClass("hint");
+          }
+
+          if (prev_board.length > 0 && prev_board.indexOf(get_card_number(card)) == -1) {
+            div.css("background-color", "#FF8");
+            div
+              .animate({backgroundColor: "#FF8"}, 200)
+              .animate({backgroundColor: "#FFF"}, 1000);
+          }
+          this_board.push(get_card_number(card));
+
+          div.click(function(e) {
+            select_card(parseInt($(this).attr("data-card-index")));
+            return false;
+          });
+
+          var card_number = get_card_number(card);
+          var offset = card_number * 80;
+
+          div.css("background-position", "-" + offset + "px 0");
+          col.append(div);
+        }
+        
+        row.append(col);
+        col.disableTextSelect();
+      }
+      table.append(row);
+    }
+    prev_board = this_board;
+  }
+
+  function update(board, scores, time, ended, hint) {
     update_scores(scores, ended);
     
     // update time
@@ -159,51 +217,16 @@ $(document).ready(function() {
     $("#time").append(time_display);
 
     // update board
-    var playing_area = $("#playing_area");
-    selection_model['selected'] = [];
-    playing_area.html('');
-    var table = $('<table>');
-    playing_area.append(table);
-    var max_row = 3;
-    var max_col = board.length / max_row;
-    card_index_to_div_map = {};
-    card_index_to_card_map = {};
-    for (var row_index = 0; row_index < max_row; row_index++) {
-      var row = $('<tr>');
-      for (var col_index = 0; col_index < max_col; col_index++) {
-        var card_index = row_index + col_index * max_row;
-        var card = board[card_index];
-        var col = $('<td>');
-        if (card === null) {
-          var div = $('<div class="fakeCard">');
-          col.append(div);
-        } else {
-          var div = $('<div class="realCard unselectedCard" data-card-index="' + card_index + '" data-card="' + card + '">');
-          card_index_to_div_map[card_index] = div;
-          card_index_to_card_map[card_index] = card;
-
-          if (processed_hint.indexOf(get_card_number(card)) != -1) {
-            div.addClass("hint");
-          }
-
-          div.click(function(e) {
-            select_card(parseInt($(this).attr("data-card-index")));
-            return false;
-          });
-
-          var card_number = get_card_number(card);
-          var offset = card_number * 80;
-
-          div.css("background-position", "-" + offset + "px 0");
-          col.append(div);
-        }
-        
-        row.append(col);
-        col.disableTextSelect();
-      }
-      table.append(row);
-    }
+    update_board(board, hint);
   };
+
+  function update_messages(text_area, name, message) {
+    var is_at_bottom = text_area[0].scrollHeight - text_area.scrollTop() <= text_area.outerHeight();
+    text_area.append($("<div class=\"message\"><span class=\"name\">" + name + ":</span> " + message + "</div>"));
+    if (is_at_bottom) {
+      text_area.scrollTop(text_area[0].scrollHeight - text_area.outerHeight());
+    }
+  }
 
   ws.onmessage = function (e) {
     var data = JSON.parse(e.data);
@@ -213,22 +236,15 @@ $(document).ready(function() {
       update_scores(data.scores, data.ended);
     } else if (data.type == "chat") {
       var text_area = $("#chat");
-      if (text_area.text()) {
-        text_area.text(text_area.text() + "\n" + data.message);
-      } else {
-        text_area.text(data.message);
-      }
+      update_messages($("#chat"), data.name, data.message);
     } else if (data.type == "history") {
       var text_area = $("#chat");
-      text_area.text("");
+      text_area.html("");
       data.messages.forEach(function(chat_message) {
-        if (text_area.text()) {
-          text_area.text(text_area.text() + "\n" + chat_message);
-        } else {
-          text_area.text(chat_message);
-        }
+        update_messages(text_area, chat_message[0], chat_message[1]);
       });
-      $("#chat_box").attr("disabled", "");
+      $("#chat_box").removeAttr("disabled");
+      $("#say").removeAttr("disabled");
     }
   }
 
@@ -239,14 +255,24 @@ $(document).ready(function() {
 
   // CHAT
 
-  var chat_box = $("#chat_box");
-  chat_box.keypress(function(e) {
-    if (event.keyCode == '13') {
+  function on_chat(e) {
+    var chat_box = $("#chat_box");
+    if (event.type == "click" || event.keyCode == '13') {
       ws.send(JSON.stringify({
         'type' : 'chat',
+        'name' : user_name,
         'message' : chat_box.val()
       }));
       chat_box.val("");
     }
+  };
+
+  $("#chat_box").keypress(on_chat);
+  $("#chat_box").focus(function (e) {
+    in_chat_box = true;
   });
+  $("#chat_box").blur(function (e) {
+    in_chat_box = false;
+  });
+  $("#say").click(on_chat);
 });

@@ -5,6 +5,8 @@ from tornado import template
 import json
 import os
 from game import Game
+import argparse
+import datetime
 
 settings = {
     "template_path" : os.path.join(os.path.dirname(__file__), "templates"),
@@ -73,14 +75,15 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
         'ended' : game.ended
     }))
 
-  def send_message_update_to_all(self, message):
+  def send_message_update_to_all(self, name, message):
     for socket in game_to_sockets[self.game_id]:
-      socket.send_message_update(message)
+      socket.send_message_update(name, message)
 
-  def send_message_update(self, message):
+  def send_message_update(self, name, message):
     print "Sending message update %s" % message
     self.write_message(json.dumps({
         'type' : 'chat',
+        'name' : name,
         'message' : message
     }))
 
@@ -92,7 +95,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
     game = socket_to_game[self]
     time = game.total_time if game.ended else game.get_total_time()
 
-    hint = False
+    hint = args.hints
 
     self.write_message(json.dumps({
         'type' : 'update',
@@ -114,8 +117,8 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
       if socket_to_game[self].started:
         self.send_update()
     elif message['type'] == 'chat':
-      game_to_messages[self.game_id].append(message['message'])
-      self.send_message_update_to_all(message['message'])
+      game_to_messages[self.game_id].append((message['name'], message['message']))
+      self.send_message_update_to_all(message['name'], message['message'])
     elif message['type'] == 'submit':
       game = socket_to_game[self]
       if game.started:
@@ -153,13 +156,14 @@ class NewGameHandler(tornado.web.RequestHandler):
 
 class GameHandler(tornado.web.RequestHandler):
   def get(self, game_id):
-    if not int(game_id) in games:
+    if not self.get_cookie("name") or not int(game_id) in games:
       self.redirect("/")
       return
     game = games[int(game_id)]
     self.render(
         "game.html",
         game_id=game_id,
+        user_name=self.get_cookie("name"),
         game_type=("6 Tau" if game.size == 6 else "3 Tau"),
         game=game)
 
@@ -171,7 +175,24 @@ application = tornado.web.Application([
   (r"/websocket/(\d*)", TauWebSocketHandler),
 ], **settings)
 
+# returns control to the main thread every 250ms
+def set_ping(ioloop, timeout):
+    ioloop.add_timeout(timeout, lambda: set_ping(ioloop, timeout))
+
+def parse_args():
+  parser = argparse.ArgumentParser(description='Run Tau server.')
+  parser.add_argument('--hints', dest='hints', action='store_true',
+                      help='Enable hints.')
+  parser.add_argument('-d', '--debug', dest='debug', action='store_true',
+                      help='Enable debug.')
+  return parser.parse_args()
+
 if __name__ == "__main__":
   http_server = tornado.httpserver.HTTPServer(application)
   http_server.listen(80)
-  tornado.ioloop.IOLoop.instance().start()
+  global args
+  args = parse_args()
+  ioloop = tornado.ioloop.IOLoop.instance()
+  if args.debug:
+    set_ping(ioloop, datetime.timedelta(seconds=1))
+  ioloop.start()

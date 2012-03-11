@@ -1,6 +1,64 @@
+h2 {
+  font-size:20px;
+  font-weight: bold;
+}
+
+h4 {
+  font-size:14px;
+  font-weight: bold;
+  padding-bottom:2px;
+}
+
+body {
+  font-family: sans-serif;
+  font-size:13px;
+  margin:8px;
+}
+
 table {
   border-collapse:collapse;
   border-style:none;
+}
+
+#scores {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+#scores tr {
+  margin-top:2px;
+  margin-bottom:2px;
+}
+
+.score_name {
+  padding-right: 5px;
+  text-align:right;
+}
+
+#time {
+  padding-top:10px;
+  padding-bottom:10px;
+}
+
+#playing_area {
+  min-height:384px;
+  position:relative;
+}
+
+#start {
+  position:absolute;
+  top:45%;
+  left:160px;
+  display:block;
+}
+
+#chat {
+  border-top: 1px solid #CCC;
+  padding-top: 2px;
+  height: 7em;
+  width:348px;
+  overflow:auto;
+  margin-top: 4px;
 }
 
 .fakeCard, .realCard {
@@ -9,6 +67,10 @@ table {
 
 .hint {
   background-color:green !important;
+}
+
+.name {
+  color: #999;
 }
 
 /* have to include border in width/height */

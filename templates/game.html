@@ -4,15 +4,16 @@
     <script type="text/javascript">
       var game_id = "{{ game_id }}";
       var game_size = {{ game.size }};
+      var user_name = "{{ user_name }}";
     </script>
     <script type="text/javascript" src="{{ static_url("jquery.js") }}"></script>
+    <script type="text/javascript" src="{{ static_url("jquery-ui.min.js") }}"></script>
     <script type="text/javascript" src="{{ static_url("tau.js") }}"></script>
     <link rel="stylesheet" type="text/css" href="{{ static_url("reset.css") }}" />
     <link rel="stylesheet" type="text/css" href="{{ static_url("styles.css") }}" />
   </head>
   <body>
-    <h2>Tau</h2>
-    <h3>Game {{ game_id }} ({{ game_type }})</h3>
+    <h2>Tau - Game {{ game_id }} ({{ game_type }})</h2>
     <div>
       <div id="scores">
         <h4>Scores</h4>
@@ -27,8 +28,11 @@
     </div>
 
     <div>
-      <textarea id="chat" readonly="readonly" style="width: 400px; height:300px; resizable:none;">loading...</textarea>
-      <input style="display:block;" type="text" id="chat_box" disabled="disabled" />
+      <div id="chat">loading...</div>
+      <div>
+        <input style="display:inline-block;" type="text" id="chat_box" disabled="disabled" />
+        <button style="display:inline-block;" id="say" disabled="disabled">Say</button>
+      </div>
     </div>
 
     <div>
