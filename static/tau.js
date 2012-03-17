@@ -196,25 +196,43 @@ $(document).ready(function() {
     prev_board = this_board;
   }
 
-  function update(board, scores, time, ended, hint) {
-    update_scores(scores, ended);
-    
-    // update time
-    last_server_time = time;
+  function get_time(ended) {
+    if (ended) {
+      return Math.round(last_server_time);
+    } else {
+      return Math.round((last_server_time + (new Date().getTime() / 1000 - last_server_time_browser_time)))
+    }
+  };
+
+  function format_time(seconds) {
+    minutes = Math.floor(seconds / 60);
+    seconds = seconds - minutes * 60;
+    return minutes + (seconds < 10 ? ":0" : ":") + seconds;
+  };
+
+  function update_time(time, ended) {
+    last_server_time = time + 56;
     last_server_time_browser_time = new Date().getTime() / 1000;
     $("#time").html('');
     var time_display = $("<span id=\"time_display\">");
-    time_display.html((Math.round((last_server_time + (new Date().getTime() / 1000 - last_server_time_browser_time)))) + " seconds");
+    time_display.html(format_time(get_time(ended)));
     if (ended) {
-      $("#time").append($("<span>TOTAL TIME:</span>"));
+      $("#time").append($("<span>TOTAL TIME: </span>"));
     } else {
-      $("#time").append($("<span>ELAPSED TIME:</span>"));
+      $("#time").append($("<span>ELAPSED TIME: </span>"));
       clearInterval(current_time_updater);
       current_time_updater = setInterval(function() {
-        time_display.html((Math.round((last_server_time + (new Date().getTime() / 1000 - last_server_time_browser_time)))) + " seconds");
+        seconds = get_time(ended);
+        time_display.html(format_time(seconds));
       }, 500);
     }
     $("#time").append(time_display);
+  };
+
+  function update(board, scores, time, ended, hint) {
+    update_scores(scores, ended);
+    
+    update_time(time, ended);
 
     // update board
     update_board(board, hint);

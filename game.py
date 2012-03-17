@@ -2,7 +2,7 @@ import random, itertools, time
 from operator import mod
 
 class Game(object):
-  def __init__(self, size):
+  def __init__(self, size, quick=False):
     self.size = size
     self.min_number = 12
     self.scores = {}
@@ -13,8 +13,9 @@ class Game(object):
     self.start_time = 0
     self.ended = False
 
-    #for i in xrange(0, 23):
-    #  self.submit_tau(self.get_tau(), "dummy")
+    if quick:
+      for i in xrange(0, 23):
+        self.submit_tau(self.get_tau(), "dummy")
 
   def start(self):
     self.start_time = time.time()

@@ -150,7 +150,7 @@ class NewGameHandler(tornado.web.RequestHandler):
       next_id = 0
     else:
       next_id = max(games.keys()) + 1
-    games[next_id] = Game(3 if type == "3tau" else 6)
+    games[next_id] = Game(3 if type == "3tau" else 6, args.quick)
     game_to_sockets[next_id] = []
     game_to_messages[next_id] = []
     self.redirect("/game/%d" % next_id)
@@ -186,6 +186,7 @@ def parse_args():
                       help='Enable hints.')
   parser.add_argument('-d', '--debug', dest='debug', action='store_true',
                       help='Enable debug.')
+  parser.add_argument('-q', '--quick', dest='quick', action='store_true', help='Enable quick game. Deck only has 12 cards.')
   return parser.parse_args()
 
 if __name__ == "__main__":
