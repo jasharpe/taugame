@@ -218,6 +218,10 @@ $(document).ready(function() {
 
     // update board
     update_board(board, hint);
+
+    if (ended) {
+      $("body").addClass("ended");
+    }
   };
 
   function update_messages(text_area, name, message) {

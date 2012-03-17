@@ -1,3 +1,7 @@
+body.ended {
+  background-color:lightgreen;
+}
+
 h2 {
   font-size:20px;
   font-weight: bold;
@@ -59,9 +63,14 @@ table {
   width:348px;
   overflow:auto;
   margin-top: 4px;
+  background-color:white;
 }
 
-.fakeCard, .realCard {
+.fakeCard {
+  background-color:transparent;
+}
+
+.realCard {
   background-color:white;
 }
 
@@ -77,6 +86,8 @@ table {
 .fakeCard {
   width:82px;
   height:122px;
+  margin-right:6px;
+  margin-bottom:6px;
 }
 
 .realCard {
