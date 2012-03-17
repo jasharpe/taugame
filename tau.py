@@ -77,7 +77,6 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
       socket.send_message_update(name, message)
 
   def send_message_update(self, name, message):
-    print "Sending message update %s" % message
     self.write_message(json.dumps({
         'type' : 'chat',
         'name' : name,

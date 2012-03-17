@@ -44,6 +44,10 @@ $(document).ready(function() {
     }
   });
 
+  $(window).focus(function() {
+    $("body").focus();
+  });
+
   $("#start").click(function() {
     ws.send(JSON.stringify({'type' : 'start'}));
   });
