@@ -43,10 +43,6 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
     if self in game_to_sockets[self.game_id]:
       game_to_sockets[self.game_id].remove(self)
     self.send_scores_update_to_all()
-    
-    if not game_to_sockets[self.game_id] and game.ended:
-      del game_to_sockets[self.game_id]
-      del games[self.game_id]
 
   def get_scores(self):
     game = socket_to_game[self]
@@ -109,7 +105,6 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
 
   def on_message(self, message_json):
     message = json.loads(message_json)
-    print message
     if message['type'] == 'start':
       if not socket_to_game[self].started:
         socket_to_game[self].start()
@@ -131,9 +126,14 @@ class MainHandler(tornado.web.RequestHandler):
     if not self.get_cookie("name"):
       self.redirect("/choose_name")
       return
+    new_games = ("New games", filter(lambda g: not g[1].started, sorted(games.items(), None, lambda game: game[0])))
+    started_games = ("Started games", filter(lambda g: g[1].started and not g[1].ended, sorted(games.items(), None, lambda game: game[0])))
+    ended_games = ("Ended games", filter(lambda g: g[1].ended, sorted(games.items(), None, lambda game: game[0])))
     self.render(
         "game_list.html",
-        games=sorted(games.items(), None, lambda game: game[0]))
+        new_games=new_games,
+        started_games=started_games,
+        ended_games=ended_games)
 
 class ChooseNameHandler(tornado.web.RequestHandler):
   def get(self):
@@ -145,7 +145,6 @@ class ChooseNameHandler(tornado.web.RequestHandler):
 
 class NewGameHandler(tornado.web.RequestHandler):
   def post(self, type):
-    print type
     if len(games.keys()) == 0:
       next_id = 0
     else:

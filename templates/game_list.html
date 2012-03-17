@@ -6,18 +6,29 @@
     <link rel="stylesheet" type="text/css" href="{{ static_url("styles.css") }}" />
   </head>
   <body>
-    <form name="new_game" action="/new_game/3tau" method="post">
+    <form style="display:inline-block;" name="new_game" action="/new_game/3tau" method="post">
       <input type="submit" value="New 3 Tau game" />
     </form>
 
-    <form name="new_game" action="/new_game/6tau" method="post">
+    <form style="display:inline-block;" name="new_game" action="/new_game/6tau" method="post">
       <input type="submit" value="New 6 Tau game" />
     </form>
 
-    {% for game in games %}
-    <li><a href="/game/{{ game[0] }}">Game {{ game[0] }}</a> ({{ game[1].size }} Tau)</li>
+    <div id="game_panel">
+    {% for game_list in [new_games, started_games, ended_games] %}
+    {% if game_list[1] %}
+    <h4>{{ game_list[0] }}</h4>
+    <ul class="games_list" >
+      {% for game in game_list[1] %}
+      <li><a href="/game/{{ game[0] }}">Game {{ game[0] }}</a> ({{ game[1].size }} Tau)</li>
+      {% end %}
+    </ul>
     {% end %}
+    {% end %}
+    </div>
 
-    <a href="/choose_name">Change name</a>
+    <ul>
+      <li><a href="/choose_name">Change name</a></li>
+    </ul>
   </body>
 </html>

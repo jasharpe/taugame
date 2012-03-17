@@ -13,6 +13,10 @@ h4 {
   padding-bottom:2px;
 }
 
+#game_panel h4 {
+  margin-top:15px;
+}
+
 body {
   font-family: sans-serif;
   font-size:13px;
@@ -22,6 +26,16 @@ body {
 table {
   border-collapse:collapse;
   border-style:none;
+}
+
+.games_list {
+  margin-top:5px;
+  margin-bottom:5px;
+}
+
+#game_panel {
+  margin-top:15px;
+  margin-bottom:15px;
 }
 
 #scores {
