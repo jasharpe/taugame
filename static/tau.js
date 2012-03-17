@@ -135,7 +135,8 @@ $(document).ready(function() {
     }
   };
 
-  var prev_board = []
+  var prev_board = [];
+  var card_to_board_map = {}
   function update_board(board, hint) {
     var processed_hint = []
     if (hint !== null) {
@@ -172,12 +173,13 @@ $(document).ready(function() {
             div.addClass("hint");
           }
 
-          if (prev_board.length > 0 && prev_board.indexOf(get_card_number(card)) == -1) {
+          prev_index = card_to_board_map[get_card_number(card)];
+          if (prev_board.length > 0 && (prev_index === undefined || prev_index != card_index)) {
             div.css("background-color", "#FF8");
-            div
-              .animate({backgroundColor: "#FF8"}, 200)
-              .animate({backgroundColor: "#FFF"}, 1000);
+            div.animate({backgroundColor: "#FF8"}, 200)
+               .animate({backgroundColor: "#FFF"}, 1000);
           }
+          card_to_board_map[get_card_number(card)] = card_index;
           this_board.push(get_card_number(card));
 
           div.click(function(e) {
