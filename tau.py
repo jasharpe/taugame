@@ -2,6 +2,7 @@ import tornado.web
 import tornado.websocket
 import tornado.httpserver
 from tornado import template
+from tornado.escape import url_escape, url_unescape
 import json
 import os
 from game import Game
@@ -52,7 +53,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
     
     scores = {}
     for socket in game_to_sockets[self.game_id]:
-      name = socket.get_cookie("name")
+      name = url_unescape(socket.get_cookie("name"))
       if name in game.scores.keys():
         scores[name] = game.scores[name]
       else:
@@ -122,7 +123,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
     elif message['type'] == 'submit':
       game = socket_to_game[self]
       if game.started:
-        if game.submit_tau(map(tuple, message['cards']), self.get_cookie("name")):
+        if game.submit_tau(map(tuple, message['cards']), url_unescape(self.get_cookie("name"))):
           self.send_update_to_all()
 
 class MainHandler(tornado.web.RequestHandler):
@@ -139,7 +140,7 @@ class ChooseNameHandler(tornado.web.RequestHandler):
     self.render("choose_name.html")
 
   def post(self):
-    self.set_cookie("name", self.get_argument("name"))
+    self.set_cookie("name", url_escape(self.get_argument("name")))
     self.redirect("/")
 
 class NewGameHandler(tornado.web.RequestHandler):
@@ -163,7 +164,7 @@ class GameHandler(tornado.web.RequestHandler):
     self.render(
         "game.html",
         game_id=game_id,
-        user_name=self.get_cookie("name"),
+        user_name=url_unescape(self.get_cookie("name")),
         game_type=("6 Tau" if game.size == 6 else "3 Tau"),
         game=game)
 
