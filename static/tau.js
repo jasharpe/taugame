@@ -211,7 +211,7 @@ $(document).ready(function() {
   };
 
   function update_time(time, ended) {
-    last_server_time = time + 56;
+    last_server_time = time;
     last_server_time_browser_time = new Date().getTime() / 1000;
     $("#time").html('');
     var time_display = $("<span id=\"time_display\">");
