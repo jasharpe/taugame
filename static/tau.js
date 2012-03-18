@@ -137,7 +137,9 @@ $(document).ready(function() {
 
   var prev_board = [];
   var card_to_board_map = {}
-  function update_board(board, hint) {
+  function update_board(board, number, hint) {
+    console.log("This board has " + number + " taus");
+
     var processed_hint = []
     if (hint !== null) {
       for (var card_index in hint) {
@@ -146,6 +148,7 @@ $(document).ready(function() {
     }
 
     var playing_area = $("#playing_area");
+    old_selected = selection_model['selected'];
     selection_model['selected'] = [];
     playing_area.html('');
     var table = $('<table>');
@@ -216,7 +219,7 @@ $(document).ready(function() {
     return minutes + (seconds < 10 ? ":0" : ":") + seconds;
   };
 
-  function update_time(time, ended) {
+  function update_time(time, avg_number, ended) {
     last_server_time = time;
     last_server_time_browser_time = new Date().getTime() / 1000;
     $("#time").html('');
@@ -233,15 +236,18 @@ $(document).ready(function() {
       }, 500);
     }
     $("#time").append(time_display);
+    if (avg_number !== null) {
+      console.log(avg_number);
+    }
   };
 
-  function update(board, scores, time, ended, hint) {
+  function update(board, scores, time, avg_number, number, ended, hint) {
     update_scores(scores, ended);
     
-    update_time(time, ended);
+    update_time(time, avg_number, ended);
 
     // update board
-    update_board(board, hint);
+    update_board(board, number, hint);
 
     if (ended) {
       $("body").addClass("ended");
@@ -259,7 +265,7 @@ $(document).ready(function() {
   ws.onmessage = function (e) {
     var data = JSON.parse(e.data);
     if (data.type == "update") {
-      update(data.board, data.scores, data.time, data.ended, data.hint);
+      update(data.board, data.scores, data.time, data.avg_number, data.number, data.ended, data.hint);
     } else if (data.type == "scores") {
       update_scores(data.scores, data.ended);
     } else if (data.type == "chat") {

@@ -91,14 +91,27 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
     game = socket_to_game[self]
     time = game.total_time if game.ended else game.get_total_time()
 
-    hint = args.hints
+    numbers_map = None
+    if game.ended:
+      numbers_map = {}
+      last_time = 0
+      for (tau_time, number, player, cards) in game.taus:
+        time_to_find = tau_time - last_time
+        last_time = tau_time
+        if not number in numbers_map:
+          numbers_map[number] = []
+        numbers_map[number].append(time_to_find)
+      for (number, times) in numbers_map.items():
+        numbers_map[number] = sum(times) / float(len(times))
 
     self.write_message(json.dumps({
         'type' : 'update',
         'board' : game.board,
         'scores' : self.get_scores(),
+        'avg_number' : numbers_map,
+        'number' : len(game.get_all_taus()),
         'time' : time,
-        'hint' : game.get_tau() if hint else None,
+        'hint' : game.get_tau() if args.hints else None,
         'ended' : game.ended
     }))
 

@@ -8,6 +8,8 @@ class Game(object):
     self.scores = {}
     self.deck = create_deck()
     self.board = []
+    self.boards = []
+    self.taus = []
     self.compress_and_fill_board()
     self.started = False
     self.start_time = 0
@@ -15,7 +17,10 @@ class Game(object):
 
     if quick:
       for i in xrange(0, 23):
-        self.submit_tau(self.get_tau(), "dummy")
+        self.take_tau()
+
+  def take_tau(self):
+    self.submit_tau(self.get_tau(), "dummy")
 
   def start(self):
     self.start_time = time.time()
@@ -65,6 +70,13 @@ class Game(object):
   def is_over(self):
     return len(self.deck) == 0 and no_subset_is_tau(filter(None, self.board), self.size)
 
+  def get_all_taus(self):
+    taus = []
+    for card_subset in itertools.combinations(filter(None, self.board), self.size):
+      if is_tau(card_subset):
+        taus.append(card_subset)
+    return taus
+
   def get_tau(self):
     for card_subset in itertools.combinations(filter(None, self.board), self.size):
       if is_tau(card_subset):
@@ -79,10 +91,12 @@ class Game(object):
 
   def submit_tau(self, cards, player):
     if len(cards) == self.size and self.board_contains(cards) and is_tau(cards):
-      self.remove_cards(cards)
       if not player in self.scores:
         self.scores[player] = []
       self.scores[player].append(cards)
+      self.boards.append(list(self.board))
+      self.taus.append((self.get_total_time(), len(self.get_all_taus()), player, cards))
+      self.remove_cards(cards)
       self.compress_and_fill_board()
       if self.is_over():
         self.total_time = self.get_total_time()
