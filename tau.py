@@ -8,6 +8,7 @@ import os
 from game import Game
 import argparse
 import datetime
+import ssl
 
 settings = {
     "template_path" : os.path.join(os.path.dirname(__file__), "templates"),
@@ -200,12 +201,34 @@ def parse_args():
   parser.add_argument('-q', '--quick', dest='quick', action='store_true', help='Enable quick game. Deck only has 12 cards.')
   return parser.parse_args()
 
-if __name__ == "__main__":
-  http_server = tornado.httpserver.HTTPServer(application)
+class OptionalHTTPServer(tornado.httpserver.HTTPServer):
+  def __init__(self, *args, **kwargs):
+    tornado.httpserver.HTTPServer.__init__(self, *args, **kwargs)
+
+  def _handle_connection(self, connection, address):
+    if connection.getsockname()[1] == 80:
+      old_ssl_options = self.ssl_options
+      self.ssl_options = None
+      super(tornado.httpserver.HTTPServer, self)._handle_connection(connection, address)
+      self.ssl_options = old_ssl_options
+    else:
+      super(tornado.httpserver.HTTPServer, self)._handle_connection(connection, address)
+
+def main():
+  http_server = OptionalHTTPServer(application,
+      ssl_options={
+          "certfile" : "localhost.crt",
+          "keyfile" : "localhost.key",
+      })
   http_server.listen(80)
+  http_server.listen(443)
   global args
   args = parse_args()
   ioloop = tornado.ioloop.IOLoop.instance()
   if args.debug:
     set_ping(ioloop, datetime.timedelta(seconds=1))
   ioloop.start()
+
+if __name__ == "__main__":
+  main()
+  

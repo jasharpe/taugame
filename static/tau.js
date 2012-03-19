@@ -52,7 +52,9 @@ $(document).ready(function() {
     ws.send(JSON.stringify({'type' : 'start'}));
   });
 
-  var ws = new WebSocket("ws://" + window.location.host + "/websocket/" + game_id);
+  var start = (("" + window.location).indexOf("https") == 0) ? "wss" : "ws";
+  console.log("Using " + start);
+  var ws = new WebSocket(start + "://" + window.location.host + "/websocket/" + game_id);
   ws.onopen = function() {
     ws.send(JSON.stringify({
         'type' : 'update'
