@@ -28,6 +28,32 @@ table {
   border-style:none;
 }
 
+.leaderboard {
+  margin:20px;
+  width:250px;
+  line-height:1.4em;
+}
+
+.leaderboard thead {
+  text-align:left;
+}
+
+.leaderboard th {
+  font-size: 14px;
+  color: #039;
+  border-bottom: 2px solid #6678B1;
+  padding: 10px 8px;
+}
+
+.leaderboard tbody tr:hover td {
+  color: #009;
+}
+
+.leaderboard td {
+  color: #669;
+  padding: 9px 8px 0;
+}
+
 .games_list {
   margin-top:5px;
   margin-bottom:5px;

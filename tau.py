@@ -9,6 +9,7 @@ from game import Game
 import argparse
 import datetime
 import ssl
+from state import save_game, get_all_high_scores
 
 settings = {
     "template_path" : os.path.join(os.path.dirname(__file__), "templates"),
@@ -130,23 +131,36 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
       self.send_message_update_to_all(message['name'], message['message'])
     elif message['type'] == 'submit':
       game = socket_to_game[self]
-      if game.started:
+      if game.started and not game.ended:
         if game.submit_tau(map(tuple, message['cards']), url_unescape(self.get_cookie("name"))):
+          if game.ended:
+            save_game(game)
           self.send_update_to_all()
 
 class MainHandler(tornado.web.RequestHandler):
   def get(self):
+    see_more_ended = self.get_argument('see_more_ended', default=False)
     if not self.get_cookie("name"):
       self.redirect("/choose_name")
       return
     new_games = ("New games", filter(lambda g: not g[1].started, sorted(games.items(), None, lambda game: game[0])))
     started_games = ("Started games", filter(lambda g: g[1].started and not g[1].ended, sorted(games.items(), None, lambda game: game[0])))
-    ended_games = ("Ended games", filter(lambda g: g[1].ended, sorted(games.items(), None, lambda game: game[0])))
+    if see_more_ended:
+      ended_games = ("Ended games", filter(lambda g: g[1].ended, sorted(games.items(), None, lambda game: game[0])))
+    else:
+      ended_games = ("Ended games", filter(lambda g: g[1].ended, sorted(games.items(), None, lambda game: game[0]))[-1:])
     self.render(
         "game_list.html",
         new_games=new_games,
         started_games=started_games,
         ended_games=ended_games)
+
+class LeaderboardHandler(tornado.web.RequestHandler):
+  def get(self):
+    all_high_scores = get_all_high_scores(10)
+    self.render(
+        "leaderboard.html",
+        all_high_scores=all_high_scores)
 
 class ChooseNameHandler(tornado.web.RequestHandler):
   def get(self):
@@ -182,6 +196,7 @@ class GameHandler(tornado.web.RequestHandler):
 
 application = tornado.web.Application([
   (r"/", MainHandler),
+  (r"/leaderboard", LeaderboardHandler),
   (r"/choose_name", ChooseNameHandler),
   (r"/new_game/(3tau|6tau)", NewGameHandler),
   (r"/game/(\d*)", GameHandler),

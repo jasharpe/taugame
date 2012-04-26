@@ -17,14 +17,18 @@
     <div id="game_panel">
     {% for game_list in [new_games, started_games, ended_games] %}
     {% if game_list[1] %}
-    <h4>{{ game_list[0] }}</h4>
-    <ul class="games_list" >
-      {% for game in game_list[1] %}
-      <li><a href="/game/{{ game[0] }}">Game {{ game[0] }}</a> ({{ game[1].size }} Tau)</li>
-      {% end %}
-    </ul>
+      <h4>{{ game_list[0] }}</h4>
+      <ul class="games_list" >
+        {% for game in game_list[1] %}
+        <li><a href="/game/{{ game[0] }}">Game {{ game[0] }}</a> ({{ game[1].size }} Tau)</li>
+        {% end %}
+      </ul>
     {% end %}
     {% end %}
+    </div>
+
+    <div id="leaderboard_panel">
+      <a href="/leaderboard">Leaderboard</a>
     </div>
 
     <ul>

@@ -16,7 +16,7 @@ class Game(object):
     self.ended = False
 
     if quick:
-      for i in xrange(0, 23):
+      for i in xrange(0, 23 if size == 3 else 12):
         self.take_tau()
 
   def take_tau(self):
