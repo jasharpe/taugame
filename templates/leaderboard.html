@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script type="text/javascript" src="{{ static_url("jquery.js") }}"></script>
+    <link rel="stylesheet" type="text/css" href="{{ static_url("reset.css") }}" />
+    <link rel="stylesheet" type="text/css" href="{{ static_url("styles.css") }}" />
+  </head>
+  <body>
+    {% for game_type in [3, 6] %}
+    <div style="float:left; width:300px;padding:25px;">
+      <h2>{{ game_type }} Tau</h2>
+      {% for (num_players, scores) in all_high_scores[str(game_type) + "tau"].items() %}
+        <h4>{{ num_players }} players</h4>
+        <table class="leaderboard">
+          <thead><tr><th>Time</th><th>Players</th></tr></thead>
+          <tbody>
+          {% for score in scores %}
+            <tr>
+              <td>{{ score.elapsed_time }}</td>
+              <td>{{ ", ".join(map(lambda x: x.name, score.players)) }}</td>
+            </tr>
+          {% end %}
+          </tbody>
+        </table>
+      {% end %}
+    </div>
+    {% end %}
+
+    <div style="clear:both;"></div>
+    
+    <div>
+      <a href="/">Back to games</a>
+    </div>
+  </body>
+</html>
