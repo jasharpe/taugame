@@ -1,7 +1,7 @@
 from db import Base, get_session
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, Text, Table, distinct
 from sqlalchemy.orm import relationship, backref
-from sqlalchemy.sql.expression import desc
+from sqlalchemy.sql.expression import desc, asc
 import datetime
 import json
 
@@ -10,7 +10,7 @@ def get_all_high_scores(num_scores):
   numbers = list(session.query(distinct(Score.num_players), Score.game_type))
   ret = {'3tau' : {}, '6tau' : {}}
   for (number3, game_type) in numbers:
-    top_scores = session.query(Score).filter_by(num_players=number3,game_type=game_type).order_by(desc(Score.elapsed_time)).limit(num_scores)
+    top_scores = session.query(Score).filter_by(num_players=number3,game_type=game_type).order_by(asc(Score.elapsed_time)).limit(num_scores)
     ret[game_type][number3] = list(top_scores)
   return ret
 

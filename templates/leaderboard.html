@@ -1,3 +1,5 @@
+{% from mytime import fmt_time %}
+
 <!DOCTYPE html>
 <html>
   <head>
@@ -16,8 +18,8 @@
           <tbody>
           {% for score in scores %}
             <tr>
-              <td>{{ score.elapsed_time }}</td>
-              <td>{{ ", ".join(map(lambda x: x.name, score.players)) }}</td>
+              <td>{{ fmt_time(score.elapsed_time) }}</td>
+              <td>{{ ", ".join(sorted(map(lambda x: x.name, score.players))) }}</td>
             </tr>
           {% end %}
           </tbody>
