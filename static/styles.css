@@ -29,9 +29,15 @@ table {
 }
 
 .leaderboard {
-  margin:20px;
-  width:250px;
+  margin:13px;
+  width:375px;
   line-height:1.4em;
+}
+
+.leaderboard_container {
+  float:left;
+  width:400px;
+  padding:20px;
 }
 
 .leaderboard_menu {

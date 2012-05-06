@@ -36,7 +36,7 @@
     </div>
     
     {% for game_type in [3, 6] %}
-    <div style="float:left; width:300px;padding:25px;">
+    <div class="leaderboard_container">
       <h2>{{ game_type }} Tau</h2>
       {% for (num_players, scores) in all_high_scores[str(game_type) + "tau"].items() %}
         <h4>{{ num_players }} players</h4>
