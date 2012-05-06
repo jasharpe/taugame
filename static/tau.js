@@ -285,7 +285,7 @@ $(document).ready(function() {
   }
 
   ws.onclose = function() {
-    $("body").prepend($("<span>DISCONNECTED - REFRESH</span>"));
+    $("body").prepend($("<span>DISCONNECTED - <a href=\"javascript:location.reload(true)\">REFRESH</a> (if you can't connect at all, <a href=\"" + window.location.href.replace("http:", "https:") + "\">try https</a> (ignore any warnings you see, my certificate is not good))</span>"));
     $("body").css("background-color", "red");
   };
 
