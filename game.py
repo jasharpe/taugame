@@ -14,6 +14,7 @@ class Game(object):
     self.started = False
     self.start_time = 0
     self.ended = False
+    self.player_ranks = {}
 
     if quick:
       for i in xrange(0, 23 if size == 3 else 12):

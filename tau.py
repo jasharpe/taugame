@@ -9,7 +9,7 @@ from game import Game
 import argparse
 import datetime
 import ssl
-from state import save_game, get_all_high_scores
+from state import save_game, get_all_high_scores, get_ranks
 
 settings = {
     "template_path" : os.path.join(os.path.dirname(__file__), "templates"),
@@ -92,6 +92,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
   def send_update(self):
     game = socket_to_game[self]
     time = game.total_time if game.ended else game.get_total_time()
+    name = url_unescape(self.get_cookie("name"))
 
     numbers_map = None
     if game.ended:
@@ -114,7 +115,8 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
         'number' : len(game.get_all_taus()),
         'time' : time,
         'hint' : game.get_tau() if args.hints else None,
-        'ended' : game.ended
+        'ended' : game.ended,
+        'player_rank' : game.player_ranks[name] if game.ended and name in game.player_ranks else None
     }))
 
   def on_message(self, message_json):
@@ -134,7 +136,10 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
       if game.started and not game.ended:
         if game.submit_tau(map(tuple, message['cards']), url_unescape(self.get_cookie("name"))):
           if game.ended:
-            save_game(game)
+            (db_game, score) = save_game(game)
+            for player_name in game.scores.keys():
+              player_rank = get_ranks(score.elapsed_time, db_game.game_type, player_name, score.num_players)
+              game.player_ranks[player_name] = player_rank
           self.send_update_to_all()
 
 class MainHandler(tornado.web.RequestHandler):

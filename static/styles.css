@@ -90,9 +90,9 @@ table {
   text-align:right;
 }
 
-#time {
-  padding-top:10px;
-  padding-bottom:10px;
+#time, .rank {
+  margin-top:10px;
+  margin-bottom:10px;
 }
 
 #playing_area {

@@ -1,19 +1,19 @@
 from db import Base, get_session
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, Text, Table, distinct
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, Text, Table, distinct, func
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.sql.expression import desc, asc
 import datetime
 import json
 
-def get_all_high_scores(num_scores, leaderboard_type, player):
-  filter_map = {
-    "alltime" : Score.date >= datetime.datetime.min,
-    "thisweek" : Score.date >= datetime.datetime.now() - datetime.timedelta(days=7),
-    "today" : Score.date >= datetime.datetime.now() - datetime.timedelta(days=1),
+filter_map = {
+    "alltime" : lambda: Score.date >= datetime.datetime.min,
+    "thisweek" : lambda: Score.date >= datetime.datetime.now() - datetime.timedelta(days=7),
+    "today" : lambda: Score.date >= datetime.datetime.now() - datetime.timedelta(days=1),
   }
 
+def get_all_high_scores(num_scores, leaderboard_type, player):
   session = get_session()
-  time_filter = filter_map[leaderboard_type]
+  time_filter = filter_map[leaderboard_type]()
   numbers_query = session.query(distinct(Score.num_players), Score.game_type).filter(time_filter)
   if player is not None:
     numbers_query = numbers_query.filter(Score.players.any(name=player))
@@ -39,6 +39,20 @@ def get_or_create_dbplayer(session, name):
     session.add(player)
     return player
 
+# return a dict with "personal" and "all"
+def get_ranks(total_time, game_type, player_name, num_players):
+  ret = {}
+  session = get_session()
+  for leaderboard in ["personal", "all"]:
+    ret[leaderboard] = {}
+    for leaderboard_type in ["alltime", "thisweek", "today"]:
+      time_filter = filter_map[leaderboard_type]()
+      num_better_scores = session.query(Score).filter(time_filter).filter(Score.elapsed_time < total_time).filter(Score.game_type == game_type).filter_by(num_players=num_players)
+      if leaderboard == "personal":
+        num_better_scores = num_better_scores.filter(Score.players.any(name=player_name))
+      ret[leaderboard][leaderboard_type] = num_better_scores.count() + 1
+  return ret
+
 def save_game(game):
   session = get_session()
   db_game = DBGame("3tau" if game.size == 3 else "6tau")
@@ -62,6 +76,7 @@ def save_game(game):
   session.add(score)
   session.add(db_game)
   session.commit()
+  return (db_game, score)
 
 class DBGame(Base):
   __tablename__ = 'games'
