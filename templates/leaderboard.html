@@ -20,6 +20,10 @@
   </head>
   <body>
     <div class="leaderboard_menu">
+      <a href="/">Back to games</a>
+    </div>
+
+    <div class="leaderboard_menu">
     {% for (i, (leaderboard_type, leaderboard_type_label)) in enumerate(leaderboard_types) %}
     {% if leaderboard_type == selected_leaderboard_type and player_name is None %}
       <span>{{ leaderboard_type_label }}</span>
