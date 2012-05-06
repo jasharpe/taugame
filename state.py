@@ -5,7 +5,7 @@ from sqlalchemy.sql.expression import desc, asc
 import datetime
 import json
 
-def get_all_high_scores(num_scores, leaderboard_type):
+def get_all_high_scores(num_scores, leaderboard_type, player):
   filter_map = {
     "alltime" : Score.date >= datetime.datetime.min,
     "thisweek" : Score.date >= datetime.datetime.now() - datetime.timedelta(days=7),
@@ -14,11 +14,16 @@ def get_all_high_scores(num_scores, leaderboard_type):
 
   session = get_session()
   time_filter = filter_map[leaderboard_type]
-  numbers = list(session.query(distinct(Score.num_players), Score.game_type).filter(time_filter))
+  numbers_query = session.query(distinct(Score.num_players), Score.game_type).filter(time_filter)
+  if player is not None:
+    numbers_query = numbers_query.filter(Score.players.any(name=player))
+  numbers = list(numbers_query)
   ret = {'3tau' : {}, '6tau' : {}}
   for (number3, game_type) in numbers:
-    top_scores = session.query(Score).filter_by(num_players=number3,game_type=game_type).filter(time_filter).order_by(asc(Score.elapsed_time)).limit(num_scores)
-    ret[game_type][number3] = list(top_scores)
+    top_scores = session.query(Score).filter_by(num_players=number3,game_type=game_type).filter(time_filter).order_by(asc(Score.elapsed_time))
+    if player is not None:
+      top_scores = top_scores.filter(Score.players.any(name=player))
+    ret[game_type][number3] = list(top_scores.limit(num_scores))
   return ret
 
 def get_high_scores(num_players, num_scores, game_type):

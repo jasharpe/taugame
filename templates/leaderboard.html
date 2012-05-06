@@ -8,18 +8,31 @@
     <link rel="stylesheet" type="text/css" href="{{ static_url("styles.css") }}" />
   </head>
   <body>
-    <div>
-    {% for (leaderboard_type, leaderboard_type_label) in leaderboard_types %}
-    {% if leaderboard_type == selected_leaderboard_type %}
+    <div class="leaderboard_menu">
+    {% for (i, (leaderboard_type, leaderboard_type_label)) in enumerate(leaderboard_types) %}
+    {% if leaderboard_type == selected_leaderboard_type and player_name is None %}
       <span>{{ leaderboard_type_label }}</span>
     {% else %}
       <a href="/leaderboard/{{ leaderboard_type }}">{{ leaderboard_type_label }}</a>
     {% end %}
-    {% if not leaderboard_type == "today" %}
-    |
+    {% if i != len(leaderboard_types) - 1 %}|{% end %}
+    {% end %}
+    </div>
+    
+    <div class="leaderboard_menu">
+    {% if player_name is not None %}
+    <span>High scores for {{ player_name }}:</span>
+    {% for (i, (leaderboard_type, leaderboard_type_label)) in enumerate(leaderboard_types) %}
+    {% if leaderboard_type == selected_leaderboard_type %}
+      <span>{{ leaderboard_type_label }}</span>
+    {% else %}
+      <a href="/leaderboard/{{ leaderboard_type }}/{{ player_name }}">{{ leaderboard_type_label }}</a>
+    {% end %}
+    {% if i != len(leaderboard_types) - 1 %}|{% end %}
     {% end %}
     {% end %}
     </div>
+    
     {% for game_type in [3, 6] %}
     <div style="float:left; width:300px;padding:25px;">
       <h2>{{ game_type }} Tau</h2>
@@ -31,7 +44,12 @@
           {% for score in scores %}
             <tr>
               <td>{{ fmt_time(score.elapsed_time) }}</td>
-              <td>{{ ", ".join(sorted(map(lambda x: "%s (%s)" % (x.name, score.player_scores()[x.name]), score.players))) }}</td>
+              <td>
+                {% set processed_players = sorted(score.players, None, lambda x: x.name) %}
+                {% for (i, player) in enumerate(processed_players) %}
+                <a href="/leaderboard/{{ selected_leaderboard_type }}/{{ player.name }}">{{ player.name }}</a> ({{ score.player_scores()[player.name] }}){% if i != len(score.players) - 1 %}, {% end %}
+                {% end %}
+              </td>
               <td>{{ score.date.strftime("%b %d %Y %I:%M%p") }}</td>
             </tr>
           {% end %}

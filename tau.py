@@ -156,10 +156,11 @@ class MainHandler(tornado.web.RequestHandler):
         ended_games=ended_games)
 
 class LeaderboardHandler(tornado.web.RequestHandler):
-  def get(self, leaderboard_type):
-    all_high_scores = get_all_high_scores(10, leaderboard_type)
+  def get(self, leaderboard_type, player=None):
+    all_high_scores = get_all_high_scores(10, leaderboard_type, player)
     self.render(
         "leaderboard.html",
+        player_name=player,
         all_high_scores=all_high_scores,
         leaderboard_types=[('alltime', 'All Time'), ('thisweek', 'This Week'), ('today', 'Today')],
         selected_leaderboard_type=leaderboard_type)
@@ -199,6 +200,7 @@ class GameHandler(tornado.web.RequestHandler):
 application = tornado.web.Application([
   (r"/", MainHandler),
   (r"/leaderboard/(alltime|thisweek|today)", LeaderboardHandler),
+  (r"/leaderboard/(alltime|thisweek|today)/([^/]*)", LeaderboardHandler),
   (r"/choose_name", ChooseNameHandler),
   (r"/new_game/(3tau|6tau)", NewGameHandler),
   (r"/game/(\d*)", GameHandler),
