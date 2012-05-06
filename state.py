@@ -5,12 +5,19 @@ from sqlalchemy.sql.expression import desc, asc
 import datetime
 import json
 
-def get_all_high_scores(num_scores):
+def get_all_high_scores(num_scores, leaderboard_type):
+  filter_map = {
+    "alltime" : Score.date >= datetime.datetime.min,
+    "thisweek" : Score.date >= datetime.datetime.now() - datetime.timedelta(days=7),
+    "today" : Score.date >= datetime.datetime.now() - datetime.timedelta(days=1),
+  }
+
   session = get_session()
-  numbers = list(session.query(distinct(Score.num_players), Score.game_type))
+  time_filter = filter_map[leaderboard_type]
+  numbers = list(session.query(distinct(Score.num_players), Score.game_type).filter(time_filter))
   ret = {'3tau' : {}, '6tau' : {}}
   for (number3, game_type) in numbers:
-    top_scores = session.query(Score).filter_by(num_players=number3,game_type=game_type).order_by(asc(Score.elapsed_time)).limit(num_scores)
+    top_scores = session.query(Score).filter_by(num_players=number3,game_type=game_type).filter(time_filter).order_by(asc(Score.elapsed_time)).limit(num_scores)
     ret[game_type][number3] = list(top_scores)
   return ret
 
@@ -31,18 +38,22 @@ def save_game(game):
   session = get_session()
   db_game = DBGame("3tau" if game.size == 3 else "6tau")
   name_to_player_map = {}
+  player_to_score_map = {}
   last_elapsed_time = 0
   for (board, tau) in zip(game.boards, game.taus):
     (elapsed_time, total_taus, player, cards) = tau
     if player in name_to_player_map:
       db_player = name_to_player_map[player]
+      player_to_score_map[player] += 1
     else:
       db_player = get_or_create_dbplayer(session, player)
+      player_to_score_map[player] = 1
     name_to_player_map[db_player.name] = db_player
+
     state = State(elapsed_time, board, cards, db_player)
     db_game.states.append(state)
     last_elapsed_time = elapsed_time
-  score = Score(last_elapsed_time, db_game, name_to_player_map.values())
+  score = Score(last_elapsed_time, datetime.datetime.now(), db_game, name_to_player_map.values(), player_to_score_map)
   session.add(score)
   session.add(db_game)
   session.commit()
@@ -86,16 +97,23 @@ class Score(Base):
   game_id = Column(Integer, ForeignKey('games.id'))
   game = relationship("DBGame", uselist=False, backref=backref('score'))
   game_type = Column(String)
+  date = Column(DateTime)
+  player_scores_json = Column(String)
 
-  def __init__(self, elapsed_time, game, players):
+  def __init__(self, elapsed_time, date, game, players, player_scores):
     self.elapsed_time = elapsed_time
+    self.date = date
     self.game = game
     self.players = players
     self.num_players = len(players)
     self.game_type = game.game_type
+    self.player_scores_json = json.dumps(player_scores)
 
   def __repr__(self):
-    return "<Score(%f, %s, %s)>" % (self.elapsed_time, self.game, self.players)
+    return "<Score(%f, %s, %s, %s, %s)>" % (self.elapsed_time, repr(self.date), self.game, self.players, repr(self.player_scores()))
+
+  def player_scores(self):
+    return json.loads(self.player_scores_json)
 
 # Represents the state just before a tau is taken, and
 # the tau that was taken.
