@@ -8,6 +8,15 @@
     <script type="text/javascript" src="{{ static_url("jquery.js") }}"></script>
     <link rel="stylesheet" type="text/css" href="{{ static_url("reset.css") }}" />
     <link rel="stylesheet" type="text/css" href="{{ static_url("styles.css") }}" />
+
+    <script>
+      $(document).ready(function() {
+        $("#go_to_user_form").submit(function(e) {
+          e.preventDefault();
+          window.location = window.location.origin + "/leaderboard/{{ selected_leaderboard_type }}/" + $("#user_name").val();
+        });
+      });
+    </script>
   </head>
   <body>
     <div class="leaderboard_menu">
@@ -34,6 +43,11 @@
     {% end %}
     {% end %}
     </div>
+
+    <form name="go_to_user" id="go_to_user_form">
+      <input type="text" id="user_name" name="name" />
+      <input type="submit" value="Go to user" />
+    </form>
     
     {% for game_type in [3, 6] %}
     <div class="leaderboard_container">
