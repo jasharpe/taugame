@@ -148,7 +148,7 @@ class MainHandler(tornado.web.RequestHandler):
     if see_more_ended:
       ended_games = ("Ended games", filter(lambda g: g[1].ended, sorted(games.items(), None, lambda game: game[0])))
     else:
-      ended_games = ("Ended games", filter(lambda g: g[1].ended, sorted(games.items(), None, lambda game: game[0]))[-1:])
+      ended_games = ("Ended games", filter(lambda g: g[1].ended, sorted(games.items(), None, lambda game: game[0]))[-5:])
     self.render(
         "game_list.html",
         new_games=new_games,
