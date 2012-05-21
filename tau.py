@@ -163,12 +163,17 @@ class MainHandler(tornado.web.RequestHandler):
 class LeaderboardHandler(tornado.web.RequestHandler):
   def get(self, leaderboard_type, player=None):
     all_high_scores = get_all_high_scores(10, leaderboard_type, player)
+    try:
+      time_offset = int(url_unescape(self.get_cookie("time_offset")))
+    except:
+      time_offset = 0
     self.render(
         "leaderboard.html",
         player_name=player,
         all_high_scores=all_high_scores,
         leaderboard_types=[('alltime', 'All Time'), ('thisweek', 'This Week'), ('today', 'Today')],
-        selected_leaderboard_type=leaderboard_type)
+        selected_leaderboard_type=leaderboard_type,
+        time_offset=time_offset)
 
 class ChooseNameHandler(tornado.web.RequestHandler):
   def get(self):
@@ -202,6 +207,11 @@ class GameHandler(tornado.web.RequestHandler):
         game_type=("6 Tau" if game.size == 6 else "3 Tau"),
         game=game)
 
+class TimeHandler(tornado.web.RequestHandler):
+  def post(self):
+    new_time_offset = url_escape(self.get_argument("time_offset"))
+    self.set_cookie("time_offset", new_time_offset)
+
 application = tornado.web.Application([
   (r"/", MainHandler),
   (r"/leaderboard/(alltime|thisweek|today)", LeaderboardHandler),
@@ -210,6 +220,7 @@ application = tornado.web.Application([
   (r"/new_game/(3tau|6tau)", NewGameHandler),
   (r"/game/(\d*)", GameHandler),
   (r"/websocket/(\d*)", TauWebSocketHandler),
+  (r"/time", TimeHandler),
 ], **settings)
 
 # returns control to the main thread every 250ms

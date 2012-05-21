@@ -72,7 +72,7 @@ def save_game(game):
     state = State(elapsed_time, board, cards, db_player)
     db_game.states.append(state)
     last_elapsed_time = elapsed_time
-  score = Score(last_elapsed_time, datetime.datetime.now(), db_game, name_to_player_map.values(), player_to_score_map)
+  score = Score(last_elapsed_time, datetime.datetime.utcnow(), db_game, name_to_player_map.values(), player_to_score_map)
   session.add(score)
   session.add(db_game)
   session.commit()

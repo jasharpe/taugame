@@ -1,4 +1,5 @@
 {% from mytime import fmt_time %}
+{% from datetime import timedelta %}
 
 <!DOCTYPE html>
 <html>
@@ -6,6 +7,7 @@
     <title>{{ "Tau - Leaderboard" if player_name is None else ("Tau - %s's High Scores" % (player_name))}}</title>
 
     <script type="text/javascript" src="{{ static_url("jquery.js") }}"></script>
+    <script type="text/javascript" src="{{ static_url("time.js") }}"></script>
     <link rel="stylesheet" type="text/css" href="{{ static_url("reset.css") }}" />
     <link rel="stylesheet" type="text/css" href="{{ static_url("styles.css") }}" />
 
@@ -70,7 +72,7 @@
                 <a href="/leaderboard/{{ selected_leaderboard_type }}/{{ player.name }}">{{ player.name }}</a> ({{ score.player_scores()[player.name] }}){% if i != len(score.players) - 1 %}, {% end %}
                 {% end %}
               </td>
-              <td>{{ score.date.strftime("%b %d %Y %I:%M%p") }}</td>
+              <td>{{ (score.date - timedelta(minutes=time_offset)).strftime("%b %d %Y %I:%M%p") }}</td>
             </tr>
           {% end %}
           </tbody>
