@@ -16,11 +16,76 @@ settings = {
     "static_path" : os.path.join(os.path.dirname(__file__), "static"),
 }
 
+# Tau sockets
 sockets = []
 games = {}
 socket_to_game = {}
 game_to_sockets = {}
 game_to_messages = {}
+
+# game list sockets
+game_list_sockets = []
+
+def get_games(see_more_ended):
+  new_games = filter(lambda g: not g[1].started, sorted(games.items(), None, lambda game: game[0]))
+  started_games = filter(lambda g: g[1].started and not g[1].ended, sorted(games.items(), None, lambda game: game[0]))
+  if see_more_ended:
+    ended_games = filter(lambda g: g[1].ended, sorted(games.items(), None, lambda game: game[0]))
+  else:
+    ended_games = filter(lambda g: g[1].ended, sorted(games.items(), None, lambda game: game[0]))[-5:]
+  return (new_games, started_games, ended_games)
+
+def send_game_list_update_to_all():
+  for socket in game_list_sockets:
+    (new_games, started_games, ended_games) = get_games(socket.see_more_ended)
+    socket.send_game_list_update(new_games, started_games, ended_games)
+
+class GameListWebSocketHandler(tornado.websocket.WebSocketHandler):
+  def open(self, see_more_ended):
+    self.see_more_ended = int(see_more_ended)
+    game_list_sockets.append(self)
+    self.send_player_list_update_to_all()
+  
+  def on_close(self):
+    game_list_sockets.remove(self)
+    self.send_player_list_update_to_all()
+
+  def on_message(self, message_json):
+    message = json.loads(message_json)
+    if message['type'] == 'update':
+      self.send_player_list_update(self.get_players())
+      self.send_game_list_update(*get_games(self.see_more_ended))
+
+  def send_player_list_update_to_all(self):
+    players = self.get_players()
+    for socket in game_list_sockets:
+      socket.send_player_list_update(players)
+
+  def send_player_list_update(self, players):
+    self.write_message(json.dumps({
+        'type' : 'players',
+        'players' : players
+    }))
+
+  def get_players(self):
+    players = []
+    for socket in game_list_sockets:
+      try:
+        players.append(url_unescape(socket.get_cookie("name")))
+      except:
+        pass
+    return players
+
+  def transform_games(self, games):
+    return [(game_id, game.size) for (game_id, game) in games]
+
+  def send_game_list_update(self, new_games, started_games, ended_games):
+    self.write_message(json.dumps({
+        'type' : 'games',
+        'new_games' : self.transform_games(new_games),
+        'started_games' : self.transform_games(started_games),
+        'ended_games' : self.transform_games(ended_games)
+    }))
 
 class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
   def open(self, game_id):
@@ -124,6 +189,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
     if message['type'] == 'start':
       if not socket_to_game[self].started:
         socket_to_game[self].start()
+      send_game_list_update_to_all()
       self.send_update_to_all()
     elif message['type'] == 'update':
       if socket_to_game[self].started:
@@ -136,6 +202,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
       if game.started and not game.ended:
         if game.submit_tau(map(tuple, message['cards']), url_unescape(self.get_cookie("name"))):
           if game.ended:
+            send_game_list_update_to_all()
             (db_game, score) = save_game(game)
             for player_name in game.scores.keys():
               player_rank = get_ranks(score.elapsed_time, db_game.game_type, player_name, score.num_players)
@@ -148,17 +215,11 @@ class MainHandler(tornado.web.RequestHandler):
     if not self.get_cookie("name"):
       self.redirect("/choose_name")
       return
-    new_games = ("New games", filter(lambda g: not g[1].started, sorted(games.items(), None, lambda game: game[0])))
-    started_games = ("Started games", filter(lambda g: g[1].started and not g[1].ended, sorted(games.items(), None, lambda game: game[0])))
-    if see_more_ended:
-      ended_games = ("Ended games", filter(lambda g: g[1].ended, sorted(games.items(), None, lambda game: game[0])))
-    else:
-      ended_games = ("Ended games", filter(lambda g: g[1].ended, sorted(games.items(), None, lambda game: game[0]))[-5:])
+    
+    (new_games, started_games, ended_games) = get_games(see_more_ended)
     self.render(
         "game_list.html",
-        new_games=new_games,
-        started_games=started_games,
-        ended_games=ended_games)
+        see_more_ended=int(see_more_ended))
 
 class LeaderboardHandler(tornado.web.RequestHandler):
   def get(self, leaderboard_type, player=None):
@@ -192,6 +253,7 @@ class NewGameHandler(tornado.web.RequestHandler):
     games[next_id] = Game(3 if type == "3tau" else 6, args.quick)
     game_to_sockets[next_id] = []
     game_to_messages[next_id] = []
+    send_game_list_update_to_all()
     self.redirect("/game/%d" % next_id)
 
 class GameHandler(tornado.web.RequestHandler):
@@ -220,6 +282,7 @@ application = tornado.web.Application([
   (r"/new_game/(3tau|6tau)", NewGameHandler),
   (r"/game/(\d*)", GameHandler),
   (r"/websocket/(\d*)", TauWebSocketHandler),
+  (r"/gamelistwebsocket/(0|1)", GameListWebSocketHandler),
   (r"/time", TimeHandler),
 ], **settings)
 

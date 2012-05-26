@@ -4,6 +4,10 @@
     <title>Tau - Game List</title>
 
     <script type="text/javascript" src="{{ static_url("jquery.js") }}"></script>
+    <script>
+      var see_more_ended = {{ see_more_ended }};
+    </script>
+    <script type="text/javascript" src="{{ static_url("game_list.js") }}"></script>
     <script type="text/javascript" src="{{ static_url("time.js") }}"></script>
     <link rel="stylesheet" type="text/css" href="{{ static_url("reset.css") }}" />
     <link rel="stylesheet" type="text/css" href="{{ static_url("styles.css") }}" />
@@ -18,16 +22,12 @@
     </form>
 
     <div id="game_panel">
-    {% for game_list in [new_games, started_games, ended_games] %}
-    {% if game_list[1] %}
-      <h4>{{ game_list[0] }}</h4>
-      <ul class="games_list" >
-        {% for game in game_list[1] %}
-        <li><a href="/game/{{ game[0] }}">Game {{ game[0] }}</a> ({{ game[1].size }} Tau)</li>
-        {% end %}
-      </ul>
-    {% end %}
-    {% end %}
+      {% for (id, label) in [("newgames", "New games"), ("startedgames", "Started games"), ("endedgames", "Ended games")] %}
+      <div id="{{ id }}" style="display:none;">
+        <h4>{{ label }}</h4>
+        <ul class="games_list"></ul>
+      </div>
+      {% end %}
     </div>
 
     <div id="leaderboard_panel">
