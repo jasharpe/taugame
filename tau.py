@@ -40,6 +40,15 @@ def send_game_list_update_to_all():
     (new_games, started_games, ended_games) = get_games(socket.see_more_ended)
     socket.send_game_list_update(new_games, started_games, ended_games)
 
+def get_players_in_game(game_id):
+  players = set()
+  for socket in game_to_sockets[game_id]:
+    try:
+      players.add(url_unescape(socket.get_cookie("name")))
+    except:
+      pass
+  return sorted(players)
+
 class GameListWebSocketHandler(tornado.websocket.WebSocketHandler):
   def open(self, see_more_ended):
     self.see_more_ended = int(see_more_ended)
@@ -77,7 +86,11 @@ class GameListWebSocketHandler(tornado.websocket.WebSocketHandler):
     return players
 
   def transform_games(self, games):
-    return [(game_id, game.size) for (game_id, game) in games]
+    return [{
+      'id' : game_id,
+      'size' : game.size,
+      'players' : get_players_in_game(game_id),
+    } for (game_id, game) in games]
 
   def send_game_list_update(self, new_games, started_games, ended_games):
     self.write_message(json.dumps({
@@ -96,6 +109,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
     socket_to_game[self] = games[self.game_id]
     game_to_sockets[self.game_id].append(self)
     self.send_scores_update_to_all()
+    send_game_list_update_to_all()
     self.write_message(json.dumps({
         'type' : 'history',
         'messages' : game_to_messages[self.game_id]
@@ -110,6 +124,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
     if self in game_to_sockets[self.game_id]:
       game_to_sockets[self.game_id].remove(self)
     self.send_scores_update_to_all()
+    send_game_list_update_to_all()
 
   def get_scores(self):
     game = socket_to_game[self]

@@ -14,7 +14,13 @@ $(function() {
     if (games.length !== 0) {
       for (i in games) {
         var game_data = games[i];
-        section.find(".games_list").append($("<li><a href=\"/game/" + game_data[0] + "\">Game " + game_data[0] + "</a> (" + game_data[1] + " Tau)</li>"));
+        
+        var players_string = "<span style=\"color:#ccc\">Empty</span>";
+        if (game_data.players.length > 0) {
+          players_string = game_data.players.join(", ");
+        }
+
+        section.find(".games_list").append($("<li><a href=\"/game/" + game_data.id + "\">Game " + game_data.id + "</a> (" + game_data.size + " Tau) - " + players_string + "</li>"));
       }
       section.show();
     } else {
@@ -27,6 +33,7 @@ $(function() {
     if (data.type == "players") {
       // TODO
     } else if (data.type == "games") {
+      console.log(data);
       add_games($("#newgames"), data.new_games);
       add_games($("#startedgames"), data.started_games);
       add_games($("#endedgames"), data.ended_games);
