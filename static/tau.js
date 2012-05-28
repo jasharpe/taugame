@@ -231,8 +231,12 @@ $(document).ready(function() {
     if (ended) {
       $("#time").append($("<span>TOTAL TIME: </span>"));
       if (player_rank !== null) {
-        $("#rank").append("<div class=\"rank\">All players: #" + player_rank.all.alltime + " <a href=\"/leaderboard/alltime\">all time</a>, #" + player_rank.all.thisweek + " <a href=\"/leaderboard/thisweek\">this week</a>, and #" + player_rank.all.today + " <a href=\"/leaderboard/today\">today</a></div>");
-        $("#rank").append("<div class=\"rank\">Personal: #" + player_rank.personal.alltime + " <a href=\"/leaderboard/alltime/" + user_name + "\">all time</a>, #" + player_rank.personal.thisweek + " <a href=\"/leaderboard/thisweek/" + user_name + "\">this week</a>, and #" + player_rank.personal.today + " <a href=\"/leaderboard/today/" + user_name + "\">today</a></div>");
+        $("#rank").append("<div class=\"rank\">All players: #" + player_rank.exact.all.alltime + " <a href=\"/leaderboard/alltime\">all time</a>, #" + player_rank.exact.all.thisweek + " <a href=\"/leaderboard/thisweek\">this week</a>, and #" + player_rank.exact.all.today + " <a href=\"/leaderboard/today\">today</a></div>");
+        $("#rank").append("<div class=\"rank\">Personal: #" + player_rank.exact.personal.alltime + " <a href=\"/leaderboard/alltime/" + user_name + "\">all time</a>, #" + player_rank.exact.personal.thisweek + " <a href=\"/leaderboard/thisweek/" + user_name + "\">this week</a>, and #" + player_rank.exact.personal.today + " <a href=\"/leaderboard/today/" + user_name + "\">today</a></div>");
+
+        $("#rank").append("Within 5 seconds of:");
+        $("#rank").append("<div class=\"rank\">All players: #" + player_rank.close.all.alltime + " <a href=\"/leaderboard/alltime\">all time</a>, #" + player_rank.close.all.thisweek + " <a href=\"/leaderboard/thisweek\">this week</a>, and #" + player_rank.close.all.today + " <a href=\"/leaderboard/today\">today</a></div>");
+        $("#rank").append("<div class=\"rank\">Personal: #" + player_rank.close.personal.alltime + " <a href=\"/leaderboard/alltime/" + user_name + "\">all time</a>, #" + player_rank.close.personal.thisweek + " <a href=\"/leaderboard/thisweek/" + user_name + "\">this week</a>, and #" + player_rank.close.personal.today + " <a href=\"/leaderboard/today/" + user_name + "\">today</a></div>");
       }
     } else {
       $("#time").append($("<span>ELAPSED TIME: </span>"));

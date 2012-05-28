@@ -5,6 +5,8 @@ from sqlalchemy.sql.expression import desc, asc
 import datetime
 import json
 
+CLOSE_THRESHOLD = 5.0
+
 filter_map = {
     "alltime" : lambda: Score.date >= datetime.datetime.min,
     "thisweek" : lambda: Score.date >= datetime.datetime.now() - datetime.timedelta(days=7),
@@ -43,14 +45,17 @@ def get_or_create_dbplayer(session, name):
 def get_ranks(total_time, game_type, player_name, num_players):
   ret = {}
   session = get_session()
-  for leaderboard in ["personal", "all"]:
-    ret[leaderboard] = {}
-    for leaderboard_type in ["alltime", "thisweek", "today"]:
-      time_filter = filter_map[leaderboard_type]()
-      num_better_scores = session.query(Score).filter(time_filter).filter(Score.elapsed_time < total_time).filter(Score.game_type == game_type).filter_by(num_players=num_players)
-      if leaderboard == "personal":
-        num_better_scores = num_better_scores.filter(Score.players.any(name=player_name))
-      ret[leaderboard][leaderboard_type] = num_better_scores.count() + 1
+  for close in ["close", "exact"]:
+    ret[close] = {}
+    for leaderboard in ["personal", "all"]:
+      ret[close][leaderboard] = {}
+      for leaderboard_type in ["alltime", "thisweek", "today"]:
+        time_filter = filter_map[leaderboard_type]()
+        elapsed_time_filter = Score.elapsed_time < total_time - (CLOSE_THRESHOLD if close == "close" else 0)
+        num_better_scores = session.query(Score).filter(time_filter).filter(elapsed_time_filter).filter(Score.game_type == game_type).filter_by(num_players=num_players)
+        if leaderboard == "personal":
+          num_better_scores = num_better_scores.filter(Score.players.any(name=player_name))
+        ret[close][leaderboard][leaderboard_type] = num_better_scores.count() + 1
   return ret
 
 def save_game(game):
