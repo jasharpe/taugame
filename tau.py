@@ -9,7 +9,7 @@ from game import Game
 import argparse
 import datetime
 import ssl
-from state import save_game, get_all_high_scores, get_ranks
+from state import save_game, get_all_high_scores, get_ranks, get_graph_data
 
 settings = {
     "template_path" : os.path.join(os.path.dirname(__file__), "templates"),
@@ -234,7 +234,20 @@ class MainHandler(tornado.web.RequestHandler):
     (new_games, started_games, ended_games) = get_games(see_more_ended)
     self.render(
         "game_list.html",
-        see_more_ended=int(see_more_ended))
+        see_more_ended=int(see_more_ended),
+        player=url_unescape(self.get_cookie("name")))
+
+class GraphHandler(tornado.web.RequestHandler):
+  def get(self, player):
+    try:
+      time_offset = int(url_unescape(self.get_cookie("time_offset")))
+    except:
+      time_offset = 0
+    self.render(
+        "graph.html",
+        player=player,
+        graph_data=get_graph_data(player),
+        time_offset=time_offset)
 
 class LeaderboardHandler(tornado.web.RequestHandler):
   def get(self, leaderboard_type, player=None):
@@ -293,6 +306,7 @@ application = tornado.web.Application([
   (r"/", MainHandler),
   (r"/leaderboard/(alltime|thisweek|today)", LeaderboardHandler),
   (r"/leaderboard/(alltime|thisweek|today)/([^/]*)", LeaderboardHandler),
+  (r"/graph/([^/]*)", GraphHandler),
   (r"/choose_name", ChooseNameHandler),
   (r"/new_game/(3tau|6tau)", NewGameHandler),
   (r"/game/(\d*)", GameHandler),

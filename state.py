@@ -7,25 +7,46 @@ import json
 
 CLOSE_THRESHOLD = 5.0
 
+def get_graph_data(player):
+  session = get_session()
+  ret = {}
+  for game_type in ['3tau', '6tau']:
+    raw_data = session.query(Score).filter(Score.elapsed_time < 5 * 60).filter(Score.date > datetime.datetime(year=2012, month=1, day=2)).filter(Score.players.any(name=player)).filter_by(num_players=1,game_type=game_type).order_by(asc(Score.date))
+    ret[game_type] = raw_data
+  return ret
+
+# TODO: finish this
+def get_rolling_graph_data(player):
+  session = get_session()
+  ret = {}
+  for game_type in ['3tau', '6tau']:
+    raw_data = session.query(Score).filter(Score.elapsed_time < 5 * 60).filter(Score.date > datetime.datetime(year=2012, month=1, day=2)).filter(Score.players.any(name=player)).filter_by(num_players=1,game_type=game_type).order_by(asc(Score.date))
+    ret[game_type] = raw_data
+  return ret
+
 filter_map = {
     "alltime" : lambda: Score.date >= datetime.datetime.min,
     "thisweek" : lambda: Score.date >= datetime.datetime.now() - datetime.timedelta(days=7),
     "today" : lambda: Score.date >= datetime.datetime.now() - datetime.timedelta(days=1),
   }
 
-def get_all_high_scores(num_scores, leaderboard_type, player):
+def get_numbers(leaderboard_type, player):
   session = get_session()
   time_filter = filter_map[leaderboard_type]()
   numbers_query = session.query(distinct(Score.num_players), Score.game_type).filter(time_filter)
   if player is not None:
     numbers_query = numbers_query.filter(Score.players.any(name=player))
-  numbers = list(numbers_query)
+  return list(numbers_query)
+
+def get_all_high_scores(num_scores, leaderboard_type, player):
+  session = get_session()
+  time_filter = filter_map[leaderboard_type]()
   ret = {'3tau' : {}, '6tau' : {}}
-  for (number3, game_type) in numbers:
-    top_scores = session.query(Score).filter_by(num_players=number3,game_type=game_type).filter(time_filter).order_by(asc(Score.elapsed_time))
+  for (number, game_type) in get_numbers(leaderboard_type, player):
+    top_scores = session.query(Score).filter_by(num_players=number,game_type=game_type).filter(time_filter).order_by(asc(Score.elapsed_time))
     if player is not None:
       top_scores = top_scores.filter(Score.players.any(name=player))
-    ret[game_type][number3] = list(top_scores.limit(num_scores))
+    ret[game_type][number] = list(top_scores.limit(num_scores))
   return ret
 
 def get_high_scores(num_players, num_scores, game_type):
@@ -66,6 +87,8 @@ def save_game(game):
   last_elapsed_time = 0
   for (board, tau) in zip(game.boards, game.taus):
     (elapsed_time, total_taus, player, cards) = tau
+    if player == "dummy":
+      continue
     if player in name_to_player_map:
       db_player = name_to_player_map[player]
       player_to_score_map[player] += 1

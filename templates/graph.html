@@ -1,0 +1,51 @@
+{% import time %}
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>{{ "Tau - %s's Graph" % (player) }}</title>
+
+    <script type="text/javascript" src="{{ static_url("jquery.js") }}"></script>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+  
+    <script>
+      {% for game_type in ["3tau", "6tau"] %}
+      var raw_graph_data_{{ game_type }} = [
+      {% for score in graph_data[game_type] %}
+        [{{ time.mktime(score.date.timetuple()) }}, {{ score.elapsed_time }}],
+      {% end %}
+      ];
+      {% end %}
+    </script>
+
+    <script type="text/javascript" src="{{ static_url("time.js") }}"></script>
+    <script type="text/javascript" src="{{ static_url("graph.js") }}"></script>
+    <link rel="stylesheet" type="text/css" href="{{ static_url("reset.css") }}" />
+    <link rel="stylesheet" type="text/css" href="{{ static_url("styles.css") }}" />
+
+    <script>
+      $(document).ready(function() {
+        $("#go_to_user_form").submit(function(e) {
+          e.preventDefault();
+          window.location = window.location.origin + "/graph/" + $("#user_name").val();
+        });
+      });
+    </script>
+  </head>
+  <body>
+    <div class="leaderboard_menu">
+      <a href="/">Back to games</a>
+    </div>
+
+    <form name="go_to_user" id="go_to_user_form">
+      <input type="text" id="user_name" name="name" />
+      <input type="submit" value="Go to user" />
+    </form>
+
+    <h4>3 Tau</h4>
+    <div id="graph_3tau" style="width: 900px; height: 500px;"></div>
+    
+    <h4>6 Tau</h4>
+    <div id="graph_6tau" style="width: 900px; height: 500px;"></div>
+  </body>
+</html>
