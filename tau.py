@@ -302,6 +302,24 @@ class TimeHandler(tornado.web.RequestHandler):
     new_time_offset = url_escape(self.get_argument("time_offset"))
     self.set_cookie("time_offset", new_time_offset)
 
+class AboutHandler(tornado.web.RequestHandler):
+  def get(self):
+    cards = {}
+    shapes = ["square", "circle", "triangle"]
+    shadings = ["empty", "shaded", "solid"]
+    numbers = ["one", "two", "three"]
+    colours = ["red", "green", "blue"]
+    for shape in xrange(3):
+      for shading in xrange(3):
+        for number in xrange(3):
+          for colour in xrange(3):
+            offset = 80 * (shape * 27 + shading * 9 + number * 3 + colour)
+            cards[(shapes[shape], shadings[shading], numbers[number], colours[colour])] = "<div class=\"realCard unselectedCard\" style=\"background-position: -%dpx 0px; display:inline-block;\"></div>" % offset
+    self.render(
+        "about.html",
+        cards=cards
+        )
+
 application = tornado.web.Application([
   (r"/", MainHandler),
   (r"/leaderboard/(alltime|thisweek|today)", LeaderboardHandler),
@@ -313,6 +331,7 @@ application = tornado.web.Application([
   (r"/websocket/(\d*)", TauWebSocketHandler),
   (r"/gamelistwebsocket/(0|1)", GameListWebSocketHandler),
   (r"/time", TimeHandler),
+  (r"/about", AboutHandler),
 ], **settings)
 
 # returns control to the main thread every 250ms

@@ -2,6 +2,57 @@ body.ended {
   background-color:lightgreen;
 }
 
+#about p {
+  line-height:15px;
+  margin-top:9px;
+  margin-bottom:15px;
+}
+
+#about ul {
+  margin-top:15px;
+  margin-bottom:15px;
+}
+
+#about li {
+  line-height:17px;
+  padding-left:5px;
+}
+
+#about i {
+  font-style:italic;
+}
+
+#about b {
+  font-weight:bold;
+}
+
+#about h2 {
+  font-size:20px;
+  font-weight: bold;
+  margin-top:15px;
+  margin-bottom:15px;
+}
+
+#about h3 {
+  font-size:17px;
+  font-weight: bold;
+  margin-top:15px;
+  margin-bottom:15px;
+}
+
+#about h4 {
+  font-size:14px;
+  font-weight: bold;
+  margin-top:15px;
+  margin-bottom:15px;
+}
+
+#about h5 {
+  font-weight: bold;
+  margin-top:15px;
+  margin-bottom:15px;
+}
+
 h2 {
   font-size:20px;
   font-weight: bold;
