@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Tau - About</title>
+
+    <link rel="stylesheet" type="text/css" href="{{ static_url("reset.css") }}" />
+    <link rel="stylesheet" type="text/css" href="{{ static_url("styles.css") }}" />
+  </head>
+  <body>
+    <div>
+      <a href="/">Back to games</a>
+    </div>
+
+    <div id="about">
+      <h2>About</h2>
+
+      <p>taugame.com was created by <a href="http://jsharpe.ca">Jeremy Sharpe</a>. Its code is available on <a href="https://github.com/jasharpe/websockettau">github</a>. It is implemented using websockets, with a Python server using Tornado, and a javascript client.
+
+       <h2 id="controls">Controls</h2>
+
+      <p>Click on cards to select and deselect them. When you click on 3 (or 6) cards that form a Tau, they will be removed from the board and you will be credited with the Tau. If they don't disappear, then probably what you clicked on was not a Tau, or the server is being slow.
+
+      <h3>Keyboard Shortcuts</h3>
+
+      <p>You should learn to play Tau with the keyboard. It allows you to select Taus far faster than is possible with the mouse.
+      
+      <p>The keyboard simply corresponds to what's on the screen. For example, the letters Q, A, and Z, the left side of the keyboard, correspond to the left column of the Tau board. So Q selects the top left card, A the middle left card, and Z the bottom left card. Similarly, W, S, and X correspond to the second column, E, D, and C to the third, etc. If extra columns are added, this scheme continues as you'd expect. T, G, and B correspond to the fifth column, Y, H, and N to the sixth column, etc.
+
+      <h2>Rules</h2>
+      
+      <h3 id="rules3tau">3 Tau</h3>
+
+      <p>Each of the 81 cards in the Tau deck has 4 properties:
+      
+      <ul>
+        <li><i>Colour</i>: one of red, green, and blue</li>
+        <li><i>Number</i>: one of 1, 2, and 3</li>
+        <li><i>Shading</i>: one of empty, shaded, and solid</li>
+        <li><i>Shape</i>: one of circle, square, and triangle</li>
+      </ul>
+
+      <p>A few examples of Tau cards, showing all available properties, are:
+
+      {% raw cards[('triangle', 'shaded', 'two', 'green')] %}
+      {% raw cards[('circle', 'empty', 'three', 'red')] %}
+      {% raw cards[('square', 'solid', 'one', 'blue')] %}
+
+      <p>A 3 Tau is a group of 3 cards such that <b>for each of the 4 properties, all 3 cards are either <i>all different</i> or <i>all the same</i> in that property</b>.
+
+      <p>For example, the following is a tau:
+
+      {% raw cards[('circle', 'shaded', 'two', 'green')] %}
+      {% raw cards[('circle', 'empty', 'three', 'green')] %}
+      {% raw cards[('circle', 'solid', 'one', 'green')] %}
+
+      <p>The shapes are all the same, the shadings are all different, the numbers are all different, and the colours are all the same.
+
+      <p>This is also a Tau:
+
+      {% raw cards[('triangle', 'shaded', 'two', 'green')] %}
+      {% raw cards[('triangle', 'shaded', 'two', 'blue')] %}
+      {% raw cards[('triangle', 'shaded', 'two', 'red')] %}
+
+      <p>These cards differ only in colour. Their shapes, shadings, and numbers are all the same.
+
+      <p>This is <i>not</i> a Tau:
+
+      {% raw cards[('square', 'shaded', 'two', 'green')] %}
+      {% raw cards[('square', 'shaded', 'three', 'green')] %}
+      {% raw cards[('triangle', 'shaded', 'one', 'red')] %}
+
+      <p>While the cards have all the same shading, and all different numbers, the other properties are wrong. Two of the cards are squares, while only one is a triangle, and two are green, while only one is red.
+
+      <p>A useful restatement of the 3 Tau property is that <b>if two cards are the same, and the third one is different, it's not a 3 Tau</b>.
+
+      <h3 id="rules6tau">6 Tau</h3>
+
+      <p>6 Tau is an extension of 3 Tau, where instead of finding Taus with 3 cards each, you find Taus with 6 cards each. There are a couple of ways to explain what constitutes a 6 Tau.
+
+      <h4>Non-Mathematical Explanation</h4>
+
+      <p>Since 6 Tau is a mathematical extension of 3 Tau, its original definition is mathematical. That said, a 6 Tau can be defined in a way analogous to a 3 Tau - but it's questionable if an effective strategy for 6 Tau exists that can be explained in non-mathematical terms.
+
+      <p>A 6 Tau is a group of cards such that <b>for each of the 4 properties, the 6 cards can be split up into 2 groups of 3 cards such that each of the groups is either <i>all the same</i> or <i>all different</i> on that property, and the 6 cards cannot be split into two 3 Taus.</b> Note that a group of 6 cards that can be split into two 3 Taus is called a <i>trivial</i> 6 Tau, and trivial 6 Taus are not allowed because they're too easy to find!
+
+      <h4>Mathematical Explanation</h4>
+
+      <p>First, let's look at the mathematical statement of 3 Tau:
+      
+      <p>Each of the cards in the Tau deck can be thought of as a 4 dimensional vector over the integers <a href="http://en.wikipedia.org/wiki/Modular_arithmetic">mod</a> 3 (where values for each property are assigned to 0, 1, and 2 arbitrarily). That is, the card
+
+      {% raw cards[('circle', 'solid', 'three', 'green')] %}
+
+      <p>could be thought of as (0, 2, 2, 1), where 0 in the first position means circle, 2 in the second position means solid, 2 in the third position means three, and 1 in the last position means green, and
+
+      {% raw cards[('square', 'solid', 'one', 'blue')] %}
+
+      <p>could be thought of as (1, 2, 0, 2), where 1 in the first position means square, 2 in the second position means solid, 0 in the third position means one, and 2 in the last position blue, and finally
+
+      {% raw cards[('triangle', 'solid', 'two', 'red')] %}
+
+      <p>could be thought of as (2, 2, 1, 0), where 2 in the first position means triangle, 2 in the second position means solid, 1 in the third position means two, and 0 in the last position red.
+
+      <p>Now, the three cards shown above make a 3 Tau, but notice also that if you add up the vectors representing them (remembering that they're over the integers mod 3), you get (0, 2, 2, 1) + (1, 2, 0, 2) + (2, 2, 1, 0) = (0, 0, 0, 0), the zero vector.
+
+      <p>It turns out that 3 cards form a 3 Tau if and only if the three vectors representing these cards (under an arbitrary assignment of property values to the integers mod 3) sum to the zero vector. This is actually a non-trivial result, but verifiable with simple case analysis.
+
+      <p>6 Tau is the same game, but with groups of 6 cards instead of 3 cards. So, a 6 Tau is a group of 6 cards such that <b>the sum of the vectors representing the 6 cards (under an arbitrary assignment of property values to the integers mod 3) is the zero vector, and the 6 cards cannot be split into two 3 Taus</b>. As above, note that a group of 6 cards that can be split into two 3 Taus is called a <i>trivial</i> 6 Tau, and trivial 6 Taus are not allowed because they're too easy to find! This definition is equivalent to the non-mathematical definition above. Again, this is a non-trivial fact, but verifiable with some simple case analysis.
+
+      <h4>Strategies for 6 Tau</h4>
+
+      <p>6 Tau is a difficult game, and at first it seems unapproachable. While there is a relatively simple way to check if a group of 6 cards constitute a 6 Tau (by using the non-mathematical definition above), it is difficult to come up with those cards in the first place. Fortunately, there are a couple of good strategies to assist in finding 6 Taus.
+
+      <h5>4 card strategy</h5>
+
+      <p>The first strategy, the <b>4 card strategy</b>, relies on the ability to play 3 Tau well. In particular, given 2 cards, you need to be able to figure out the unique third card that completes the 3 Tau. (Mathematically, if you have two cards A and B, what you are doing in this operating is computing C = -(A + B). This completes the 3 Tau since A + B + C = A + B - (A + B) = 0.)
+
+      <p>The strategy goes as follows: First, select 4 cards on the board, A, B, C, and D (make sure they don't contain a 3 Tau!). Now, compute (in your head) the unique third cards that complete a 3 Tau with the pairs A, B, and C, D. These two "virtual" cards in your head we will call E and F. Now, compute the unique third card that completes a 3 Tau with E and F. Call this "virtual" card G. Now try to find two cards H and I on the board that complete a 3 Tau with G. If you can, then A, B, C, D, H, and I are a 6 Tau (as long as it isn't trivial)!
+
+      <p>This works because, using the 3 Tau property stated above, E = -(A + B), F = -(C + D), G = -(E + F), and G = -(H + I). Putting these together, we get:
+
+      <p>A + B + C + D + H + I = -E - F - G = -(E + F) + (E + F) = 0
+
+      <p>Here's an example of using this strategy to find a 6 Tau. Suppose that we select these 4 cards from the board:
+
+      {% raw cards[('square', 'empty', 'two', 'green')] %}
+      {% raw cards[('circle', 'empty', 'three', 'blue')] %}
+      {% raw cards[('circle', 'solid', 'one', 'green')] %}
+      {% raw cards[('triangle', 'solid', 'three', 'red')] %}
+
+      <p>The virtual card created by the two cards on the left is:
+
+      {% raw cards[('triangle', 'empty', 'one', 'red')] %}
+
+      <p>The virtual card created by the two cards on the right is:
+
+      {% raw cards[('square', 'solid', 'two', 'blue')] %}
+
+      <p>The virtual card created by the combination of the two above virtual cards is:
+
+      {% raw cards[('circle', 'shaded', 'three', 'green')] %}
+
+      <p>Now suppose we found these two cards on the board:
+
+      {% raw cards[('circle', 'shaded', 'two', 'red')] %}
+      {% raw cards[('circle', 'shaded', 'one', 'blue')] %}
+
+      <p>These two cards make a 3 Tau with the last virtual card, so these two with the original 4 make a 6 Tau. Unfortunately, this is a trivial 6 Tau since
+
+      {% raw cards[('circle', 'shaded', 'two', 'red')] %}
+      {% raw cards[('circle', 'empty', 'three', 'blue')] %}
+      {% raw cards[('circle', 'solid', 'one', 'green')] %}
+
+      <p>is a 3 Tau (the other 3 cards also form a 3 Tau).
+
+      <p>However, suppose we instead found these cards:
+
+      {% raw cards[('square', 'solid', 'two', 'red')] %}
+      {% raw cards[('triangle', 'empty', 'one', 'blue')] %}
+
+      <p>Then we have found a 6 Tau, since this group of 6 cards contains no 3 Tau:
+
+      {% raw cards[('square', 'empty', 'two', 'green')] %}
+      {% raw cards[('circle', 'empty', 'three', 'blue')] %}
+      {% raw cards[('circle', 'solid', 'one', 'green')] %}
+      {% raw cards[('triangle', 'solid', 'three', 'red')] %}
+      {% raw cards[('square', 'solid', 'two', 'red')] %}
+      {% raw cards[('triangle', 'empty', 'one', 'blue')] %}
+
+      <p>You may verify for yourself that this is a correct 6 Tau.
+
+      <p>This is actually a fairly effective strategy. Since there are usually many 6 Taus on a given board, you usually only have to try a few groups of 4 cards before finding a 6 Tau. Unfortunately, this strategy also requires a great deal of short term memory. You must remember your initial 4 cards, all while computing two virtual cards, which you must remember long to compute a third virtual card.
+
+      <h5>3 card strategy (thanks to <a href="/leaderboard/alltime/stompy">stompy</a>)</h5>
+
+      <p>The second strategy, or <b>3 card strategy</b>, is conceptually more complicated, but in practice requires less short term memory than the 4 card strategy. The basic idea is to choose 3 cards on the board, A, B, and C, and compute the card D = A + B + C. Then compute E = -D. Then, try to find another three cards F, G, H on the board such that F + G + H = E. Then A, B, C, F, G, and H are a 6 Tau (as long as it isn't trivial)!
+
+      <p>Easier said than done! For example, what exactly does it mean to find the sum of 3 cards, or the negative of a card? It turns out that these operations don't make any sense unless you actually assign values from the integers mod 3 to each of the property values. For example, for the shading property, we must choose which of empty, shaded, and solid, go with which of 0, 1, and 2.
+
+      <p>For this strategy, it is fortunately not necessary to disambiguate between 1 and 2. In this scheme, there is only one special property: the one we assign to 0. The other two behave the same as each other. For the purpose of this tutorial, we choose to make following properties our 0 values:
+
+      <ul>
+        <li><i>Colour</i>: Red (because red is the first of RGB)</li>
+        <li><i>Number</i>: One (because it is the smallest number)</li>
+        <li><i>Shading</i>: Empty (because a 0 is empty)</li>
+        <li><i>Shape</i>: Circle (because a 0 is round)</li>
+      </ul>
+
+      <p>Within this framework, we can compute negative cards and arbitrary card sums. The reason that the assignments of 1 and 2 are interchangeable is that 1 + 1 = 2 and 2 + 2 = 1 in the integers mod 3.
+
+      <p>To compute a negative card, the process is that for each property, if the card has the 0 value of the property, then the negative card also has the 0 value of the property, since -0 = 0. Otherwise, the value of the property on the negative card is the other non-zero value. For example, negative red is red, since red is the zero colour, and negative blue is green, and negative green is blue. This process works analogously for the other properties.
+
+      <p>To compute C = A + B, the process is that for each property:
+
+      <ul>
+        <li>If A's value is 0, and B's is 0, then C's is 0</li>
+        <li>If A's value is non-zero and B's is 0, then C's is A's</li>
+        <li>If A's value is 0 and B's is non-zero, then C's is B's</li>
+        <li>If A's value is non-zero and B's is the same, then C's is the other non-zero value</li>
+        <li>If A's value is non-zero and B's is the other non-zero value, then C's is 0</li>
+      </ul>
+
+      <p>It takes some time to get used to these rules, but after a while they become intuitive. Computing a 3 card sum is a straightforward extension of this process. Putting the negation process and the 3 card sum process together allows us to execute the strategy as described at the beginning of this section.
+
+      <p>For example, suppose you initially choose the following 3 cards:
+
+      {% raw cards[('square', 'empty', 'two', 'green')] %}
+      {% raw cards[('circle', 'empty', 'three', 'blue')] %}
+      {% raw cards[('circle', 'solid', 'one', 'green')] %}
+
+      <p>The sum of these cards is:
+
+      {% raw cards[('square', 'solid', 'one', 'green')] %}
+
+      <p>The negative of this card is:
+
+      {% raw cards[('triangle', 'shaded', 'one', 'blue')] %}
+
+      <p>Now, suppose we found the following 3 cards on the board:
+
+      {% raw cards[('triangle', 'solid', 'three', 'red')] %}
+      {% raw cards[('square', 'solid', 'two', 'red')] %}
+      {% raw cards[('triangle', 'empty', 'one', 'blue')] %}
+
+      <p>The sum of these cards is:
+
+      {% raw cards[('triangle', 'shaded', 'one', 'blue')] %}
+
+      <p>This is equal to the negative of the first three cards and these 6 cards together hold no 3 Taus, so we have found a 6 Tau:
+
+      {% raw cards[('square', 'empty', 'two', 'green')] %}
+      {% raw cards[('circle', 'empty', 'three', 'blue')] %}
+      {% raw cards[('circle', 'solid', 'one', 'green')] %}
+      {% raw cards[('triangle', 'solid', 'three', 'red')] %}
+      {% raw cards[('square', 'solid', 'two', 'red')] %}
+      {% raw cards[('triangle', 'empty', 'one', 'blue')] %}
+
+      <p><i>Tip</i>: An easy way to make this strategy less taxing on your short term memory, is to only remember the properties of the virtual cards that differ from 0. So, for example, if you were trying to remember a empty shaded red square, you'd only have to remember shaded square, since the other properties are 0.
+
+      <h5>Other strategies</h5>
+
+      <p>There are probably more strategies that exist for 6 Tau. If you come up with one, please let me know and I'll put it here.
+  </div>
+  </body>
+</html>
