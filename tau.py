@@ -89,6 +89,7 @@ class GameListWebSocketHandler(tornado.websocket.WebSocketHandler):
     return [{
       'id' : game_id,
       'size' : game.size,
+      'type' : game.type,
       'players' : get_players_in_game(game_id),
     } for (game_id, game) in games]
 
@@ -190,6 +191,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
     self.write_message(json.dumps({
         'type' : 'update',
         'board' : game.board,
+        'target' : game.target_tau,
         'scores' : self.get_scores(),
         'avg_number' : numbers_map,
         'number' : len(game.get_all_taus()),
@@ -231,7 +233,6 @@ class MainHandler(tornado.web.RequestHandler):
       self.redirect("/choose_name")
       return
     
-    (new_games, started_games, ended_games) = get_games(see_more_ended)
     self.render(
         "game_list.html",
         see_more_ended=int(see_more_ended),
@@ -273,18 +274,34 @@ class ChooseNameHandler(tornado.web.RequestHandler):
     self.redirect("/")
 
 class NewGameHandler(tornado.web.RequestHandler):
+  type_to_size_map = {
+      "3tau" : 3,
+      "g3tau" : 3,
+      "6tau" : 6
+  }
+
   def post(self, type):
+    if not type in self.type_to_size_map.keys():
+      print "Invalid game type: " + type
+      self.redirect("/")
+      return
     if len(games.keys()) == 0:
       next_id = 0
     else:
       next_id = max(games.keys()) + 1
-    games[next_id] = Game(3 if type == "3tau" else 6, args.quick)
+    games[next_id] = Game(type, self.type_to_size_map[type], args.quick)
     game_to_sockets[next_id] = []
     game_to_messages[next_id] = []
     send_game_list_update_to_all()
     self.redirect("/game/%d" % next_id)
 
 class GameHandler(tornado.web.RequestHandler):
+  game_type_to_type_string_map = {
+    "3tau" : "3 Tau",
+    "6tau" : "6 Tau",
+    "g3tau" : "Generalized 3 Tau"
+  }
+
   def get(self, game_id):
     if not self.get_cookie("name") or not int(game_id) in games:
       self.redirect("/")
@@ -294,7 +311,7 @@ class GameHandler(tornado.web.RequestHandler):
         "game.html",
         game_id=game_id,
         user_name=url_unescape(self.get_cookie("name")),
-        game_type=("6 Tau" if game.size == 6 else "3 Tau"),
+        game_type=self.game_type_to_type_string_map[game.type],
         game=game)
 
 class TimeHandler(tornado.web.RequestHandler):
@@ -326,7 +343,7 @@ application = tornado.web.Application([
   (r"/leaderboard/(alltime|thisweek|today)/([^/]*)", LeaderboardHandler),
   (r"/graph/([^/]*)", GraphHandler),
   (r"/choose_name", ChooseNameHandler),
-  (r"/new_game/(3tau|6tau)", NewGameHandler),
+  (r"/new_game/(3tau|6tau|g3tau)", NewGameHandler),
   (r"/game/(\d*)", GameHandler),
   (r"/websocket/(\d*)", TauWebSocketHandler),
   (r"/gamelistwebsocket/(0|1)", GameListWebSocketHandler),

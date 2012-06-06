@@ -139,7 +139,7 @@ $(document).ready(function() {
 
   var prev_board = [];
   var card_to_board_map = {}
-  function update_board(board, number, hint) {
+  function update_board(board, target, number, hint, ended) {
     console.log("This board has " + number + " taus");
 
     var processed_hint = []
@@ -153,8 +153,7 @@ $(document).ready(function() {
     old_selected = selection_model['selected'];
     selection_model['selected'] = [];
     playing_area.html('');
-    var table = $('<table>');
-    playing_area.append(table);
+    var table = $('<table style="display:inline-block;">');
     var max_row = 3;
     var max_col = board.length / max_row;
     card_index_to_div_map = {};
@@ -204,6 +203,15 @@ $(document).ready(function() {
       }
       table.append(row);
     }
+    playing_area.append(table);
+    if (game_type === "g3tau" && !ended) {
+      var card_div = $('<div class="realCard unselectedCard">');
+      var card_number = get_card_number(target);
+      var offset = card_number * 80;
+
+      card_div.css("background-position", "-" + offset + "px 0");
+      playing_area.append(card_div);
+    }
     prev_board = this_board;
   }
 
@@ -252,13 +260,13 @@ $(document).ready(function() {
     }
   };
 
-  function update(board, scores, time, avg_number, number, ended, hint, player_rank) {
+  function update(board, target, scores, time, avg_number, number, ended, hint, player_rank) {
     update_scores(scores, ended);
     
     update_time(time, avg_number, ended, player_rank);
 
     // update board
-    update_board(board, number, hint);
+    update_board(board, target, number, hint, ended);
 
     if (ended) {
       $("body").addClass("ended");
@@ -276,7 +284,7 @@ $(document).ready(function() {
   ws.onmessage = function (e) {
     var data = JSON.parse(e.data);
     if (data.type == "update") {
-      update(data.board, data.scores, data.time, data.avg_number, data.number, data.ended, data.hint, data.player_rank);
+      update(data.board, data.target, data.scores, data.time, data.avg_number, data.number, data.ended, data.hint, data.player_rank);
     } else if (data.type == "scores") {
       update_scores(data.scores, data.ended);
     } else if (data.type == "chat") {

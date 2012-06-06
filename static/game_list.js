@@ -20,7 +20,16 @@ $(function() {
           players_string = game_data.players.join(", ");
         }
 
-        section.find(".games_list").append($("<li><a href=\"/game/" + game_data.id + "\">Game " + game_data.id + "</a> (" + game_data.size + " Tau) - " + players_string + "</li>"));
+        var game_type = "Unknown game type";
+        if (game_data.type === "3tau") {
+          game_type = "3 Tau";
+        } else if (game_data.type === "6tau") {
+          game_type = "6 Tau";
+        } else if (game_data.type === "g3tau") {
+          game_type = "Generalized 3 Tau";
+        }
+
+        section.find(".games_list").append($("<li><a href=\"/game/" + game_data.id + "\">Game " + game_data.id + "</a> (" + game_type + ") - " + players_string + "</li>"));
       }
       section.show();
     } else {

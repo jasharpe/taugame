@@ -6,6 +6,7 @@
     <script type="text/javascript">
       var game_id = "{{ game_id }}";
       var game_size = {{ game.size }};
+      var game_type = "{{ game.type }}";
       var user_name = "{{ user_name }}";
     </script>
     <script type="text/javascript" src="{{ static_url("jquery.js") }}"></script>
@@ -40,7 +41,7 @@
     </div>
 
     <div>
-      <a href="/">Back to games</a> | <a href="/about#rules{{ game.size }}tau">Rules</a>
+      <a href="/">Back to games</a> | <a href="/about#rules{{ game.type }}">Rules</a>
     </div>
   </body>
 </html> 

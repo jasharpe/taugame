@@ -2,7 +2,8 @@ import random, itertools, time
 from operator import mod
 
 class Game(object):
-  def __init__(self, size, quick=False):
+  def __init__(self, type, size, quick=False):
+    self.type = type
     self.size = size
     self.min_number = 12
     self.scores = {}
@@ -10,6 +11,7 @@ class Game(object):
     self.board = []
     self.boards = []
     self.taus = []
+    self.target_tau = None
     self.compress_and_fill_board()
     self.started = False
     self.start_time = 0
@@ -48,7 +50,7 @@ class Game(object):
       self.board.pop()
 
     # add new cards to fill in gaps
-    while len(filter(None, self.board)) < self.min_number or no_subset_is_tau(filter(None, self.board), self.size):
+    while len(filter(None, self.board)) < self.min_number or (self.no_subset_is_tau(filter(None, self.board), self.size) and self.type != "g3tau"):
       if not self.deck:
         break
       to_add = self.size
@@ -64,23 +66,35 @@ class Game(object):
           break
         self.board.append(self.deck.pop())
 
+    # compute a new target tau for Generalized 3 Tau
+    if self.type == "g3tau":
+      self.target_tau = self.get_random_target(self.board)
+
     # add Nones at the end as necessary
     while len(self.board) < self.min_number:
       self.board.append(None)
 
+  def get_random_target(self, board):
+      no_nones = filter(None, board)
+      if len(no_nones) < 3:
+        return []
+      else:
+        all_card_subsets = [card_subset for card_subset in itertools.combinations(no_nones, 3)]
+        return self.sum_cards(all_card_subsets[random.randint(0, len(all_card_subsets) - 1)])
+
   def is_over(self):
-    return len(self.deck) == 0 and no_subset_is_tau(filter(None, self.board), self.size)
+    return len(self.deck) == 0 and self.no_subset_is_tau(filter(None, self.board), self.size)
 
   def get_all_taus(self):
     taus = []
     for card_subset in itertools.combinations(filter(None, self.board), self.size):
-      if is_tau(card_subset):
+      if self.is_tau(card_subset):
         taus.append(card_subset)
     return taus
 
   def get_tau(self):
     for card_subset in itertools.combinations(filter(None, self.board), self.size):
-      if is_tau(card_subset):
+      if self.is_tau(card_subset):
         return card_subset
     return []
 
@@ -91,7 +105,7 @@ class Game(object):
     return time.time() - self.start_time
 
   def submit_tau(self, cards, player):
-    if len(cards) == self.size and self.board_contains(cards) and is_tau(cards):
+    if len(cards) == self.size and self.board_contains(cards) and self.is_tau(cards):
       if not player in self.scores:
         self.scores[player] = []
       self.scores[player].append(cards)
@@ -106,20 +120,28 @@ class Game(object):
     else:
       return False
 
+  def sum_cards(self, cards):
+    return [sum(zipped) % 3 for zipped in zip(*cards)]
+
+  def is_tau_basic(self, cards):
+    return not any(self.sum_cards(cards))
+
+  def is_tau(self, cards):
+    if len(cards) == 3 and self.type in ["3tau", "6tau"]:
+      return self.is_tau_basic(cards)
+    elif len(cards) == 3 and self.type in ["g3tau"]:
+      return self.sum_cards(cards) == self.target_tau
+    elif len(cards) == 6:
+      return self.is_tau_basic(cards) and self.no_subset_is_tau(cards, 3)
+    raise Exception("Cards " + cards + " are not valid for this game type: " + self.type)
+
+  def no_subset_is_tau(self, cards, subset_size):
+    for card_subset in itertools.combinations(cards, subset_size):
+      if self.is_tau(card_subset):
+        return False
+    return True
+
 def create_deck():
   deck = list(itertools.product(*[range(0, 3) for i in range(0, 4)]))
   random.shuffle(deck)
   return deck
-
-def is_tau(cards):
-  is_tau_basic = not any(sum(zipped) % 3 for zipped in zip(*cards))
-  if len(cards) == 3:
-    return is_tau_basic
-  elif len(cards) == 6:
-    return is_tau_basic and no_subset_is_tau(cards, 3)
-
-def no_subset_is_tau(cards, subset_size):
-  for card_subset in itertools.combinations(cards, subset_size):
-    if is_tau(card_subset):
-      return False
-  return True

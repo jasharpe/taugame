@@ -33,7 +33,7 @@ def get_numbers(leaderboard_type, player):
 def get_all_high_scores(num_scores, leaderboard_type, player):
   session = get_session()
   time_filter = filter_map[leaderboard_type]()
-  ret = {'3tau' : {}, '6tau' : {}}
+  ret = {'3tau' : {}, '6tau' : {}, 'g3tau' : {}}
   for (number, game_type) in get_numbers(leaderboard_type, player):
     top_scores = session.query(Score).filter_by(num_players=number,game_type=game_type).filter(time_filter).order_by(asc(Score.elapsed_time))
     if player is not None:
@@ -73,7 +73,7 @@ def get_ranks(total_time, game_type, player_name, num_players):
 
 def save_game(game):
   session = get_session()
-  db_game = DBGame("3tau" if game.size == 3 else "6tau")
+  db_game = DBGame(game.type)
   name_to_player_map = {}
   player_to_score_map = {}
   last_elapsed_time = 0
