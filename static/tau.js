@@ -201,17 +201,27 @@ $(document).ready(function() {
         row.append(col);
         col.disableTextSelect();
       }
+      if (game_type === "g3tau") {
+        var col = $('<td>');
+        var div = $('<div class="fakeCard">');
+        col.append(div);
+        row.append(col);
+        if (row_index === 0 || row_index === 2) {
+          row.append(col);
+        } else {
+          var card_div = $('<div class="realCard unselectedCard">');
+          var card_number = get_card_number(target);
+          var offset = card_number * 80;
+
+          card_div.css("background-position", "-" + offset + "px 0");
+          var col = $('<td>');
+          col.append(card_div);
+          row.append(col);
+        }
+      }
       table.append(row);
     }
     playing_area.append(table);
-    if (game_type === "g3tau" && !ended) {
-      var card_div = $('<div class="realCard unselectedCard">');
-      var card_number = get_card_number(target);
-      var offset = card_number * 80;
-
-      card_div.css("background-position", "-" + offset + "px 0");
-      playing_area.append(card_div);
-    }
     prev_board = this_board;
   }
 
