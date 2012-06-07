@@ -201,7 +201,7 @@ $(document).ready(function() {
         row.append(col);
         col.disableTextSelect();
       }
-      if (game_type === "g3tau") {
+      if (game_type === "g3tau" && !ended) {
         var col = $('<td>');
         var div = $('<div class="fakeCard">');
         col.append(div);
