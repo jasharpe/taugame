@@ -4,11 +4,14 @@ from sqlalchemy.orm import relationship, backref
 from sqlalchemy.sql.expression import desc, asc
 import datetime
 import json
+import logging
 
 CLOSE_THRESHOLD = 5.0
 
 def get_graph_data(player):
-  print "getting graph data for player %s" % player
+  logger = logging.getLogger('graph')
+  logger.warning("getting graph data for player %s", player)
+  
   session = get_session()
   ret = {}
   for game_type in ['3tau', 'g3tau', '6tau']:
