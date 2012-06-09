@@ -241,8 +241,8 @@ $(document).ready(function() {
 
   function render_ranks(rank_element, player_rank_info) {
     function thing(rank_data) {
-      rank_element.append("<div class=\"rank\">All players: #" + rank_data.all.alltime.rank + " <a href=\"/leaderboard/alltime\">all time</a>, #" + rank_data.all.thisweek.rank + " <a href=\"/leaderboard/thisweek\">this week</a>, and #" + rank_data.all.today.rank + " <a href=\"/leaderboard/today\">today</a></div>");
-    rank_element.append("<div class=\"rank\">Personal: #" + rank_data.personal.alltime.rank + " <a href=\"/leaderboard/alltime/" + user_name + "\">all time</a>, #" + rank_data.personal.thisweek.rank + " <a href=\"/leaderboard/thisweek/" + user_name + "\">this week</a>, and #" + rank_data.personal.today.rank + " <a href=\"/leaderboard/today/" + user_name + "\">today</a></div>");
+      rank_element.append("<div class=\"rank\">All players: <span title=\"" + rank_data.all.alltime.percentile + "%ile\">#" + rank_data.all.alltime.rank + "</span> <a href=\"/leaderboard/alltime\">all time</a>, <span title=\"" + rank_data.all.alltime.percentile + "%ile\">#" + rank_data.all.thisweek.rank + "</span> <a href=\"/leaderboard/thisweek\">this week</a>, and <span title=\"" + rank_data.all.alltime.percentile + "%ile\">#" + rank_data.all.today.rank + "</span> <a href=\"/leaderboard/today\">today</a></div>");
+    rank_element.append("<div class=\"rank\">Personal: <span title=\"" + rank_data.all.alltime.percentile + "%ile\">#" + rank_data.personal.alltime.rank + "</span> <a href=\"/leaderboard/alltime/" + user_name + "\">all time</a>, <span title=\"" + rank_data.all.alltime.percentile + "%ile\">#" + rank_data.personal.thisweek.rank + "</span> <a href=\"/leaderboard/thisweek/" + user_name + "\">this week</a>, and <span title=\"" + rank_data.all.alltime.percentile + "%ile\">#" + rank_data.personal.today.rank + "</span> <a href=\"/leaderboard/today/" + user_name + "\">today</a></div>");
     }
 
     thing(player_rank_info.exact);

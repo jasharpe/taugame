@@ -61,12 +61,11 @@ def new_get_ranks(total_time, game_type, player_names, num_players):
 
   session = get_session()
   all_scores = session.query(Score).filter_by(num_players=num_players).filter(Score.game_type == game_type)
-  player_expressions = []
-  for player_name in player_names:
-    player_expressions.append(Score.players.any(name=player_name))
-  all_scores = all_scores.filter(or_(*player_expressions))
+  #player_expressions = []
+  #for player_name in player_names:
+  #  player_expressions.append(Score.players.any(name=player_name))
+  #all_scores = all_scores.filter(or_(*player_expressions))
   all_scores = list(all_scores)
-  #print len(all_scores)
   logging.warning("Took %.03f seconds to query player ranks for %d player", time.time() - init_time, num_players)
 
   dates = {
@@ -102,19 +101,22 @@ def new_get_ranks(total_time, game_type, player_names, num_players):
 
           filtered_scores = filter(constraints, all_scores)
           filtered_by_time_scores = filter(elapsed_time_constraint, filtered_scores)
-          #print all_scores
-          #print filtered_scores, filtered_by_time_scores
 
           if len(filtered_scores) == 0:
             percentile = 0
+          elif len(filtered_by_time_scores) == len(filtered_scores):
+            percentile = 100
           else:
-            percentile = len(filtered_by_time_scores) / float(len(filtered_scores))
+            percentile = round(100 * ((len(filtered_scores) - len(filtered_by_time_scores)) / float(len(filtered_scores))))
+            if percentile == 100:
+              percentile = 99
+            
           ret[player_name][close][leaderboard][leaderboard_type] = {
-              'percentile' : percentile,
+              'percentile' : "%d" % percentile,
               'rank' : len(filtered_by_time_scores) + 1,
           }
-          if leaderboard == "all":
-            all_cache[key] = ret[player_name][close][leaderboard][leaderboard_type]
+          #if leaderboard == "all":
+            #all_cache[key] = ret[player_name][close][leaderboard][leaderboard_type]
   logging.warning("Took %.03f seconds to process player ranks for %d player", time.time() - init_time, num_players)
 
   return ret
@@ -137,9 +139,20 @@ def get_ranks(total_time, game_type, player_names, num_players):
           num_better_scores = session.query(Score).filter(time_filter).filter(Score.game_type == game_type).filter_by(num_players=num_players)
           if leaderboard == "personal":
             num_better_scores = num_better_scores.filter(Score.players.any(name=player_name))
+          total = num_better_scores.count()
+          better = num_better_scores.filter(elapsed_time_filter).count()
+          if total == 0:
+            percentile = 0
+          elif better == 0:
+            percentile = 100
+          else:
+            percentile = round(100 * ((total - better) / float(total)))
+            if percentile == 100:
+              percentile = 99
+          
           ret[player_name][close][leaderboard][leaderboard_type] = {
-              'total' : num_better_scores.count(),
-              'rank' : num_better_scores.filter(elapsed_time_filter).count() + 1,
+              'percentile' : percentile,
+              'rank' : better + 1,
           }
   print time.time() - init_time
 
