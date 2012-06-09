@@ -25,7 +25,7 @@
       </div>
       <div id="playing_area">
         {% if not game.started %}
-          <a id="start" href="javascript:void(0);">Start</a>
+          <a id="start" tabindex="1" href="javascript:void(0);">Start</a>
         {% end %}
       </div>
       <div id="time"></div>
@@ -35,13 +35,14 @@
     <div>
       <div id="chat">loading...</div>
       <div>
-        <input style="display:inline-block;" type="text" id="chat_box" disabled="disabled" />
+        <input style="display:inline-block;" tabindex="-1" type="text" id="chat_box" disabled="disabled" />
         <button style="display:inline-block;" id="say" disabled="disabled">Say</button>
+        <span>(press 'p' to enter chat)</span>
       </div>
     </div>
 
     <div>
-      <a href="/">Back to games</a> | <a href="/about#rules{{ game.type }}">Rules</a>
+      <a href="/" tabindex="2">Back to games</a> | <a href="/about#rules{{ game.type }}">Rules</a>
     </div>
   </body>
 </html> 

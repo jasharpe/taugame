@@ -42,6 +42,17 @@ $(document).ready(function() {
     if (!in_chat_box && key_map.hasOwnProperty(key)) {
       select_card(parseInt(key_map[key]));
     }
+    if (!in_chat_box && key === "p") {
+      $("#chat_box").focus();
+      return false;
+    }
+  });
+
+  // onfocus from chat box on escape. Helps with button mashing.
+  $(document).keyup(function(e) {
+    if (in_chat_box && e.keyCode === 27) {
+      $("#chat_box").blur();
+    }
   });
 
   $(window).focus(function() {
