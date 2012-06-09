@@ -9,6 +9,10 @@ import logging
 CLOSE_THRESHOLD = 5.0
 
 def get_graph_data(player):
+  logger = logging.getLogger('graph')
+  logger.setLevel(logging.INFO)
+  logger.warning("get_graph_data(%s)", player)
+
   session = get_session()
   ret = {}
   for game_type in ['3tau', 'g3tau', '6tau']:
@@ -67,7 +71,7 @@ def new_get_ranks(total_time, game_type, player_names, num_players):
   #print len(all_scores)
   logger = logging.getLogger('new_get_ranks')
   logger.setLevel(logging.INFO)
-  logger.info("Took %.03f seconds to query player ranks for %d player", time.time() - init_time, num_players)
+  logger.warning("Took %.03f seconds to query player ranks for %d player", time.time() - init_time, num_players)
 
   dates = {
       "alltime" : datetime.datetime.min,
@@ -115,7 +119,7 @@ def new_get_ranks(total_time, game_type, player_names, num_players):
           }
           if leaderboard == "all":
             all_cache[key] = ret[player_name][close][leaderboard][leaderboard_type]
-  logger.info("Took %.03f seconds to process player ranks for %d player", time.time() - init_time, num_players)
+  logger.warning("Took %.03f seconds to process player ranks for %d player", time.time() - init_time, num_players)
 
   return ret
 
