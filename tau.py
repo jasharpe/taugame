@@ -9,7 +9,7 @@ from game import Game
 import argparse
 import datetime
 import ssl
-from state import save_game, get_all_high_scores, get_ranks, get_graph_data
+from state import save_game, get_all_high_scores, new_get_ranks, get_graph_data
 
 settings = {
     "template_path" : os.path.join(os.path.dirname(__file__), "templates"),
@@ -198,7 +198,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
         'time' : time,
         'hint' : game.get_tau() if args.hints else None,
         'ended' : game.ended,
-        'player_rank' : game.player_ranks[name] if game.ended and name in game.player_ranks else None
+        'player_rank_info' : game.player_ranks[name] if game.ended and name in game.player_ranks else None
     }))
 
   def on_message(self, message_json):
@@ -221,9 +221,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
           if game.ended:
             send_game_list_update_to_all()
             (db_game, score) = save_game(game)
-            for player_name in game.scores.keys():
-              player_rank = get_ranks(score.elapsed_time, db_game.game_type, player_name, score.num_players)
-              game.player_ranks[player_name] = player_rank
+            game.player_ranks = new_get_ranks(score.elapsed_time, db_game.game_type, game.scores.keys(), score.num_players)
           self.send_update_to_all()
 
 class MainHandler(tornado.web.RequestHandler):

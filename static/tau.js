@@ -239,7 +239,18 @@ $(document).ready(function() {
     return minutes + (seconds < 10 ? ":0" : ":") + seconds;
   };
 
-  function update_time(time, avg_number, ended, player_rank) {
+  function render_ranks(rank_element, player_rank_info) {
+    function thing(rank_data) {
+      rank_element.append("<div class=\"rank\">All players: #" + rank_data.all.alltime.rank + " <a href=\"/leaderboard/alltime\">all time</a>, #" + rank_data.all.thisweek.rank + " <a href=\"/leaderboard/thisweek\">this week</a>, and #" + rank_data.all.today.rank + " <a href=\"/leaderboard/today\">today</a></div>");
+    rank_element.append("<div class=\"rank\">Personal: #" + rank_data.personal.alltime.rank + " <a href=\"/leaderboard/alltime/" + user_name + "\">all time</a>, #" + rank_data.personal.thisweek.rank + " <a href=\"/leaderboard/thisweek/" + user_name + "\">this week</a>, and #" + rank_data.personal.today.rank + " <a href=\"/leaderboard/today/" + user_name + "\">today</a></div>");
+    }
+
+    thing(player_rank_info.exact);
+    rank_element.append("Within 5 seconds of:");
+    thing(player_rank_info.close);
+  };
+
+  function update_time(time, avg_number, ended, player_rank_info) {
     last_server_time = time;
     last_server_time_browser_time = new Date().getTime() / 1000;
     $("#time").html('');
@@ -248,13 +259,8 @@ $(document).ready(function() {
     time_display.html(format_time(get_time(ended)));
     if (ended) {
       $("#time").append($("<span>TOTAL TIME: </span>"));
-      if (player_rank !== null) {
-        $("#rank").append("<div class=\"rank\">All players: #" + player_rank.exact.all.alltime + " <a href=\"/leaderboard/alltime\">all time</a>, #" + player_rank.exact.all.thisweek + " <a href=\"/leaderboard/thisweek\">this week</a>, and #" + player_rank.exact.all.today + " <a href=\"/leaderboard/today\">today</a></div>");
-        $("#rank").append("<div class=\"rank\">Personal: #" + player_rank.exact.personal.alltime + " <a href=\"/leaderboard/alltime/" + user_name + "\">all time</a>, #" + player_rank.exact.personal.thisweek + " <a href=\"/leaderboard/thisweek/" + user_name + "\">this week</a>, and #" + player_rank.exact.personal.today + " <a href=\"/leaderboard/today/" + user_name + "\">today</a></div>");
-
-        $("#rank").append("Within 5 seconds of:");
-        $("#rank").append("<div class=\"rank\">All players: #" + player_rank.close.all.alltime + " <a href=\"/leaderboard/alltime\">all time</a>, #" + player_rank.close.all.thisweek + " <a href=\"/leaderboard/thisweek\">this week</a>, and #" + player_rank.close.all.today + " <a href=\"/leaderboard/today\">today</a></div>");
-        $("#rank").append("<div class=\"rank\">Personal: #" + player_rank.close.personal.alltime + " <a href=\"/leaderboard/alltime/" + user_name + "\">all time</a>, #" + player_rank.close.personal.thisweek + " <a href=\"/leaderboard/thisweek/" + user_name + "\">this week</a>, and #" + player_rank.close.personal.today + " <a href=\"/leaderboard/today/" + user_name + "\">today</a></div>");
+      if (player_rank_info !== null) {
+        render_ranks($("#rank"), player_rank_info);
       }
     } else {
       $("#time").append($("<span>ELAPSED TIME: </span>"));
@@ -270,10 +276,10 @@ $(document).ready(function() {
     }
   };
 
-  function update(board, target, scores, time, avg_number, number, ended, hint, player_rank) {
+  function update(board, target, scores, time, avg_number, number, ended, hint, player_rank_info) {
     update_scores(scores, ended);
     
-    update_time(time, avg_number, ended, player_rank);
+    update_time(time, avg_number, ended, player_rank_info);
 
     // update board
     update_board(board, target, number, hint, ended);
@@ -294,7 +300,7 @@ $(document).ready(function() {
   ws.onmessage = function (e) {
     var data = JSON.parse(e.data);
     if (data.type == "update") {
-      update(data.board, data.target, data.scores, data.time, data.avg_number, data.number, data.ended, data.hint, data.player_rank);
+      update(data.board, data.target, data.scores, data.time, data.avg_number, data.number, data.ended, data.hint, data.player_rank_info);
     } else if (data.type == "scores") {
       update_scores(data.scores, data.ended);
     } else if (data.type == "chat") {

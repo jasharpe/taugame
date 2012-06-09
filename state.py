@@ -1,5 +1,5 @@
 from db import Base, get_session
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, Text, Table, distinct, func
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, Text, Table, distinct, func, or_
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.sql.expression import desc, asc
 import datetime
@@ -20,7 +20,7 @@ filter_map = {
     "alltime" : lambda: Score.date >= datetime.datetime.min,
     "thisweek" : lambda: Score.date >= datetime.datetime.now() - datetime.timedelta(days=7),
     "today" : lambda: Score.date >= datetime.datetime.now() - datetime.timedelta(days=1),
-  }
+}
 
 def get_numbers(leaderboard_type, player):
   session = get_session()
@@ -43,10 +43,6 @@ def get_all_high_scores(num_scores, leaderboard_type, player):
     ret[game_type][number] = list(top_scores.limit(num_scores))
   return ret
 
-def get_high_scores(num_players, num_scores, game_type):
-  session = get_session()
-  return session.query(Score).filter_by(num_players=num_players,game_type=game_type).order_by(desc(Score.elapsed_time)).limit(num_scores)
-
 def get_or_create_dbplayer(session, name):
   player = session.query(DBPlayer).filter_by(name=name).first()
   if player:
@@ -56,21 +52,94 @@ def get_or_create_dbplayer(session, name):
     session.add(player)
     return player
 
-# return a dict with "personal" and "all"
-def get_ranks(total_time, game_type, player_name, num_players):
+def new_get_ranks(total_time, game_type, player_names, num_players):
+  import time
+  init_time = time.time()
+
+  session = get_session()
+  all_scores = session.query(Score).filter_by(num_players=num_players).filter(Score.game_type == game_type)
+  player_expressions = []
+  for player_name in player_names:
+    player_expressions.append(Score.players.any(name=player_name))
+  all_scores = all_scores.filter(or_(*player_expressions))
+  all_scores = list(all_scores)
+  #print len(all_scores)
+  print "Took %.03f seconds to query player ranks for %d" % (time.time() - init_time, num_players)
+
+  dates = {
+      "alltime" : datetime.datetime.min,
+      "thisweek" : datetime.datetime.now() - datetime.timedelta(days=7),
+      "today" : datetime.datetime.now() - datetime.timedelta(days=1),
+  }
+
+  ret = {}
+  all_cache = {}
+  for player_name in player_names:
+    ret[player_name] = {}
+    for close in ["close", "exact"]:
+      time_threshold = total_time - (CLOSE_THRESHOLD if close == "close" else 0)
+      elapsed_time_constraint = lambda score: score.elapsed_time < time_threshold
+      ret[player_name][close] = {}
+      for leaderboard in ["personal", "all"]:
+        def leaderboard_constraint(score):
+          if leaderboard_constraint == "all":
+            return True
+          else:
+            player_names = set(map(lambda p: p.name, score.players))
+            return player_name in player_names
+        ret[player_name][close][leaderboard] = {}
+        for leaderboard_type in ["alltime", "thisweek", "today"]:
+          key = (close, leaderboard, leaderboard_type)
+          if key in all_cache:
+            ret[player_name][close][leaderboard][leaderboard_type] = all_cache[key]
+            continue
+          date_constraint = lambda score: score.date >= dates[leaderboard_type]
+          def constraints(score):
+            return all([date_constraint(score), leaderboard_constraint(score)])
+
+          filtered_scores = filter(constraints, all_scores)
+          filtered_by_time_scores = filter(elapsed_time_constraint, filtered_scores)
+          #print all_scores
+          #print filtered_scores, filtered_by_time_scores
+
+          if len(filtered_scores) == 0:
+            percentile = 0
+          else:
+            percentile = len(filtered_by_time_scores) / float(len(filtered_scores))
+          ret[player_name][close][leaderboard][leaderboard_type] = {
+              'percentile' : percentile,
+              'rank' : len(filtered_by_time_scores) + 1,
+          }
+          if leaderboard == "all":
+            all_cache[key] = ret[player_name][close][leaderboard][leaderboard_type]
+  print "Took %.03f seconds to get player ranks for %d" % (time.time() - init_time, num_players)
+
+  return ret
+
+def get_ranks(total_time, game_type, player_names, num_players):
+  import time
+  init_time = time.time()
+
   ret = {}
   session = get_session()
-  for close in ["close", "exact"]:
-    ret[close] = {}
-    for leaderboard in ["personal", "all"]:
-      ret[close][leaderboard] = {}
-      for leaderboard_type in ["alltime", "thisweek", "today"]:
-        time_filter = filter_map[leaderboard_type]()
-        elapsed_time_filter = Score.elapsed_time < total_time - (CLOSE_THRESHOLD if close == "close" else 0)
-        num_better_scores = session.query(Score).filter(time_filter).filter(elapsed_time_filter).filter(Score.game_type == game_type).filter_by(num_players=num_players)
-        if leaderboard == "personal":
-          num_better_scores = num_better_scores.filter(Score.players.any(name=player_name))
-        ret[close][leaderboard][leaderboard_type] = num_better_scores.count() + 1
+  for player_name in player_names:
+    ret[player_name] = {}
+    for close in ["close", "exact"]:
+      ret[player_name][close] = {}
+      for leaderboard in ["personal", "all"]:
+        ret[player_name][close][leaderboard] = {}
+        for leaderboard_type in ["alltime", "thisweek", "today"]:
+          time_filter = filter_map[leaderboard_type]()
+          elapsed_time_filter = Score.elapsed_time < total_time - (CLOSE_THRESHOLD if close == "close" else 0)
+          num_better_scores = session.query(Score).filter(time_filter).filter(Score.game_type == game_type).filter_by(num_players=num_players)
+          if leaderboard == "personal":
+            num_better_scores = num_better_scores.filter(Score.players.any(name=player_name))
+          ret[player_name][close][leaderboard][leaderboard_type] = {
+              'total' : num_better_scores.count(),
+              'rank' : num_better_scores.filter(elapsed_time_filter).count() + 1,
+          }
+  print time.time() - init_time
+
   return ret
 
 def save_game(game):
