@@ -10,7 +10,7 @@ CLOSE_THRESHOLD = 5.0
 def get_graph_data(player):
   session = get_session()
   ret = {}
-  for game_type in ['3tau', '6tau']:
+  for game_type in ['3tau', 'g3tau', '6tau']:
     time_limit = (600 if game_type == '3tau' else 2700)
     raw_data = session.query(Score).filter(Score.elapsed_time < time_limit).filter(Score.date > datetime.datetime(year=2012, month=1, day=2)).filter(Score.players.any(name=player)).filter_by(num_players=1,game_type=game_type).order_by(asc(Score.date))
     ret[game_type] = raw_data

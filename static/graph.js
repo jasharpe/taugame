@@ -7,6 +7,7 @@ google.setOnLoadCallback(drawCharts);
 function drawCharts() {
   drawChart(raw_graph_data_3tau, document.getElementById('graph_3tau'));
   drawChart(raw_graph_data_6tau, document.getElementById('graph_6tau'));
+  drawChart(raw_graph_data_g3tau, document.getElementById('graph_g3tau'));
 }
 
 function drawChart(raw_data, element) {
