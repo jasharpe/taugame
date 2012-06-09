@@ -8,6 +8,7 @@ import json
 CLOSE_THRESHOLD = 5.0
 
 def get_graph_data(player):
+  print "getting graph data for player %s" % player
   session = get_session()
   ret = {}
   for game_type in ['3tau', 'g3tau', '6tau']:
