@@ -342,7 +342,7 @@ application = tornado.web.Application([
   (r"/graph/([^/]*)", GraphHandler),
   (r"/choose_name", ChooseNameHandler),
   (r"/new_game/(3tau|6tau|g3tau)", NewGameHandler),
-  (r"/game/(\d*)", GameHandler),
+  (r"/game/(\d+)", GameHandler),
   (r"/websocket/(\d*)", TauWebSocketHandler),
   (r"/gamelistwebsocket/(0|1)", GameListWebSocketHandler),
   (r"/time", TimeHandler),
