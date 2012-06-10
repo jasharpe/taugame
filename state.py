@@ -136,9 +136,10 @@ def get_ranks(total_time, game_type, player_names, num_players):
         for leaderboard_type in ["alltime", "thisweek", "today"]:
           time_filter = filter_map[leaderboard_type]()
           elapsed_time_filter = Score.elapsed_time < total_time - (CLOSE_THRESHOLD if close == "close" else 0)
-          num_better_scores = session.query(Score).filter(time_filter).filter(Score.game_type == game_type).filter_by(num_players=num_players)
-          if leaderboard == "personal":
-            num_better_scores = num_better_scores.filter(Score.players.any(name=player_name))
+          if leaderboard == "all":
+            num_better_scores = session.query(Score).filter(time_filter).filter(Score.game_type == game_type).filter(Score.num_players == num_players)
+          else:
+            num_better_scores = session.query(Score).join((DBPlayer, Score.players)).filter(time_filter).filter(Score.game_type == game_type).filter(Score.num_players == num_players).filter(DBPlayer.name == player_name)
           total = num_better_scores.count()
           better = num_better_scores.filter(elapsed_time_filter).count()
           if total == 0:
@@ -154,7 +155,7 @@ def get_ranks(total_time, game_type, player_names, num_players):
               'percentile' : percentile,
               'rank' : better + 1,
           }
-  print time.time() - init_time
+  logging.warning("Took %.03f seconds to fetch player ranks for %d player", time.time() - init_time, num_players)
 
   return ret
 
