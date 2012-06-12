@@ -320,7 +320,7 @@ class TimeHandler(tornado.web.RequestHandler):
 class AboutHandler(tornado.web.RequestHandler):
   def get(self):
     cards = {}
-    shapes = ["square", "circle", "triangle"]
+    shapes = ["circle", "square", "triangle"]
     shadings = ["empty", "shaded", "solid"]
     numbers = ["one", "two", "three"]
     colours = ["red", "green", "blue"]
