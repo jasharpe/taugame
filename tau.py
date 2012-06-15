@@ -249,15 +249,19 @@ class GraphHandler(tornado.web.RequestHandler):
         time_offset=time_offset)
 
 class LeaderboardHandler(tornado.web.RequestHandler):
-  def get(self, leaderboard_type, player=None):
-    all_high_scores = get_all_high_scores(10, leaderboard_type, player)
+  def get(self, leaderboard_type, slash_separated_players=None):
+    if slash_separated_players:
+      players = filter(None, slash_separated_players.split("/"))
+    else:
+      players = []
+    all_high_scores = get_all_high_scores(10, leaderboard_type, players)
     try:
       time_offset = int(url_unescape(self.get_cookie("time_offset")))
     except:
       time_offset = 0
     self.render(
         "leaderboard.html",
-        player_name=player,
+        players=players,
         all_high_scores=all_high_scores,
         leaderboard_types=[('alltime', 'All Time'), ('thisweek', 'This Week'), ('today', 'Today')],
         selected_leaderboard_type=leaderboard_type,
@@ -268,7 +272,13 @@ class ChooseNameHandler(tornado.web.RequestHandler):
     self.render("choose_name.html")
 
   def post(self):
-    self.set_cookie("name", url_escape(self.get_argument("name")))
+    name = self.get_argument("name")
+    if "/" in name:
+      # TODO: put in error code
+      # TODO: escape names properly generally so we don't need to outlaw slashes
+      self.redirect("/choose_name")
+      return
+    self.set_cookie("name", url_escape(name))
     self.redirect("/")
 
 class NewGameHandler(tornado.web.RequestHandler):
@@ -337,8 +347,8 @@ class AboutHandler(tornado.web.RequestHandler):
 
 application = tornado.web.Application([
   (r"/", MainHandler),
-  (r"/leaderboard/(alltime|thisweek|today)", LeaderboardHandler),
-  (r"/leaderboard/(alltime|thisweek|today)/([^/]*)", LeaderboardHandler),
+  (r"/leaderboard/(alltime|thisweek|today)/?", LeaderboardHandler),
+  (r"/leaderboard/(alltime|thisweek|today)/((?:[^/]+/?)+)", LeaderboardHandler),
   (r"/graph/([^/]*)", GraphHandler),
   (r"/choose_name", ChooseNameHandler),
   (r"/new_game/(3tau|6tau|g3tau)", NewGameHandler),

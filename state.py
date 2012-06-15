@@ -25,24 +25,27 @@ filter_map = {
     "today" : lambda: Score.date >= datetime.datetime.now() - datetime.timedelta(days=1),
 }
 
-def get_numbers(leaderboard_type, player):
+def filter_for_players(query, players):
+  return query.join((DBPlayer, Score.players)).filter(or_(*[DBPlayer.name == player for player in players]))
+
+def get_numbers(leaderboard_type, players):
   session = get_session()
   time_filter = filter_map[leaderboard_type]()
   numbers_query = session.query(distinct(Score.num_players), Score.game_type).filter(time_filter)
-  if player is not None:
-    numbers_query = numbers_query.filter(Score.players.any(name=player))
+  if players:
+    numbers_query = filter_for_players(numbers_query, players)
   return list(numbers_query)
 
-def get_all_high_scores(num_scores, leaderboard_type, player):
+def get_all_high_scores(num_scores, leaderboard_type, players):
   session = get_session()
   time_filter = filter_map[leaderboard_type]()
   ret = {}
-  for (number, game_type) in get_numbers(leaderboard_type, player):
+  for (number, game_type) in get_numbers(leaderboard_type, players):
     if not game_type in ret:
       ret[game_type] = {}
     top_scores = session.query(Score).filter_by(num_players=number,game_type=game_type).filter(time_filter).order_by(asc(Score.elapsed_time))
-    if player is not None:
-      top_scores = top_scores.filter(Score.players.any(name=player))
+    if players:
+      top_scores = filter_for_players(top_scores, players)
     ret[game_type][number] = list(top_scores.limit(num_scores))
   return ret
 
@@ -54,72 +57,6 @@ def get_or_create_dbplayer(session, name):
     player = DBPlayer(name)
     session.add(player)
     return player
-
-def new_get_ranks(total_time, game_type, player_names, num_players):
-  import time
-  init_time = time.time()
-
-  session = get_session()
-  all_scores = session.query(Score).filter_by(num_players=num_players).filter(Score.game_type == game_type)
-  #player_expressions = []
-  #for player_name in player_names:
-  #  player_expressions.append(Score.players.any(name=player_name))
-  #all_scores = all_scores.filter(or_(*player_expressions))
-  all_scores = list(all_scores)
-  logging.warning("Took %.03f seconds to query player ranks for %d player", time.time() - init_time, num_players)
-
-  dates = {
-      "alltime" : datetime.datetime.min,
-      "thisweek" : datetime.datetime.now() - datetime.timedelta(days=7),
-      "today" : datetime.datetime.now() - datetime.timedelta(days=1),
-  }
-
-  ret = {}
-  all_cache = {}
-  for player_name in player_names:
-    ret[player_name] = {}
-    for close in ["close", "exact"]:
-      time_threshold = total_time - (CLOSE_THRESHOLD if close == "close" else 0)
-      elapsed_time_constraint = lambda score: score.elapsed_time < time_threshold
-      ret[player_name][close] = {}
-      for leaderboard in ["personal", "all"]:
-        def leaderboard_constraint(score):
-          if leaderboard_constraint == "all":
-            return True
-          else:
-            player_names = set(map(lambda p: p.name, score.players))
-            return player_name in player_names
-        ret[player_name][close][leaderboard] = {}
-        for leaderboard_type in ["alltime", "thisweek", "today"]:
-          key = (close, leaderboard, leaderboard_type)
-          if key in all_cache:
-            ret[player_name][close][leaderboard][leaderboard_type] = all_cache[key]
-            continue
-          date_constraint = lambda score: score.date >= dates[leaderboard_type]
-          def constraints(score):
-            return all([date_constraint(score), leaderboard_constraint(score)])
-
-          filtered_scores = filter(constraints, all_scores)
-          filtered_by_time_scores = filter(elapsed_time_constraint, filtered_scores)
-
-          if len(filtered_scores) == 0:
-            percentile = 0
-          elif len(filtered_by_time_scores) == len(filtered_scores):
-            percentile = 100
-          else:
-            percentile = round(100 * ((len(filtered_scores) - len(filtered_by_time_scores)) / float(len(filtered_scores))))
-            if percentile == 100:
-              percentile = 99
-            
-          ret[player_name][close][leaderboard][leaderboard_type] = {
-              'percentile' : "%d" % percentile,
-              'rank' : len(filtered_by_time_scores) + 1,
-          }
-          #if leaderboard == "all":
-            #all_cache[key] = ret[player_name][close][leaderboard][leaderboard_type]
-  logging.warning("Took %.03f seconds to process player ranks for %d player", time.time() - init_time, num_players)
-
-  return ret
 
 def get_ranks(total_time, game_type, player_names, num_players):
   import time
