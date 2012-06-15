@@ -38,7 +38,7 @@ $(document).ready(function() {
   };
 
   $(document).keypress(function(e) {
-    var key = String.fromCharCode(e.keyCode).toLowerCase();
+    var key = String.fromCharCode(e.charCode).toLowerCase();
     if (!in_chat_box && key_map.hasOwnProperty(key)) {
       select_card(parseInt(key_map[key]));
     }
