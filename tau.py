@@ -5,7 +5,7 @@ from tornado import template
 from tornado.escape import url_escape, url_unescape
 import json
 import os
-from game import Game
+from game import Game, InvalidGameType
 import argparse
 import datetime
 import ssl
@@ -272,22 +272,19 @@ class ChooseNameHandler(tornado.web.RequestHandler):
     self.redirect("/")
 
 class NewGameHandler(tornado.web.RequestHandler):
-  type_to_size_map = {
-      "3tau" : 3,
-      "g3tau" : 3,
-      "6tau" : 6
-  }
-
   def post(self, type):
-    if not type in self.type_to_size_map.keys():
-      print "Invalid game type: " + type
-      self.redirect("/")
-      return
     if len(games.keys()) == 0:
       next_id = 0
     else:
       next_id = max(games.keys()) + 1
-    games[next_id] = Game(type, self.type_to_size_map[type], args.quick)
+
+    try:
+      games[next_id] = Game(type, args.quick)
+    except InvalidGameType:
+      print 'Invalid game type: ' + type
+      self.redirect('/')
+      return
+
     game_to_sockets[next_id] = []
     game_to_messages[next_id] = []
     send_game_list_update_to_all()
@@ -297,7 +294,8 @@ class GameHandler(tornado.web.RequestHandler):
   game_type_to_type_string_map = {
     "3tau" : "3 Tau",
     "6tau" : "6 Tau",
-    "g3tau" : "Generalized 3 Tau"
+    "g3tau" : "Generalized 3 Tau",
+    "i3tau" : "Insane 3 Tau",
   }
 
   def get(self, game_id):
@@ -341,7 +339,7 @@ application = tornado.web.Application([
   (r"/leaderboard/(alltime|thisweek|today)/([^/]*)", LeaderboardHandler),
   (r"/graph/([^/]*)", GraphHandler),
   (r"/choose_name", ChooseNameHandler),
-  (r"/new_game/(3tau|6tau|g3tau)", NewGameHandler),
+  (r"/new_game/(3tau|6tau|g3tau|i3tau)", NewGameHandler),
   (r"/game/(\d+)", GameHandler),
   (r"/websocket/(\d*)", TauWebSocketHandler),
   (r"/gamelistwebsocket/(0|1)", GameListWebSocketHandler),
