@@ -14,7 +14,7 @@
     <div id="about">
       <h2>About</h2>
 
-      <p>taugame.com was created by <a href="http://jsharpe.ca">Jeremy Sharpe</a>. Its code is available on <a href="https://github.com/jasharpe/websockettau">github</a>. It is implemented using websockets, with a Python server using Tornado, and a javascript client.
+      <p>taugame.com was created by <a href="http://jsharpe.ca">Jeremy Sharpe</a>. Its code is available on <a href="https://github.com/jasharpe/websockettau">github</a>. It is implemented using websockets, with a Python server using Tornado, and a javascript client. You can contact me with any questions or comments at <a href="mailto:jsharpe@taugame.com">jsharpe@taugame.com</a>.
 
        <h2 id="controls">Controls</h2>
 
@@ -111,9 +111,9 @@
 
       <p>6 Tau is a difficult game, and at first it seems unapproachable. While there is a relatively simple way to check if a group of 6 cards constitute a 6 Tau (by using the non-mathematical definition above), it is difficult to come up with those cards in the first place. Fortunately, there are a couple of good strategies to assist in finding 6 Taus.
 
-      <h5>4 card strategy</h5>
+      <h5 id="4cardstrategy">4 card strategy</h5>
 
-      <p>The first strategy, the <b>4 card strategy</b>, relies on the ability to play 3 Tau well. In particular, given 2 cards, you need to be able to figure out the unique third card that completes the 3 Tau. (Mathematically, if you have two cards A and B, what you are doing in this operating is computing C = -(A + B). This completes the 3 Tau since A + B + C = A + B - (A + B) = 0.)
+      <p>The first strategy, the <b>4 card strategy</b>, relies on the ability to play 3 Tau well. In particular, given 2 cards, you need to be able to figure out the unique third card that completes the 3 Tau (or <i>negasum</i>. (Mathematically, if you have two cards A and B, what you are doing in this operating is computing C = -(A + B) (hence why it's called a negasum). This completes the 3 Tau since A + B + C = A + B - (A + B) = 0.)
 
       <p>The strategy goes as follows: First, select 4 cards on the board, A, B, C, and D (make sure they don't contain a 3 Tau!). Now, compute (in your head) the unique third cards that complete a 3 Tau with the pairs A, B, and C, D. These two "virtual" cards in your head we will call E and F. Now, compute the unique third card that completes a 3 Tau with E and F. Call this "virtual" card G. Now try to find two cards H and I on the board that complete a 3 Tau with G. If you can, then A, B, C, D, H, and I are a 6 Tau (as long as it isn't trivial)!
 
@@ -171,7 +171,7 @@
 
       <p>This is actually a fairly effective strategy. Since there are usually many 6 Taus on a given board, you usually only have to try a few groups of 4 cards before finding a 6 Tau. Unfortunately, this strategy also requires a great deal of short term memory. You must remember your initial 4 cards, all while computing two virtual cards, which you must remember long to compute a third virtual card.
 
-      <h5>3 card strategy (thanks to <a href="/leaderboard/alltime/stompy">stompy</a>)</h5>
+      <h5 id="3cardstrategy">3 card strategy (thanks to <a href="/leaderboard/alltime/stompy">stompy</a>)</h5>
 
       <p>The second strategy, or <b>3 card strategy</b>, is conceptually more complicated, but in practice requires less short term memory than the 4 card strategy. The basic idea is to choose 3 cards on the board, A, B, and C, and compute the card D = A + B + C. Then compute E = -D. Then, try to find another three cards F, G, H on the board such that F + G + H = E. Then A, B, C, F, G, and H are a 6 Tau (as long as it isn't trivial)!
 
@@ -186,7 +186,15 @@
         <li><i>Shape</i>: Circle (because a 0 is round)</li>
       </ul>
 
-      <p>Within this framework, we can compute negative cards and arbitrary card sums. The reason that the assignments of 1 and 2 are interchangeable is that 1 + 1 = 2 and 2 + 2 = 1 in the integers mod 3.
+      <p>Within this framework, we can compute negative cards and arbitrary card sums. The reason that the assignments of 1 and 2 are interchangeable is that either way we assign A and B to 1 and 2, we get these properties (you can check these):
+
+      <ul>
+        <li>2A = B
+        <li>2B = A
+        <li>A + B = 0
+      </ul>
+
+      <p>These give us all the properties we need to compute sums without actually assigning 1 and 2 to properties. The first and second, for example, says that the sum of two equivalent non-zero values, is the other non-zero value. The third says that the sum of two different non-zero values is 0.
 
       <p>To compute a negative card, the process is that for each property, if the card has the 0 value of the property, then the negative card also has the 0 value of the property, since -0 = 0. Otherwise, the value of the property on the negative card is the other non-zero value. For example, negative red is red, since red is the zero colour, and negative blue is green, and negative green is blue. This process works analogously for the other properties.
 
@@ -202,7 +210,7 @@
 
       <p>It takes some time to get used to these rules, but after a while they become intuitive. Computing a 3 card sum is a straightforward extension of this process. Putting the negation process and the 3 card sum process together allows us to execute the strategy as described at the beginning of this section.
 
-      <p>For example, suppose you initially choose the following 3 cards:
+      <p id="sumexample">For example, suppose you initially choose the following 3 cards:
 
       {% raw cards[('square', 'empty', 'two', 'green')] %}
       {% raw cards[('circle', 'empty', 'three', 'blue')] %}
@@ -211,6 +219,15 @@
       <p>The sum of these cards is:
 
       {% raw cards[('square', 'solid', 'one', 'green')] %}
+
+      <p>This is because:
+
+      <ul>
+        <li>Square + Circle + Circle = Square + 0 + 0 = Square
+        <li>Empty + Empty + Solid = 0 + 0 + Solid = Solid
+        <li>Two + Three + One = (Two + Three) + 0 = 0 + 0 = 0 = One
+        <li>Green + Blue + Green = (Green + Blue) + Green = 0 + Green = Green
+      </ul>
 
       <p>The negative of this card is:
 
@@ -242,6 +259,45 @@
       <p>There are probably more strategies that exist for 6 Tau. If you come up with one, please let me know and I'll put it here.
 
       <h3 id="rulesg3tau">Generalized 3 Tau</h3>
+
+      <p>Generalized 3 Tau is another mathematical extension of 3 Tau. In 6 Tau, a proscribed assignment of values to card properties is useful for the <a href="#3cardstrategy">3 card strategy</a>, but which groups of 6 cards constitute a 6 Tau does not depend on this assignment. Generalized 3 Tau, by contrast, has a specific assignment of 0, 1, and 2 to the card properties, and what constitutes a Generalized 3 Tau depends on this assignment.
+
+      <p>Fortunately, this assignment does not need to be fully described. As in the <a href="#3cardstrategy">3 card strategy</a> for 6 Tau, there is only need to assign a 0 for each property. After that, the assignment of 1 and 2 is not important.
+
+      <p>Generalized 3 Tau uses the same assignment of 0 property values as the <a href="#3cardstrategy">3 card strategy</a> for 6 Tau. The 0's are:
+
+      <ul>
+        <li><i>Colour</i>: Red (because red is the first of RGB)</li>
+        <li><i>Number</i>: One (because it is the smallest number)</li>
+        <li><i>Shading</i>: Empty (because a 0 is empty)</li>
+        <li><i>Shape</i>: Circle (because a 0 is round)</li>
+      </ul>
+
+      <p>Thus the <i>0 card</i> is:
+
+      {% raw cards[('circle', 'empty', 'one', 'red')] %}
+
+      <p>In Generalized 3 Tau, there are up to 13 cards shown at any given time. One of these cards is the <i>target</i> card, which sits to the right, and the rest form a board, similar to the 3 Tau board. A Generalized 3 Tau is a group of 3 cards A, B, and C, such that <b>the sum of the cards A, B, and C, under the assignment of property values to integers given above, is equal to the <i>target</i> card</b>.
+      
+      <p>An interesting fact to observe is that if the target card is the <i>0 card</i>, then a Generalized 3 Tau is just a 3 Tau. If the target card has just one non-zero property, then a Generalized 3 Tau is a <i>near 3 Tau</i>. That is, a 3 Tau that is wrong in exactly the one property 
+
+      <p>For example, suppose the target card is this:
+
+      {% raw cards[('square', 'solid', 'one', 'green')] %}
+
+      <p>The following 3 cards <a href="#sumexample">sum up to this target card</a>, so these 3 are a Generalized 3 Tau:
+
+      {% raw cards[('square', 'empty', 'two', 'green')] %}
+      {% raw cards[('circle', 'empty', 'three', 'blue')] %}
+      {% raw cards[('circle', 'solid', 'one', 'green')] %}
+
+      <!-- <h4>Strategies for Generalized 3 Tau</h4>
+
+      <p>There are a couple of different approaches to take to find Generalized 3 Taus.
+
+      <h5>Negasum Strategy</h5>
+
+      <p>This strategy is similar in flavour to the <a href="4cardstrategy">4 card strategy</a> for 6 Tau. -->
 
       <h3 id="rulesi3tau">Insane 3 Tau</h3>
 

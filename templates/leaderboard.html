@@ -4,7 +4,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>{{ "Tau - Leaderboard" if player_name is None else ("Tau - %s's High Scores" % (player_name))}}</title>
+    <title>{{ "Tau - Leaderboard" if not players else ("Tau - %s's High Scores" % (", ".join(players)))}}</title>
 
     <script type="text/javascript" src="{{ static_url("jquery.js") }}"></script>
     <script type="text/javascript" src="{{ static_url("time.js") }}"></script>
@@ -27,7 +27,7 @@
 
     <div class="leaderboard_menu">
     {% for (i, (leaderboard_type, leaderboard_type_label)) in enumerate(leaderboard_types) %}
-    {% if leaderboard_type == selected_leaderboard_type and player_name is None %}
+    {% if leaderboard_type == selected_leaderboard_type and not players %}
       <span>{{ leaderboard_type_label }}</span>
     {% else %}
       <a href="/leaderboard/{{ leaderboard_type }}">{{ leaderboard_type_label }}</a>
@@ -37,13 +37,13 @@
     </div>
     
     <div class="leaderboard_menu">
-    {% if player_name is not None %}
-    <span>High scores for {{ player_name }}:</span>
+    {% if players %}
+    <span>High scores for {{ ", ".join(players) }}:</span>
     {% for (i, (leaderboard_type, leaderboard_type_label)) in enumerate(leaderboard_types) %}
     {% if leaderboard_type == selected_leaderboard_type %}
       <span>{{ leaderboard_type_label }}</span>
     {% else %}
-      <a href="/leaderboard/{{ leaderboard_type }}/{{ player_name }}">{{ leaderboard_type_label }}</a>
+      <a href="/leaderboard/{{ leaderboard_type }}/{{ "/".join(players) }}">{{ leaderboard_type_label }}</a>
     {% end %}
     {% if i != len(leaderboard_types) - 1 %}|{% end %}
     {% end %}
