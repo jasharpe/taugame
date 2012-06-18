@@ -1,10 +1,26 @@
+import logging
 import random, itertools, time
 from operator import mod
 
+class InvalidGameType(Exception):
+  pass
+
+game_types = ['3tau', 'g3tau', '6tau', 'i3tau']
+
+type_to_size_map = {
+  '3tau': 3,
+  'g3tau': 3,
+  '6tau': 6,
+  'i3tau': 3,
+}
+
 class Game(object):
-  def __init__(self, type, size, quick=False):
+  def __init__(self, type, quick=False):
     self.type = type
-    self.size = size
+    try:
+      self.size = type_to_size_map[type]
+    except KeyError:
+      raise InvalidGameType()
     self.min_number = 12
     self.scores = {}
     self.deck = create_deck()
@@ -19,7 +35,7 @@ class Game(object):
     self.player_ranks = {}
 
     if quick:
-      for i in xrange(0, 23 if size == 3 else 12):
+      for i in xrange(0, 23 if self.size == 3 else 12):
         self.take_tau()
 
   def take_tau(self):
@@ -54,17 +70,49 @@ class Game(object):
       if not self.deck:
         break
       to_add = self.size
+      add_indices = []
       for i in range(0, len(self.board)):
-        if not self.deck:
-          break
         if to_add > 0 and self.board[i] is None:
-          self.board[i] = self.deck.pop()
+          add_indices.append(i)
           to_add -= 1
 
-      for i in range(0, to_add):
+      while to_add > 0:
+        self.board.append(None)
+        add_indices.append(len(self.board) - 1)
+        to_add -= 1
+
+      if self.type == 'i3tau':
+        # Try to do an Insane 3 Tau deal (i.e. only one set is present after
+        # dealing.) If it fails, fall back to normal behaviour.
+        init_time = time.time()
+        i3tau_new_cards = self.find_i3tau_new_cards()
+        logging.warning('Took %.03f seconds to deal 3 new cards for Insane 3 Tau',
+            time.time() - init_time)
+
+        if i3tau_new_cards is not None:
+          # We need to randomize the order of the new cards.
+          # To see why, observe that:
+          # - After a tau is found in a board that has only one, any tau in
+          #   the next board must involve the new cards.
+          # - Because of the ordering of the values yielded by
+          #   itertools.combinations, we select the lexicographically earliest
+          #   index tuple that works.
+          # This means that the probability that a new card is involved in the
+          # tau might depend on its corresponding position in the index tuple.
+          # Randomizing the order avoids this issue.
+          i3tau_new_cards = list(i3tau_new_cards)
+          random.shuffle(i3tau_new_cards)
+
+          for i, card in zip(add_indices, i3tau_new_cards):
+            self.deck.remove(card)
+            self.board[i] = card
+          add_indices = []
+
+      for i in add_indices:
         if not self.deck:
           break
-        self.board.append(self.deck.pop())
+        self.board[i] = self.deck.pop()
+
 
     # compute a new target tau for Generalized 3 Tau
     if self.type == "g3tau":
@@ -73,6 +121,11 @@ class Game(object):
     # add Nones at the end as necessary
     while len(self.board) < self.min_number:
       self.board.append(None)
+
+    # For insane 3 Tau, the initial positions of cards must be randomized,
+    # because the first 3 dealt cards always form a Tau.
+    if self.type == 'i3tau' and len(filter(None, self.board)) + len(self.deck) == 3**4:
+      random.shuffle(self.board)
 
   def get_random_target(self, board):
       no_nones = filter(None, board)
@@ -127,7 +180,7 @@ class Game(object):
     return not any(self.sum_cards(cards))
 
   def is_tau(self, cards):
-    if len(cards) == 3 and self.type in ["3tau", "6tau"]:
+    if len(cards) == 3 and self.type in ["3tau", "6tau", "i3tau"]:
       return self.is_tau_basic(cards)
     elif len(cards) == 3 and self.type in ["g3tau"]:
       return self.sum_cards(cards) == self.target_tau
@@ -135,11 +188,41 @@ class Game(object):
       return self.is_tau_basic(cards) and self.no_subset_is_tau(cards, 3)
     raise Exception("Cards " + cards + " are not valid for this game type: " + self.type)
 
-  def no_subset_is_tau(self, cards, subset_size):
+  def count_tau_subsets(self, cards, subset_size):
+    count = 0
     for card_subset in itertools.combinations(cards, subset_size):
       if self.is_tau(card_subset):
-        return False
-    return True
+        count += 1
+    return count
+
+  def no_subset_is_tau(self, cards, subset_size):
+    return not self.count_tau_subsets(cards, subset_size)
+
+  def find_i3tau_new_cards(self):
+    # When this routine fails to find suitable new cards, returns None.
+    # This is faster than a straightforward itertools.combination approach,
+    # because if the first or second card we pick causes the board to have
+    # more than a single set, then we don't iterate through choices of a
+    # third card. (The straightforward approach was tested and found to be
+    # too slow.)
+    i3tau_new_cards = None
+    candidate_board = filter(None, self.board)
+
+    def rec(start, to_add):
+      if to_add == 0:
+        return self.count_tau_subsets(candidate_board, self.size) == 1
+
+      for i in range(start, len(self.deck)):
+        candidate_board.append(self.deck[i])
+        if self.count_tau_subsets(candidate_board, self.size) <= 1:
+          if rec(i+1, to_add-1):
+            return True
+        candidate_board.pop()
+
+    if not rec(0, self.size):
+      return None
+
+    return candidate_board[-self.size:]
 
 def create_deck():
   deck = list(itertools.product(*[range(0, 3) for i in range(0, 4)]))

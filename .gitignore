@@ -1,2 +1,11 @@
 localhost.crt
 localhost.key
+
+# Python byte code.
+*.pyc
+
+# VIM swap files.
+*.swp
+
+# Database file.
+hello
