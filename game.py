@@ -2,6 +2,8 @@ import logging
 import random, itertools, time
 from operator import mod
 
+I3TAU_CALCULATION_LOGGING_THRESHOLD = 0.25
+
 class InvalidGameType(Exception):
   pass
 
@@ -92,8 +94,10 @@ class Game(object):
         # dealing.) If it fails, fall back to normal behaviour.
         init_time = time.time()
         i3tau_new_cards = self.find_i3tau_new_cards()
-        logging.warning('Took %.03f seconds to deal 3 new cards for Insane 3 Tau',
-            time.time() - init_time)
+        calculation_time = time.time() - init_time
+        if calculation_time > I3TAU_CALCULATION_LOGGING_THRESHOLD:
+          logging.warning('Took %.03f seconds to deal 3 new cards for Insane 3 Tau',
+              calculation_time)
 
         if i3tau_new_cards is not None:
           # We need to randomize the order of the new cards.
