@@ -21,10 +21,10 @@ For options, type:
 *** Adding a new game type (as of June 17, 2012)
 - Implement the rules in game.py.
 - Add to the list in templates/leaderboard.html, in order to show the scores.
-- Add a button to create the game in game_list.html.
-- Add a graph to graph.html.
-- Add a name mapping to game_list.js.
-- Add a drawChart call to graph.js.
-- Add a name mapping to tau.py.
+- Add a button to create the game in templates/game_list.html.
+- Add a graph to templates/graph.html.
+- Add a name mapping to static/game_list.js.
+- Add a drawChart call to static/graph.js.
+- Add a name mapping and URL mapping to tau.py.
 - Add a rules description to templates/about.html.
 - (Optional) Add a custom graph time cutoff in state.py.

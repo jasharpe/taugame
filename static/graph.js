@@ -9,6 +9,7 @@ function drawCharts() {
   drawChart(raw_graph_data_6tau, document.getElementById('graph_6tau'));
   drawChart(raw_graph_data_g3tau, document.getElementById('graph_g3tau'));
   drawChart(raw_graph_data_i3tau, document.getElementById('graph_i3tau'));
+  drawChart(raw_graph_data_e3tau, document.getElementById('graph_e3tau'));
 }
 
 function drawChart(raw_data, element) {
