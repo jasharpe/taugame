@@ -306,7 +306,7 @@ class GameHandler(tornado.web.RequestHandler):
     "6tau" : "6 Tau",
     "g3tau" : "Generalized 3 Tau",
     "i3tau" : "Insane 3 Tau",
-    "e3tau" : "Easy 3 Tau",
+    "e3tau" : "Easy 3 Tau (beta)",
   }
 
   def get(self, game_id):

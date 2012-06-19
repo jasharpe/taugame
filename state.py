@@ -10,8 +10,6 @@ from game import game_types
 CLOSE_THRESHOLD = 5.0
 
 def get_graph_data(player):
-  logging.warning("get_graph_data(%s)", player)
-
   session = get_session()
   ret = {}
   for game_type in game_types:

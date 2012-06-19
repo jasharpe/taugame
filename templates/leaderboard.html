@@ -55,7 +55,7 @@
       <input type="submit" value="Go to user" />
     </form>
     
-    {% for (game_type, game_type_string) in [("3tau", "3 Tau"), ("6tau", "6 Tau"), ("g3tau", "Generalized 3 Tau"), ("i3tau", "Insane 3 Tau"), ("e3tau", "Easy 3 Tau")] %}
+    {% for (game_type, game_type_string) in [("3tau", "3 Tau"), ("6tau", "6 Tau"), ("g3tau", "Generalized 3 Tau"), ("i3tau", "Insane 3 Tau"), ("e3tau", "Easy 3 Tau (beta)")] %}
     {% if game_type in all_high_scores %}
     <div class="leaderboard_container">
       <h2>{{ game_type_string }}</h2>
