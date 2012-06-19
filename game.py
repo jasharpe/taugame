@@ -5,14 +5,20 @@ from operator import mod
 class InvalidGameType(Exception):
   pass
 
-game_types = ['3tau', 'g3tau', '6tau', 'i3tau']
+game_types = ['3tau', 'g3tau', '6tau', 'i3tau', 'e3tau']
 
 type_to_size_map = {
   '3tau': 3,
   'g3tau': 3,
   '6tau': 6,
   'i3tau': 3,
+  'e3tau': 3,
 }
+
+def shuffled(xs):
+  xs = list(xs)
+  random.shuffle(xs)
+  return xs
 
 class Game(object):
   def __init__(self, type, quick=False):
@@ -82,7 +88,7 @@ class Game(object):
         to_add -= 1
 
       if self.type == 'i3tau':
-        # Try to do an Insane 3 Tau deal (i.e. only one set is present after
+        # Try to do an Insane 3 Tau deal (i.e. only one tau is present after
         # dealing.) If it fails, fall back to normal behaviour.
         init_time = time.time()
         i3tau_new_cards = self.find_i3tau_new_cards()
@@ -100,13 +106,26 @@ class Game(object):
           # This means that the probability that a new card is involved in the
           # tau might depend on its corresponding position in the index tuple.
           # Randomizing the order avoids this issue.
-          i3tau_new_cards = list(i3tau_new_cards)
-          random.shuffle(i3tau_new_cards)
+          i3tau_new_cards = shuffled(i3tau_new_cards)
 
           for i, card in zip(add_indices, i3tau_new_cards):
             self.deck.remove(card)
             self.board[i] = card
           add_indices = []
+
+      if self.type == 'e3tau':
+        # Do an Easy 3 Tau deal. That means to try to create a large number of
+        # taus after dealing.
+        init_time = time.time()
+
+        for i in add_indices:
+          card = self.find_e3tau_new_card()
+          self.deck.remove(card)
+          self.board[i] = card
+        add_indices = []
+
+        logging.warning('Took %.03f seconds to deal 3 new cards for Easy 3 Tau',
+            time.time() - init_time)
 
       for i in add_indices:
         if not self.deck:
@@ -122,9 +141,9 @@ class Game(object):
     while len(self.board) < self.min_number:
       self.board.append(None)
 
-    # For insane 3 Tau, the initial positions of cards must be randomized,
-    # because the first 3 dealt cards always form a Tau.
-    if self.type == 'i3tau' and len(filter(None, self.board)) + len(self.deck) == 3**4:
+    # For Insane 3 Tau and Easy 3 Tau, the initial positions of cards must be
+    # randomized, because the first 3 dealt cards always form a Tau.
+    if self.type in ['i3tau', 'e3tau'] and len(filter(None, self.board)) + len(self.deck) == 3**4:
       random.shuffle(self.board)
 
   def get_random_target(self, board):
@@ -176,17 +195,24 @@ class Game(object):
   def sum_cards(self, cards):
     return [sum(zipped) % 3 for zipped in zip(*cards)]
 
+  def negate(self, card):
+    # Note that in Python, the % operator always returns a non-negative number.
+    return map(lambda x: (-x)%3, card)
+
+  def negasum(self, a, b):
+    return self.negate(self.sum_cards([a,b]))
+
   def is_tau_basic(self, cards):
     return not any(self.sum_cards(cards))
 
   def is_tau(self, cards):
-    if len(cards) == 3 and self.type in ["3tau", "6tau", "i3tau"]:
+    if len(cards) == 3 and self.type in ["3tau", "6tau", "i3tau", "e3tau"]:
       return self.is_tau_basic(cards)
     elif len(cards) == 3 and self.type in ["g3tau"]:
       return self.sum_cards(cards) == self.target_tau
     elif len(cards) == 6:
       return self.is_tau_basic(cards) and self.no_subset_is_tau(cards, 3)
-    raise Exception("Cards " + cards + " are not valid for this game type: " + self.type)
+    raise Exception("Cards %s are not valid for this game type: %s" % (cards, self.type))
 
   def count_tau_subsets(self, cards, subset_size):
     count = 0
@@ -223,6 +249,40 @@ class Game(object):
       return None
 
     return candidate_board[-self.size:]
+
+  def find_e3tau_new_card(self):
+    # Find the earliest card that maximizes the number of taus present.
+    # The deck must be non-empty when calling this routine.
+
+    # Note: The routine here is optimized a bit because originally I
+    # was seeing deal times as much as ~200ms on my laptop, which could
+    # be steep if several people are playing games at once.
+    # In the optimize form, dealing time is around ~1ms.
+    assert self.deck
+
+    # Figure out how many taus are completed by each card.
+    existing_cards = filter(None, self.board)
+    completion_map = {}
+    for a,b in itertools.combinations(existing_cards, 2):
+      key = tuple(self.negasum(a,b))
+      completion_map[key] = 1 + completion_map.get(key, 0)
+
+    # Find the card that completes the most taus.
+    best = -1
+    best_card = None
+    for card in self.deck:
+      cur = completion_map.get(tuple(card), 0)
+
+      # Assertion commented out for speed.
+      #assert (cur + self.count_tau_subsets(existing_cards, self.size)
+      #        == self.count_tau_subsets(existing_cards + [card], self.size))
+
+      if cur > best:
+        best = cur
+        best_card = card
+
+    assert best_card is not None
+    return best_card
 
 def create_deck():
   deck = list(itertools.product(*[range(0, 3) for i in range(0, 4)]))
