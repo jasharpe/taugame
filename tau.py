@@ -369,6 +369,8 @@ def parse_args():
   parser.add_argument('-d', '--debug', dest='debug', action='store_true',
                       help='Enable debug.')
   parser.add_argument('-q', '--quick', dest='quick', action='store_true', help='Enable quick game. Deck only has 12 cards.')
+  parser.add_argument('-p', '--port', dest='port', type=int, default=80, help='HTTP port.')
+  parser.add_argument('-s', '--ssl_port', dest='ssl_port', type=int, default=443, help='HTTPS port.')
   return parser.parse_args()
 
 class OptionalHTTPServer(tornado.httpserver.HTTPServer):
@@ -385,15 +387,15 @@ class OptionalHTTPServer(tornado.httpserver.HTTPServer):
       super(tornado.httpserver.HTTPServer, self)._handle_connection(connection, address)
 
 def main():
+  global args
+  args = parse_args()
   http_server = OptionalHTTPServer(application,
       ssl_options={
           "certfile" : "localhost.crt",
           "keyfile" : "localhost.key",
       })
-  http_server.listen(80)
-  http_server.listen(443)
-  global args
-  args = parse_args()
+  http_server.listen(args.port)
+  http_server.listen(args.ssl_port)
   ioloop = tornado.ioloop.IOLoop.instance()
   if args.debug:
     set_ping(ioloop, datetime.timedelta(seconds=1))
