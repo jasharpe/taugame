@@ -304,7 +304,7 @@ $(document).ready(function() {
     var is_at_bottom = text_area[0].scrollHeight - text_area.scrollTop() <= text_area.outerHeight();
     text_area.append($("<div class=\"message\"><span class=\"name\">" + name + ":</span> " + message + "</div>"));
     if (is_at_bottom) {
-      text_area.scrollTop(text_area[0].scrollHeight - text_area.outerHeight());
+      text_area.scrollTop(text_area[0].scrollHeight - text_area.outerHeight() + 5);
     }
   }
 
