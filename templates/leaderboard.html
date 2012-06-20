@@ -1,92 +1,86 @@
+{% extends chrome.html %}
+
+{% block title %}{{ "Leaderboard" if not players else ("Tau - %s's High Scores" % (", ".join(players)))}}{% end %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+  $("#go_to_user_form").submit(function(e) {
+    e.preventDefault();
+    window.location = window.location.origin + "/leaderboard/{{ selected_leaderboard_type }}/" + $("#user_name").val();
+  });
+});
+</script>
+{% end %}
+
+{% block body %}
 {% from mytime import fmt_time %}
 {% from datetime import timedelta %}
+<div class="leaderboard_menu">
+  <a href="/">Back to games</a>
+</div>
 
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>{{ "Tau - Leaderboard" if not players else ("Tau - %s's High Scores" % (", ".join(players)))}}</title>
+<div class="leaderboard_menu">
+{% for (i, (leaderboard_type, leaderboard_type_label)) in enumerate(leaderboard_types) %}
+{% if leaderboard_type == selected_leaderboard_type and not players %}
+  <span>{{ leaderboard_type_label }}</span>
+{% else %}
+  <a href="/leaderboard/{{ leaderboard_type }}">{{ leaderboard_type_label }}</a>
+{% end %}
+{% if i != len(leaderboard_types) - 1 %}|{% end %}
+{% end %}
+</div>
 
-    <script type="text/javascript" src="{{ static_url("jquery.js") }}"></script>
-    <script type="text/javascript" src="{{ static_url("time.js") }}"></script>
-    <link rel="stylesheet" type="text/css" href="{{ static_url("reset.css") }}" />
-    <link rel="stylesheet" type="text/css" href="{{ static_url("styles.css") }}" />
+<div class="leaderboard_menu">
+{% if players %}
+<span>High scores for {{ ", ".join(players) }}:</span>
+{% for (i, (leaderboard_type, leaderboard_type_label)) in enumerate(leaderboard_types) %}
+{% if leaderboard_type == selected_leaderboard_type %}
+  <span>{{ leaderboard_type_label }}</span>
+{% else %}
+  <a href="/leaderboard/{{ leaderboard_type }}/{{ "/".join(players) }}">{{ leaderboard_type_label }}</a>
+{% end %}
+{% if i != len(leaderboard_types) - 1 %}|{% end %}
+{% end %}
+{% end %}
+</div>
 
-    <script>
-      $(document).ready(function() {
-        $("#go_to_user_form").submit(function(e) {
-          e.preventDefault();
-          window.location = window.location.origin + "/leaderboard/{{ selected_leaderboard_type }}/" + $("#user_name").val();
-        });
-      });
-    </script>
-  </head>
-  <body>
-    <div class="leaderboard_menu">
-      <a href="/">Back to games</a>
-    </div>
+<form name="go_to_user" id="go_to_user_form">
+  <input type="text" id="user_name" name="name" />
+  <input type="submit" value="Go to user" />
+</form>
 
-    <div class="leaderboard_menu">
-    {% for (i, (leaderboard_type, leaderboard_type_label)) in enumerate(leaderboard_types) %}
-    {% if leaderboard_type == selected_leaderboard_type and not players %}
-      <span>{{ leaderboard_type_label }}</span>
-    {% else %}
-      <a href="/leaderboard/{{ leaderboard_type }}">{{ leaderboard_type_label }}</a>
-    {% end %}
-    {% if i != len(leaderboard_types) - 1 %}|{% end %}
-    {% end %}
-    </div>
-    
-    <div class="leaderboard_menu">
-    {% if players %}
-    <span>High scores for {{ ", ".join(players) }}:</span>
-    {% for (i, (leaderboard_type, leaderboard_type_label)) in enumerate(leaderboard_types) %}
-    {% if leaderboard_type == selected_leaderboard_type %}
-      <span>{{ leaderboard_type_label }}</span>
-    {% else %}
-      <a href="/leaderboard/{{ leaderboard_type }}/{{ "/".join(players) }}">{{ leaderboard_type_label }}</a>
-    {% end %}
-    {% if i != len(leaderboard_types) - 1 %}|{% end %}
-    {% end %}
-    {% end %}
-    </div>
-
-    <form name="go_to_user" id="go_to_user_form">
-      <input type="text" id="user_name" name="name" />
-      <input type="submit" value="Go to user" />
-    </form>
-    
-    {% for (game_type, game_type_string) in [("3tau", "3 Tau"), ("6tau", "6 Tau"), ("g3tau", "Generalized 3 Tau"), ("i3tau", "Insane 3 Tau"), ("e3tau", "Easy 3 Tau (beta)")] %}
-    {% if game_type in all_high_scores %}
-    <div class="leaderboard_container">
-      <h2>{{ game_type_string }}</h2>
-      {% for (num_players, scores) in all_high_scores[game_type].items() %}
-        <h4>{{ num_players }} players</h4>
-        <table class="leaderboard">
-          <thead><tr><th>Time</th><th>Players</th><th>Date</th></tr></thead>
-          <tbody>
-          {% for score in scores %}
-            <tr>
-              <td>{{ fmt_time(score.elapsed_time) }}</td>
-              <td>
-                {% set processed_players = sorted(score.players, None, lambda x: x.name) %}
-                {% for (i, player) in enumerate(processed_players) %}
-                <a href="/leaderboard/{{ selected_leaderboard_type }}/{{ player.name }}">{{ player.name }}</a> ({{ score.player_scores()[player.name] }}){% if i != len(score.players) - 1 %}, {% end %}
-                {% end %}
-              </td>
-              <td>{{ (score.date - timedelta(minutes=time_offset)).strftime("%b %d %Y %I:%M%p") }}</td>
-            </tr>
-          {% end %}
-          </tbody>
-        </table>
+{% for (game_type, game_type_string) in [("3tau", "3 Tau"), ("6tau", "6 Tau"), ("g3tau", "Generalized 3 Tau"), ("i3tau", "Insane 3 Tau"), ("e3tau", "Easy 3 Tau (beta)")] %}
+{% if game_type in all_high_scores %}
+<div class="leaderboard_container">
+  <h2>{{ game_type_string }}</h2>
+  {% for (num_players, scores) in all_high_scores[game_type].items() %}
+    <h4>{{ num_players }} players</h4>
+    <table class="leaderboard">
+      <thead><tr><th>Time</th><th>Players</th><th>Date</th></tr></thead>
+      <tbody>
+      {% for score in scores %}
+        <tr>
+          <td>{{ fmt_time(score.elapsed_time) }}</td>
+          <td>
+            {% set processed_players = sorted(score.players, None, lambda x: x.name) %}
+            {% for (i, player) in enumerate(processed_players) %}
+            <a href="/leaderboard/{{ selected_leaderboard_type }}/{{ player.name }}">{{ player.name }}</a> ({{ score.player_scores()[player.name] }}){% if i != len(score.players) - 1 %}, {% end %}
+            {% end %}
+          </td>
+          <td>{{ (score.date - timedelta(minutes=time_offset)).strftime("%b %d %Y %I:%M%p") }}</td>
+        </tr>
       {% end %}
-    </div>
-    {% end %}
-    {% end %}
+      </tbody>
+    </table>
+  {% end %}
+</div>
+{% end %}
+{% end %}
 
-    <div style="clear:both;"></div>
-    
-    <div>
-      <a href="/">Back to games</a>
-    </div>
-  </body>
-</html>
+<div style="clear:both;"></div>
+
+<div>
+  <a href="/">Back to games</a>
+</div>
+{% end %}

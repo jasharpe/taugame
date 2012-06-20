@@ -1,17 +1,11 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>Tau - Choose Name</title>
+{% extends chrome.html %}
 
-    <script type="text/javascript" src="{{ static_url("jquery.js") }}"></script>
-    <script type="text/javascript" src="{{ static_url("time.js") }}"></script>
-    <link rel="stylesheet" type="text/css" href="{{ static_url("reset.css") }}" />
-    <link rel="stylesheet" type="text/css" href="{{ static_url("styles.css") }}" />
-  </head>
-    Choose a name:
-    <form name="choose_name" action="/choose_name" method="post">
-      <input type="text" name="name" />
-      <input type="submit" value="Choose" />
-    </form>
-  </body>
-</html>
+{% block title %}Choose Name{% end %}
+
+{% block body %}
+Choose a name:
+<form name="choose_name" action="/choose_name" method="post">
+  <input type="text" name="name" />
+  <input type="submit" value="Choose" />
+</form>
+{% end %}
