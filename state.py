@@ -61,14 +61,20 @@ def get_ranks(total_time, game_type, player_names, num_players):
   import time
   init_time = time.time()
 
-  ret = {}
+  global_ranks = {
+      "close" : { "personal" : None },
+      "exact" : { "personal" : None }
+  }
+  player_ranks = {}
   session = get_session()
   for player_name in player_names:
-    ret[player_name] = {}
+    player_ranks[player_name] = {}
     for close in ["close", "exact"]:
-      ret[player_name][close] = {}
+      player_ranks[player_name][close] = {}
       for leaderboard in ["personal", "all"]:
-        ret[player_name][close][leaderboard] = {}
+        player_ranks[player_name][close][leaderboard] = {}
+        if leaderboard == "all":
+          global_ranks[close][leaderboard] = {}
         for leaderboard_type in ["alltime", "thisweek", "today"]:
           time_filter = filter_map[leaderboard_type]()
           elapsed_time_filter = Score.elapsed_time < total_time - (CLOSE_THRESHOLD if close == "close" else 0)
@@ -87,13 +93,21 @@ def get_ranks(total_time, game_type, player_names, num_players):
             if percentile == 100:
               percentile = 99
           
-          ret[player_name][close][leaderboard][leaderboard_type] = {
+          player_ranks[player_name][close][leaderboard][leaderboard_type] = {
               'percentile' : percentile,
               'rank' : better + 1,
           }
+          if leaderboard == "all":
+            global_ranks[close][leaderboard][leaderboard_type] = {
+                'percentile' : percentile,
+                'rank' : better + 1,
+            }
   logging.warning("Took %.03f seconds to fetch player ranks for %d player", time.time() - init_time, num_players)
 
-  return ret
+  return {
+      'global' : global_ranks,
+      'players' : player_ranks
+  }
 
 def save_game(game):
   session = get_session()

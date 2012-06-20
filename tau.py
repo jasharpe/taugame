@@ -188,6 +188,12 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
       for (number, times) in numbers_map.items():
         numbers_map[number] = sum(times) / float(len(times))
 
+    player_rank_info = None
+    if game.ended and name in game.player_ranks['players']:
+      player_rank_info = game.player_ranks['players'][name]
+    elif game.ended:
+      player_rank_info = game.player_ranks['global']
+
     self.write_message(json.dumps({
         'type' : 'update',
         'board' : game.board,
@@ -198,7 +204,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
         'time' : time,
         'hint' : game.get_tau() if args.hints else None,
         'ended' : game.ended,
-        'player_rank_info' : game.player_ranks[name] if game.ended and name in game.player_ranks else None
+        'player_rank_info' : player_rank_info
     }))
 
   def on_message(self, message_json):
