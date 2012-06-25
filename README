@@ -28,3 +28,4 @@ For options, type:
 - Add a name mapping and URL mapping to tau.py.
 - Add a rules description to templates/about.html.
 - (Optional) Add a custom graph time cutoff in state.py.
+- (Sometimes applicable) Add changes to playing area in tau.js.

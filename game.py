@@ -7,7 +7,7 @@ I3TAU_CALCULATION_LOGGING_THRESHOLD = 0.25
 class InvalidGameType(Exception):
   pass
 
-game_types = ['3tau', 'g3tau', '6tau', 'i3tau', 'e3tau']
+game_types = ['3tau', 'g3tau', '6tau', 'i3tau', 'e3tau', '4tau']
 
 type_to_size_map = {
   '3tau': 3,
@@ -15,6 +15,7 @@ type_to_size_map = {
   '6tau': 6,
   'i3tau': 3,
   'e3tau': 3,
+  '4tau': 4,
 }
 
 def shuffled(xs):
@@ -43,7 +44,8 @@ class Game(object):
     self.player_ranks = {}
 
     if quick:
-      for i in xrange(0, 23 if self.size == 3 else 12):
+      # Play the game nearly to completion.
+      while self.deck:
         self.take_tau()
 
   def take_tau(self):
@@ -74,7 +76,7 @@ class Game(object):
       self.board.pop()
 
     # add new cards to fill in gaps
-    while len(filter(None, self.board)) < self.min_number or (self.no_subset_is_tau(filter(None, self.board), self.size) and self.type != "g3tau"):
+    while len(filter(None, self.board)) < self.min_number or (self.no_subset_is_tau(filter(None, self.board), self.size) and self.type not in ['g3tau', '4tau']):
       if not self.deck:
         break
       to_add = self.size
@@ -137,8 +139,8 @@ class Game(object):
         self.board[i] = self.deck.pop()
 
 
-    # compute a new target tau for Generalized 3 Tau
-    if self.type == "g3tau":
+    # compute a new target tau for Generalized 3 Tau and 4 Tau
+    if self.type in ['g3tau', '4tau']:
       self.target_tau = self.get_random_target(self.board)
 
     # add Nones at the end as necessary
@@ -152,10 +154,10 @@ class Game(object):
 
   def get_random_target(self, board):
       no_nones = filter(None, board)
-      if len(no_nones) < 3:
+      if len(no_nones) < self.size:
         return []
       else:
-        all_card_subsets = [card_subset for card_subset in itertools.combinations(no_nones, 3)]
+        all_card_subsets = [card_subset for card_subset in itertools.combinations(no_nones, self.size)]
         return self.sum_cards(all_card_subsets[random.randint(0, len(all_card_subsets) - 1)])
 
   def is_over(self):
@@ -191,6 +193,7 @@ class Game(object):
       self.compress_and_fill_board()
       if self.is_over():
         self.total_time = self.get_total_time()
+        self.target_tau = None
         self.ended = True
       return True
     else:
@@ -213,6 +216,8 @@ class Game(object):
     if len(cards) == 3 and self.type in ["3tau", "6tau", "i3tau", "e3tau"]:
       return self.is_tau_basic(cards)
     elif len(cards) == 3 and self.type in ["g3tau"]:
+      return self.sum_cards(cards) == self.target_tau
+    elif len(cards) == 4 and self.type in ['4tau']:
       return self.sum_cards(cards) == self.target_tau
     elif len(cards) == 6:
       return self.is_tau_basic(cards) and self.no_subset_is_tau(cards, 3)

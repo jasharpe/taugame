@@ -30,6 +30,10 @@
   <input type="submit" value="New Easy 3 Tau (beta) game" />
 </form>
 
+<form style="display:inline-block;" name="new_game" action="/new_game/4tau" method="post">
+  <input type="submit" value="New 4 Tau game" />
+</form>
+
 <div id="game_panel">
   {% for (id, label) in [("newgames", "New games"), ("startedgames", "Started games"), ("endedgames", "Ended games")] %}
   <div id="{{ id }}" style="display:none;">
