@@ -1,5 +1,5 @@
 from db import Base, get_session
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, Text, Table, distinct, func, or_
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, Text, Table, distinct, func, or_, and_
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.sql.expression import desc, asc
 import datetime
@@ -35,17 +35,24 @@ def get_numbers(leaderboard_type, players):
     numbers_query = filter_for_players(numbers_query, players)
   return list(numbers_query)
 
-def get_all_high_scores(num_scores, leaderboard_type, players):
+def get_all_high_scores(num_scores, leaderboard_type, players, conjunction):
   session = get_session()
   time_filter = filter_map[leaderboard_type]()
   ret = {}
   for (number, game_type) in get_numbers(leaderboard_type, players):
-    if not game_type in ret:
-      ret[game_type] = {}
-    top_scores = session.query(Score).filter_by(num_players=number,game_type=game_type).filter(time_filter).order_by(asc(Score.elapsed_time))
-    if players:
+    if conjunction == "and":
+      top_scores = session.query(Score).filter_by(num_players=number,game_type=game_type).filter(time_filter).order_by(asc(Score.elapsed_time))
       top_scores = filter_for_players(top_scores, players)
-    ret[game_type][number] = list(top_scores.limit(num_scores))
+      top_scores = top_scores.group_by(Score.id).having(func.count(distinct(DBPlayer.name)) == len(players))
+    else:
+      top_scores = session.query(Score).filter_by(num_players=number,game_type=game_type).filter(time_filter).order_by(asc(Score.elapsed_time))
+      if players:
+        top_scores = filter_for_players(top_scores, players)
+    scores = list(top_scores.limit(num_scores))
+    if scores:
+      if not game_type in ret:
+        ret[game_type] = {}
+      ret[game_type][number] = scores
   return ret
 
 def get_or_create_dbplayer(session, name):

@@ -255,12 +255,12 @@ class GraphHandler(tornado.web.RequestHandler):
         time_offset=time_offset)
 
 class LeaderboardHandler(tornado.web.RequestHandler):
-  def get(self, leaderboard_type, slash_separated_players=None):
+  def get(self, leaderboard_type, slash_separated_players=None, conjunction=None):
     if slash_separated_players:
       players = filter(None, slash_separated_players.split("/"))
     else:
       players = []
-    all_high_scores = get_all_high_scores(10, leaderboard_type, players)
+    all_high_scores = get_all_high_scores(10, leaderboard_type, players, conjunction)
     try:
       time_offset = int(url_unescape(self.get_cookie("time_offset")))
     except:
@@ -271,7 +271,8 @@ class LeaderboardHandler(tornado.web.RequestHandler):
         all_high_scores=all_high_scores,
         leaderboard_types=[('alltime', 'All Time'), ('thisweek', 'This Week'), ('today', 'Today')],
         selected_leaderboard_type=leaderboard_type,
-        time_offset=time_offset)
+        time_offset=time_offset,
+        conjunction=conjunction)
 
 class ChooseNameHandler(tornado.web.RequestHandler):
   def get(self):
@@ -353,8 +354,12 @@ class AboutHandler(tornado.web.RequestHandler):
 
 application = tornado.web.Application([
   (r"/", MainHandler),
+  # 0 players
   (r"/leaderboard/(alltime|thisweek|today)/?", LeaderboardHandler),
-  (r"/leaderboard/(alltime|thisweek|today)/((?:[^/]+/?)+)", LeaderboardHandler),
+  # 1 player
+  (r"/leaderboard/(alltime|thisweek|today)/([^/]+)/?", LeaderboardHandler),
+  # 2+ players
+  (r"/leaderboard/(alltime|thisweek|today)/((?:[^/]+/){2,})(and|or)/?", LeaderboardHandler),
   (r"/graph/([^/]*)", GraphHandler),
   (r"/choose_name", ChooseNameHandler),
   (r"/new_game/(3tau|6tau|g3tau|i3tau|e3tau|4tau)", NewGameHandler),

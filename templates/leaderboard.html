@@ -15,6 +15,7 @@ $(document).ready(function() {
 
 {% block body %}
 {% from mytime import fmt_time %}
+{% from strlib import oxford %}
 {% from datetime import timedelta %}
 <div class="leaderboard_menu">
   <a href="/">Back to games</a>
@@ -33,7 +34,7 @@ $(document).ready(function() {
 
 <div class="leaderboard_menu">
 {% if players %}
-<span>High scores for {{ ", ".join(players) }}:</span>
+<span>High scores including {{ oxford(players, conjunction) }}:</span>
 {% for (i, (leaderboard_type, leaderboard_type_label)) in enumerate(leaderboard_types) %}
 {% if leaderboard_type == selected_leaderboard_type %}
   <span>{{ leaderboard_type_label }}</span>
