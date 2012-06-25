@@ -31,6 +31,8 @@ $(function() {
           game_type = "Insane 3 Tau";
         } else if (game_data.type == "e3tau") {
           game_type = "Easy 3 Tau";
+        } else if (game_data.type == "4tau") {
+          game_type = "4 Tau";
         }
 
         section.find(".games_list").append($("<li><a href=\"/game/" + game_data.id + "\">Game " + game_data.id + "</a> (" + game_type + ") - " + players_string + "</li>"));
