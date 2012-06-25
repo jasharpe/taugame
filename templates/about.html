@@ -302,5 +302,34 @@
   <h3 id="rulese3tau">Easy 3 Tau</h3>
 
   <p>Similar to Insane 3 Tau, except the dealer tries to make boards with a lot of taus.
+
+  <h3 id="rules4tau">4 Tau</h3>
+
+  <p>4 Tau is a mathematical extension of 3 Tau that is similar to Generalized 3 Tau but doesn't depend on choice of zero. In 4 Tau, you are given a target card T, and are asked to find 4 cards A, B, C, D such that A+B+C+D = T. This is equivalent to: there are cards X and Y such that A,B,X is a 3 Tau, C,D,Y is a 3 Tau, and X,Y,T is a 3 Tau.
+
+  <p>For example, suppose the target card is this:
+
+  {% raw cards[('square', 'solid', 'one', 'green')] %}
+
+  <p>The following 4 cards sum up to this target card, so these 4 are a 4 Tau:
+
+  {% raw cards[('square', 'empty', 'two', 'green')] %}
+  {% raw cards[('circle', 'shaded', 'two', 'green')] %}
+  {% raw cards[('circle', 'solid', 'two', 'red')] %}
+  {% raw cards[('circle', 'solid', 'one', 'blue')] %}
+
+  <p>Using the other definition, it's a 4 Tau because all of the following are 3 Taus:
+
+  {% raw cards[('square', 'empty', 'two', 'green')] %}
+  {% raw cards[('circle', 'shaded', 'two', 'green')] %}
+  {% raw cards[('triangle', 'solid', 'two', 'green')] %}
+  <br/>
+  {% raw cards[('circle', 'solid', 'two', 'red')] %}
+  {% raw cards[('circle', 'solid', 'one', 'blue')] %}
+  {% raw cards[('circle', 'solid', 'three', 'green')] %}
+  <br/>
+  {% raw cards[('triangle', 'solid', 'two', 'green')] %}
+  {% raw cards[('circle', 'solid', 'three', 'green')] %}
+  {% raw cards[('square', 'solid', 'one', 'green')] %}
 </div>
 {% end %}

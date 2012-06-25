@@ -212,7 +212,7 @@ $(document).ready(function() {
         row.append(col);
         col.disableTextSelect();
       }
-      if (game_type === "g3tau" && !ended) {
+      if (target != null) {
         var col = $('<td>');
         var div = $('<div class="fakeCard">');
         col.append(div);

@@ -313,6 +313,7 @@ class GameHandler(tornado.web.RequestHandler):
     "g3tau" : "Generalized 3 Tau",
     "i3tau" : "Insane 3 Tau",
     "e3tau" : "Easy 3 Tau (beta)",
+    "4tau" : "4 Tau",
   }
 
   def get(self, game_id):
@@ -356,7 +357,7 @@ application = tornado.web.Application([
   (r"/leaderboard/(alltime|thisweek|today)/((?:[^/]+/?)+)", LeaderboardHandler),
   (r"/graph/([^/]*)", GraphHandler),
   (r"/choose_name", ChooseNameHandler),
-  (r"/new_game/(3tau|6tau|g3tau|i3tau|e3tau)", NewGameHandler),
+  (r"/new_game/(3tau|6tau|g3tau|i3tau|e3tau|4tau)", NewGameHandler),
   (r"/game/(\d+)", GameHandler),
   (r"/websocket/(\d*)", TauWebSocketHandler),
   (r"/gamelistwebsocket/(0|1)", GameListWebSocketHandler),
