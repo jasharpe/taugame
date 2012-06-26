@@ -4,10 +4,21 @@
 
 {% block scripts %}
 <script>
+var players = ["{{ '", "'.join(players) }}"];
 $(document).ready(function() {
   $("#go_to_user_form").submit(function(e) {
     e.preventDefault();
     window.location = window.location.origin + "/leaderboard/{{ selected_leaderboard_type }}/" + $("#user_name").val();
+  });
+  $("#add_user_form").submit(function(e) {
+    e.preventDefault();
+    var new_url = window.location.origin + "/leaderboard/{{ selected_leaderboard_type }}/" + "{{ "/".join(players) }}" + "/" + $("#added_user_name").val();
+    {% if conjunction is not None %}
+    new_url += "/{{ conjunction }}";
+    {% else %}
+    new_url += "/or";
+    {% end %}
+    window.location = new_url;
   });
 });
 </script>
@@ -35,16 +46,35 @@ $(document).ready(function() {
 <div class="leaderboard_menu">
 {% if players %}
 <span>High scores including {{ oxford(players, conjunction) }}:</span>
-{% for (i, (leaderboard_type, leaderboard_type_label)) in enumerate(leaderboard_types) %}
-{% if leaderboard_type == selected_leaderboard_type %}
-  <span>{{ leaderboard_type_label }}</span>
-{% else %}
-  <a href="/leaderboard/{{ leaderboard_type }}/{{ "/".join(players) }}">{{ leaderboard_type_label }}</a>
-{% end %}
-{% if i != len(leaderboard_types) - 1 %}|{% end %}
-{% end %}
+  {% for (i, (leaderboard_type, leaderboard_type_label)) in enumerate(leaderboard_types) %}
+    {% if leaderboard_type == selected_leaderboard_type %}
+    <span>{{ leaderboard_type_label }}</span>
+    {% else %}
+      {% if conjunction is not None %}
+      <a href="/leaderboard/{{ leaderboard_type }}/{{ "/".join(players) }}/{{ conjunction }}">{{ leaderboard_type_label }}</a>
+      {% else %}
+      <a href="/leaderboard/{{ leaderboard_type }}/{{ "/".join(players) }}">{{ leaderboard_type_label }}</a>
+      {% end %}
+    {% end %}
+    {% if i != len(leaderboard_types) - 1 %}|{% end %}
+  {% end %}
+  {% if conjunction is not None %}
+  -
+    {% if conjunction == "and" %}
+    <span>and</span> | <a href="/leaderboard/{{ selected_leaderboard_type }}/{{ "/".join(players) }}/or">or</a>
+    {% else %}
+    <a href="/leaderboard/{{ selected_leaderboard_type }}/{{ "/".join(players) }}/and">and</a> | <span>or</span>
+    {% end %}
+  {% end %}
 {% end %}
 </div>
+
+{% if players %}
+<form name="add_user" id="add_user_form">
+  <input type="text" id="added_user_name" name="name" />
+  <input type="submit" value="Add user" />
+</form>
+{% end %}
 
 <form name="go_to_user" id="go_to_user_form">
   <input type="text" id="user_name" name="name" />
