@@ -5,7 +5,16 @@
 {% block body %}
 Choose a name:
 <form name="choose_name" action="/choose_name" method="post">
-  <input type="text" name="name" />
+  {% if name is not None %}
+  <input type="text" name="name" value="{{ name }}"/>
+  {% else %}
+  <input type="text" name="name"/>
+  {% end %}
   <input type="submit" value="Choose" />
 </form>
+  {% if user is not None %}
+  Logged in with Google account with email {{ user['email'] }} (<a href="/google">switch</a>, <a href="/logout">logout</a>).
+  {% else %}
+  Not logged in. Log in with <a href="/google">Google</a>?
+  {% end %}
 {% end %}

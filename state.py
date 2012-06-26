@@ -200,6 +200,51 @@ class Score(Base):
   def player_scores(self):
     return json.loads(self.player_scores_json)
 
+# Returns true if the name is allowed to be taken.
+def check_name(name, email=None):
+  session = get_session()
+  names = session.query(Name).filter_by(name=name)
+  if list(names):
+    user_name = names[0]
+    return user_name.email == email
+  return True
+
+def get_name(email):
+  session = get_session()
+  existing_names = session.query(Name).filter_by(email=email)
+  if list(existing_names):
+    return existing_names[0].name
+  return None
+
+def set_name(email, name):
+  session = get_session()
+  if not check_name(name, email):
+    raise Exception("name %s is taken")
+  existing_names = session.query(Name).filter_by(email=email)
+  if list(existing_names):
+    existing_name = existing_names[0]
+    existing_name.name = name
+    session.add(existing_name)
+    session.commit()
+  else:
+    new_name = Name(email, name)
+    session.add(new_name)
+    session.commit()
+
+class Name(Base):
+  __tablename__ = 'names'
+
+  id = Column(Integer, primary_key=True)
+  email = Column(String, unique=True)
+  name = Column(String, unique=True)
+
+  def __init__(self, email, name):
+    self.email = email
+    self.name = name
+
+  def __repr__(self):
+    return "<Name(%s, %s)>" % (email, name)
+
 # Represents the state just before a tau is taken, and
 # the tau that was taken.
 class State(Base):

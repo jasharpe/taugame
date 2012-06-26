@@ -1,4 +1,5 @@
 import tornado.web
+import tornado.auth
 import tornado.websocket
 import tornado.httpserver
 from tornado import template
@@ -9,11 +10,13 @@ from game import Game, InvalidGameType
 import argparse
 import datetime
 import ssl
-from state import save_game, get_all_high_scores, get_ranks, get_graph_data
+from state import save_game, get_all_high_scores, get_ranks, get_graph_data, check_name, set_name, get_name
+from secrets import cookie_secret
 
 settings = {
     "template_path" : os.path.join(os.path.dirname(__file__), "templates"),
     "static_path" : os.path.join(os.path.dirname(__file__), "static"),
+    "cookie_secret" : cookie_secret,
 }
 
 # Tau sockets
@@ -44,7 +47,7 @@ def get_players_in_game(game_id):
   players = set()
   for socket in game_to_sockets[game_id]:
     try:
-      players.add(url_unescape(socket.get_cookie("name")))
+      players.add(url_unescape(socket.get_secure_cookie("name")))
     except:
       pass
   return sorted(players)
@@ -80,7 +83,7 @@ class GameListWebSocketHandler(tornado.websocket.WebSocketHandler):
     players = []
     for socket in game_list_sockets:
       try:
-        players.append(url_unescape(socket.get_cookie("name")))
+        players.append(url_unescape(socket.get_secure_cookie("name")))
       except:
         pass
     return players
@@ -132,7 +135,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
     
     scores = {}
     for socket in game_to_sockets[self.game_id]:
-      name = url_unescape(socket.get_cookie("name"))
+      name = url_unescape(socket.get_secure_cookie("name"))
       if name in game.scores.keys():
         scores[name] = game.scores[name]
       else:
@@ -173,7 +176,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
   def send_update(self):
     game = socket_to_game[self]
     time = game.total_time if game.ended else game.get_total_time()
-    name = url_unescape(self.get_cookie("name"))
+    name = url_unescape(self.get_secure_cookie("name"))
 
     numbers_map = None
     if game.ended:
@@ -223,7 +226,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
     elif message['type'] == 'submit':
       game = socket_to_game[self]
       if game.started and not game.ended:
-        if game.submit_tau(map(tuple, message['cards']), url_unescape(self.get_cookie("name"))):
+        if game.submit_tau(map(tuple, message['cards']), url_unescape(self.get_secure_cookie("name"))):
           if game.ended:
             send_game_list_update_to_all()
             (db_game, score) = save_game(game)
@@ -233,14 +236,14 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
 class MainHandler(tornado.web.RequestHandler):
   def get(self):
     see_more_ended = self.get_argument('see_more_ended', default=False)
-    if not self.get_cookie("name"):
-      self.redirect("/choose_name")
+    if not self.get_secure_cookie("name"):
+      self.redirect("/choose_name?use_default=1")
       return
     
     self.render(
         "game_list.html",
         see_more_ended=int(see_more_ended),
-        player=url_unescape(self.get_cookie("name")))
+        player=url_unescape(self.get_secure_cookie("name")))
 
 class GraphHandler(tornado.web.RequestHandler):
   def get(self, player):
@@ -275,17 +278,40 @@ class LeaderboardHandler(tornado.web.RequestHandler):
         conjunction=conjunction)
 
 class ChooseNameHandler(tornado.web.RequestHandler):
+  def get_user(self):
+    if self.get_secure_cookie("google_user"):
+      return json.loads(url_unescape(self.get_secure_cookie("google_user")))
+    return None
+
   def get(self):
-    self.render("choose_name.html")
+    use_default = self.get_argument('use_default', default=False)
+    user = self.get_user()
+    name = None
+    if user is not None:
+      name = get_name(user['email'])
+      if name is not None and use_default:
+        self.set_secure_cookie('name', url_escape(name))
+        self.redirect("/")
+        return
+    self.render("choose_name.html", user=user, name=name)
 
   def post(self):
     name = self.get_argument("name")
+    user = self.get_user()
+    email = None
+    if user is not None:
+      email = user['email']
     if "/" in name:
       # TODO: put in error code
       # TODO: escape names properly generally so we don't need to outlaw slashes
-      self.redirect("/choose_name")
+      self.redirect("/choose_name?slash_error=1")
       return
-    self.set_cookie("name", url_escape(name))
+    if not check_name(name, email):
+      self.redirect("/choose_name?used_name_error=1")
+      return
+    if email is not None:
+      set_name(email, name)
+    self.set_secure_cookie("name", url_escape(name))
     self.redirect("/")
 
 class NewGameHandler(tornado.web.RequestHandler):
@@ -318,14 +344,14 @@ class GameHandler(tornado.web.RequestHandler):
   }
 
   def get(self, game_id):
-    if not self.get_cookie("name") or not int(game_id) in games:
-      self.redirect("/")
+    if not self.get_secure_cookie("name") or not int(game_id) in games:
+      self.redirect("/choose_name")
       return
     game = games[int(game_id)]
     self.render(
         "game.html",
         game_id=game_id,
-        user_name=url_unescape(self.get_cookie("name")),
+        user_name=url_unescape(self.get_secure_cookie("name")),
         game_type=self.game_type_to_type_string_map[game.type],
         game=game)
 
@@ -352,6 +378,32 @@ class AboutHandler(tornado.web.RequestHandler):
         cards=cards
         )
 
+class GoogleHandler(tornado.web.RequestHandler, tornado.auth.GoogleMixin):
+  @tornado.web.asynchronous
+  def get(self):
+    if self.get_argument("openid.mode", None):
+      self.get_authenticated_user(self.async_callback(self._on_auth))
+      return
+    self.authenticate_redirect()
+    
+  def _on_auth(self, user):
+    if not user:
+      raise tornado.web.HTTPError(500, "Google auth failed")
+    self.set_secure_cookie("google_user", url_escape(json.dumps(user)))
+    name = get_name(user['email'])
+    if name is None:
+      self.redirect("/choose_name")
+      return
+    else:
+      self.set_secure_cookie('name', url_escape(name))
+      self.redirect("/")
+
+class LogoutHandler(tornado.web.RequestHandler):
+  def get(self):
+    self.clear_cookie("google_user")
+    self.clear_cookie("name")
+    self.redirect("/choose_name")
+
 application = tornado.web.Application([
   (r"/", MainHandler),
   # 0 players
@@ -368,6 +420,8 @@ application = tornado.web.Application([
   (r"/gamelistwebsocket/(0|1)", GameListWebSocketHandler),
   (r"/time", TimeHandler),
   (r"/about", AboutHandler),
+  (r"/google", GoogleHandler),
+  (r"/logout", LogoutHandler),
 ], **settings)
 
 # returns control to the main thread every 250ms
