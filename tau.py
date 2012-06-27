@@ -238,7 +238,18 @@ def require_name(f):
   @wraps(f)
   def wrapper(*args, **kwargs):
     self = args[0]
+    # If user doesn't have a name, go to name chooser.
     if not self.get_secure_cookie("name"):
+      self.redirect("/choose_name")
+      return
+    # If user has a reserved name, go to name chooser.
+    name = url_unescape(self.get_secure_cookie("name"))
+    user = get_user(self)
+    email = None
+    if user is not None:
+      email = user['email']
+    if not check_name(name, email):
+      self.clear_cookie("name")
       self.redirect("/choose_name")
       return
     return f(*args, **kwargs)
@@ -284,14 +295,14 @@ class LeaderboardHandler(tornado.web.RequestHandler):
         time_offset=time_offset,
         conjunction=conjunction)
 
-class ChooseNameHandler(tornado.web.RequestHandler):
-  def get_user(self):
-    if self.get_secure_cookie("google_user"):
-      return json.loads(url_unescape(self.get_secure_cookie("google_user")))
-    return None
+def get_user(request_handler):
+  if request_handler.get_secure_cookie("google_user"):
+    return json.loads(url_unescape(request_handler.get_secure_cookie("google_user")))
+  return None
 
+class ChooseNameHandler(tornado.web.RequestHandler):
   def get(self):
-    user = self.get_user()
+    user = get_user(self)
     name = None
     if user is not None:
       name = get_name(user['email'])
@@ -306,7 +317,7 @@ class ChooseNameHandler(tornado.web.RequestHandler):
       self.redirect("/choose_name?slash_error=1")
       return
 
-    user = self.get_user()
+    user = get_user(self)
     email = None
     if user is not None:
       email = user['email']
