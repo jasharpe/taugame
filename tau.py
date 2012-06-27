@@ -233,16 +233,23 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
             game.player_ranks = get_ranks(score.elapsed_time, db_game.game_type, game.scores.keys(), score.num_players)
           self.send_update_to_all()
 
-class MainHandler(tornado.web.RequestHandler):
-  def get(self):
-    see_more_ended = self.get_argument('see_more_ended', default=False)
+def require_name(f):
+  from functools import wraps
+  @wraps(f)
+  def wrapper(*args, **kwargs):
+    self = args[0]
     if not self.get_secure_cookie("name"):
-      self.redirect("/choose_name?use_default=1")
+      self.redirect("/choose_name")
       return
-    
+    return f(*args, **kwargs)
+  return wrapper
+
+class MainHandler(tornado.web.RequestHandler):
+  @require_name
+  def get(self):
     self.render(
         "game_list.html",
-        see_more_ended=int(see_more_ended),
+        see_more_ended=int(self.get_argument('see_more_ended', default=False)),
         player=url_unescape(self.get_secure_cookie("name")))
 
 class GraphHandler(tornado.web.RequestHandler):
@@ -284,30 +291,28 @@ class ChooseNameHandler(tornado.web.RequestHandler):
     return None
 
   def get(self):
-    use_default = self.get_argument('use_default', default=False)
     user = self.get_user()
     name = None
     if user is not None:
       name = get_name(user['email'])
-      if name is not None and use_default:
-        self.set_secure_cookie('name', url_escape(name))
-        self.redirect("/")
-        return
     self.render("choose_name.html", user=user, name=name)
 
   def post(self):
     name = self.get_argument("name")
-    user = self.get_user()
-    email = None
-    if user is not None:
-      email = user['email']
+    # validate name
     if "/" in name:
       # TODO: put in error code
       # TODO: escape names properly generally so we don't need to outlaw slashes
       self.redirect("/choose_name?slash_error=1")
       return
+
+    user = self.get_user()
+    email = None
+    if user is not None:
+      email = user['email']
+    
     if not check_name(name, email):
-      self.redirect("/choose_name?used_name_error=1")
+      self.redirect("/choose_name?name_in_use_error=1")
       return
     if email is not None:
       set_name(email, name)
@@ -315,6 +320,7 @@ class ChooseNameHandler(tornado.web.RequestHandler):
     self.redirect("/")
 
 class NewGameHandler(tornado.web.RequestHandler):
+  @require_name
   def post(self, type):
     if len(games.keys()) == 0:
       next_id = 0
@@ -343,9 +349,10 @@ class GameHandler(tornado.web.RequestHandler):
     "4tau" : "4 Tau",
   }
 
+  @require_name
   def get(self, game_id):
-    if not self.get_secure_cookie("name") or not int(game_id) in games:
-      self.redirect("/choose_name")
+    if not int(game_id) in games:
+      self.redirect("/?invalid_game_id_error=1")
       return
     game = games[int(game_id)]
     self.render(
