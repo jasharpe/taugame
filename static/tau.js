@@ -46,6 +46,10 @@ $(document).ready(function() {
       $("#chat_box").focus();
       return false;
     }
+    if (key === "l") {
+      pause(game_paused ? "unpause" : "pause");
+      return false;
+    }
   });
 
   // onfocus from chat box on escape. Helps with button mashing.
@@ -76,6 +80,13 @@ $(document).ready(function() {
     ws.send(JSON.stringify({
         'type' : 'submit',
         'cards' : cards
+    }));
+  };
+
+  function pause(pause_or_unpause) {
+    ws.send(JSON.stringify({
+        'type' : 'pause',
+        'pause' : pause_or_unpause,
     }));
   };
 
@@ -150,7 +161,9 @@ $(document).ready(function() {
 
   var prev_board = [];
   var card_to_board_map = {}
-  function update_board(board, target, number, hint, ended) {
+  var game_paused = false;
+  function update_board(board, paused, target, number, hint, ended) {
+    game_paused = paused;
     console.log("This board has " + number + " taus");
 
     var processed_hint = []
@@ -164,6 +177,16 @@ $(document).ready(function() {
     old_selected = selection_model['selected'];
     selection_model['selected'] = [];
     playing_area.html('');
+
+    if (paused) {
+      var unpause_link = $("<a id=\"unpause\" tabindex=\"1\" href=\"javascript:void(0);\">Unpause</a>");
+      unpause_link.click(function() {
+        pause("unpause");
+      });
+      playing_area.append(unpause_link);
+      return;
+    }
+
     var table = $('<table style="display:inline-block;">');
     var max_row = 3;
     var max_col = board.length / max_row;
@@ -172,6 +195,9 @@ $(document).ready(function() {
     var this_board = [];
     for (var row_index = 0; row_index < max_row; row_index++) {
       var row = $('<tr>');
+      if (row_index === max_row - 1) {
+        row.addClass("bottomRow");
+      }
       for (var col_index = 0; col_index < max_col; col_index++) {
         var card_index = row_index + col_index * max_row;
         var card = board[card_index];
@@ -263,7 +289,7 @@ $(document).ready(function() {
     thing(player_rank_info.close);
   };
 
-  function update_time(time, avg_number, ended, player_rank_info) {
+  function update_time(time, paused, avg_number, ended, player_rank_info) {
     last_server_time = time;
     last_server_time_browser_time = new Date().getTime() / 1000;
     $("#time").html('');
@@ -278,10 +304,12 @@ $(document).ready(function() {
     } else {
       $("#time").append($("<span>ELAPSED TIME: </span>"));
       clearInterval(current_time_updater);
-      current_time_updater = setInterval(function() {
-        seconds = get_time(ended);
-        time_display.html(format_time(seconds));
-      }, 500);
+      if (!paused) {
+        current_time_updater = setInterval(function() {
+          seconds = get_time(ended);
+          time_display.html(format_time(seconds));
+        }, 500);
+      }
     }
     $("#time").append(time_display);
     if (avg_number !== null) {
@@ -289,13 +317,13 @@ $(document).ready(function() {
     }
   };
 
-  function update(board, target, scores, time, avg_number, number, ended, hint, player_rank_info) {
+  function update(board, paused, target, scores, time, avg_number, number, ended, hint, player_rank_info) {
     update_scores(scores, ended);
     
-    update_time(time, avg_number, ended, player_rank_info);
+    update_time(time, paused, avg_number, ended, player_rank_info);
 
     // update board
-    update_board(board, target, number, hint, ended);
+    update_board(board, paused, target, number, hint, ended);
 
     if (ended) {
       $("body").addClass("ended");
@@ -313,7 +341,7 @@ $(document).ready(function() {
   ws.onmessage = function (e) {
     var data = JSON.parse(e.data);
     if (data.type == "update") {
-      update(data.board, data.target, data.scores, data.time, data.avg_number, data.number, data.ended, data.hint, data.player_rank_info);
+      update(data.board, data.paused, data.target, data.scores, data.time, data.avg_number, data.number, data.ended, data.hint, data.player_rank_info);
     } else if (data.type == "scores") {
       update_scores(data.scores, data.ended);
     } else if (data.type == "chat") {

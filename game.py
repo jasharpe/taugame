@@ -39,9 +39,11 @@ class Game(object):
     self.target_tau = None
     self.compress_and_fill_board()
     self.started = False
-    self.start_time = 0
+    self.most_recent_start_time = 0
+    self.previous_time = 0
     self.ended = False
     self.player_ranks = {}
+    self.paused = False
 
     if quick:
       # Play the game nearly to completion.
@@ -52,8 +54,19 @@ class Game(object):
     self.submit_tau(self.get_tau(), "dummy")
 
   def start(self):
-    self.start_time = time.time()
+    self.most_recent_start_time = time.time()
     self.started = True
+
+  def is_pausable(self):
+    return self.started and not self.ended
+
+  def pause(self):
+    self.previous_time += time.time() - self.most_recent_start_time
+    self.paused = True
+
+  def unpause(self):
+    self.most_recent_start_time = time.time()
+    self.paused = False
 
   def remove_cards(self, cards):
     for i in range(0, len(self.board)):
@@ -180,7 +193,10 @@ class Game(object):
     return not any([not card in self.board for card in cards])
 
   def get_total_time(self):
-    return time.time() - self.start_time
+    if self.paused:
+      return self.previous_time
+    else:
+      return time.time() - self.most_recent_start_time + self.previous_time
 
   def submit_tau(self, cards, player):
     if len(cards) == self.size and self.board_contains(cards) and self.is_tau(cards):
