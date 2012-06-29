@@ -138,10 +138,10 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
   def pause(self, pause):
     game = socket_to_game[self]
     if game.is_pausable():
-      if pause == "pause" and len(game_to_sockets[self.game_id]) < 2:
+      if pause == "pause" and not game.paused and len(game_to_sockets[self.game_id]) < 2:
         game.pause()
         return True
-      elif game.paused:
+      elif pause != "pause" and game.paused:
         game.unpause()
         return True
     return False
