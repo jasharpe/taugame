@@ -124,8 +124,6 @@ def save_game(game):
   last_elapsed_time = 0
   for (board, tau) in zip(game.boards, game.taus):
     (elapsed_time, total_taus, player, cards) = tau
-    if player == "dummy":
-      continue
     if player in name_to_player_map:
       db_player = name_to_player_map[player]
       player_to_score_map[player] += 1
