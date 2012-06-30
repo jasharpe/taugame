@@ -92,7 +92,7 @@ $(document).ready(function() {
 
   function get_card_number(card) {
     if (game_type === "3ptau") {
-      return card[0] + 4 * card[1] + 16 * card[2];
+      return card[0] + 4 * card[1] + 16 * card[2] - 1;
     } else {
       return card[0] + 3 * card[1] + 9 * card[2] + 27 * card[3];
     }
@@ -163,6 +163,14 @@ $(document).ready(function() {
     }
   };
 
+  function getImgClass() {
+    if (game_type === "3ptau") {
+      return "projectiveTau";
+    } else {
+      return "regularTau";
+    }
+  }
+
   var prev_board = [];
   var card_to_board_map = {}
   var game_paused = false;
@@ -211,11 +219,7 @@ $(document).ready(function() {
           col.append(div);
         } else {
           var div = $('<div class="realCard unselectedCard" data-card-index="' + card_index + '" data-card="' + card + '">');
-          if (game_type === "3ptau") {
-            div.addClass("projectiveTau");
-          } else {
-            div.addClass("regularTau");
-          }
+          div.addClass(getImgClass());
           card_index_to_div_map[card_index] = div;
           card_index_to_card_map[card_index] = card;
 
@@ -256,6 +260,7 @@ $(document).ready(function() {
           row.append(col);
         } else {
           var card_div = $('<div class="realCard unselectedCard">');
+          card_div.addClass(getImgClass());
           var card_number = get_card_number(target);
           var offset = card_number * 80;
 

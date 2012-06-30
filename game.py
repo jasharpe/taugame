@@ -2,12 +2,14 @@ import logging
 import random, itertools, time
 from operator import mod
 
+import fingeo
+
 I3TAU_CALCULATION_LOGGING_THRESHOLD = 0.25
 
 class InvalidGameType(Exception):
   pass
 
-game_types = ['3tau', 'g3tau', '6tau', 'i3tau', 'e3tau', '4tau']
+game_types = ['3tau', 'g3tau', '6tau', 'i3tau', 'e3tau', '4tau', '3ptau']
 
 type_to_size_map = {
   '3tau': 3,
@@ -16,6 +18,7 @@ type_to_size_map = {
   'i3tau': 3,
   'e3tau': 3,
   '4tau': 4,
+  '3ptau': 3,
 }
 
 def shuffled(xs):
@@ -30,9 +33,13 @@ class Game(object):
       self.size = type_to_size_map[type]
     except KeyError:
       raise InvalidGameType()
+    if self.type == '3ptau':
+      self.space = fingeo.ProjectiveSpace()
+    else:
+      self.space = fingeo.AffineSpace()
     self.min_number = 12
     self.scores = {}
-    self.deck = create_deck()
+    self.deck = shuffled(self.space.all_points())
     self.board = []
     self.boards = []
     self.taus = []
@@ -171,7 +178,7 @@ class Game(object):
         return []
       else:
         all_card_subsets = [card_subset for card_subset in itertools.combinations(no_nones, self.size)]
-        return self.sum_cards(all_card_subsets[random.randint(0, len(all_card_subsets) - 1)])
+        return self.space.sum_cards(all_card_subsets[random.randint(0, len(all_card_subsets) - 1)])
 
   def is_over(self):
     return len(self.deck) == 0 and self.no_subset_is_tau(filter(None, self.board), self.size)
@@ -215,26 +222,16 @@ class Game(object):
     else:
       return False
 
-  def sum_cards(self, cards):
-    return [sum(zipped) % 3 for zipped in zip(*cards)]
-
-  def negate(self, card):
-    # Note that in Python, the % operator always returns a non-negative number.
-    return map(lambda x: (-x)%3, card)
-
-  def negasum(self, a, b):
-    return self.negate(self.sum_cards([a,b]))
-
   def is_tau_basic(self, cards):
-    return not any(self.sum_cards(cards))
+    return not any(self.space.sum_cards(cards))
 
   def is_tau(self, cards):
-    if len(cards) == 3 and self.type in ["3tau", "6tau", "i3tau", "e3tau"]:
+    if len(cards) == 3 and self.type in ["3tau", "6tau", "i3tau", "e3tau", "3ptau"]:
       return self.is_tau_basic(cards)
     elif len(cards) == 3 and self.type in ["g3tau"]:
-      return self.sum_cards(cards) == self.target_tau
+      return self.space.sum_cards(cards) == self.target_tau
     elif len(cards) == 4 and self.type in ['4tau']:
-      return self.sum_cards(cards) == self.target_tau
+      return self.space.sum_cards(cards) == self.target_tau
     elif len(cards) == 6:
       return self.is_tau_basic(cards) and self.no_subset_is_tau(cards, 3)
     raise Exception("Cards %s are not valid for this game type: %s" % (cards, self.type))
@@ -289,7 +286,7 @@ class Game(object):
     existing_cards = filter(None, self.board)
     completion_map = {}
     for a,b in itertools.combinations(existing_cards, 2):
-      key = tuple(self.negasum(a,b))
+      key = tuple(self.space.negasum(a,b))
       completion_map[key] = 1 + completion_map.get(key, 0)
 
     # Find the card that completes the most taus.
@@ -309,7 +306,16 @@ class Game(object):
     assert best_card is not None
     return best_card
 
-def create_deck():
-  deck = list(itertools.product(*[range(0, 3) for i in range(0, 4)]))
-  random.shuffle(deck)
-  return deck
+  def get_client_board(self):
+    return map(self.space.to_client_card, self.board)
+
+  def get_client_target_tau(self):
+    return self.space.to_client_card(self.target_tau)
+
+  def get_client_tau(self):
+    server_tau = self.get_tau()
+    return map(self.space.to_client_card, server_tau)
+
+  def submit_client_tau(self, cards, player):
+    server_cards = map(self.space.from_client_card, cards)
+    return self.submit_tau(server_cards, player)

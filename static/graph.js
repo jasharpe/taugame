@@ -11,6 +11,7 @@ function drawCharts() {
   drawChart(raw_graph_data_i3tau, document.getElementById('graph_i3tau'));
   drawChart(raw_graph_data_e3tau, document.getElementById('graph_e3tau'));
   drawChart(raw_graph_data_4tau, document.getElementById('graph_4tau'));
+  drawChart(raw_graph_data_3ptau, document.getElementById('graph_3ptau'));
 }
 
 function drawChart(raw_data, element) {
