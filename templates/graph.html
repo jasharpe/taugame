@@ -7,7 +7,7 @@
 
 <script type="text/javascript" src="https://www.google.com/jsapi"></script>  
 <script>
-  {% for game_type in ["3tau", "g3tau", "6tau", "i3tau", "e3tau", "4tau"] %}
+  {% for game_type in ["3tau", "g3tau", "6tau", "i3tau", "e3tau", "4tau", "3ptau"] %}
   var raw_graph_data_{{ game_type }} = [
   {% for score in graph_data[game_type] %}
     [{{ time.mktime(score.date.timetuple()) }}, {{ score.elapsed_time }}],
@@ -53,4 +53,7 @@
 
 <h4>4 Tau</h4>
 <div id="graph_4tau" style="width: 900px; height: 500px;"></div>
+
+<h4>3 Projective Tau</h4>
+<div id="graph_3ptau" style="width: 900px; height: 500px;"></div>
 {% end %}
