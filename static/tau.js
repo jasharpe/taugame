@@ -91,7 +91,11 @@ $(document).ready(function() {
   };
 
   function get_card_number(card) {
-    return card[0] + 3 * card[1] + 9 * card[2] + 27 * card[3];
+    if (game_type === "3ptau") {
+      return card[0] + 4 * card[1] + 16 * card[2];
+    } else {
+      return card[0] + 3 * card[1] + 9 * card[2] + 27 * card[3];
+    }
   };
 
   var in_chat_box = false;
@@ -207,6 +211,11 @@ $(document).ready(function() {
           col.append(div);
         } else {
           var div = $('<div class="realCard unselectedCard" data-card-index="' + card_index + '" data-card="' + card + '">');
+          if (game_type === "3ptau") {
+            div.addClass("projectiveTau");
+          } else {
+            div.addClass("regularTau");
+          }
           card_index_to_div_map[card_index] = div;
           card_index_to_card_map[card_index] = card;
 

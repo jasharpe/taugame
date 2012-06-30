@@ -199,11 +199,18 @@ table {
 .realCard {
   height:120px;
   width:80px;
-  background:url('/static/cards.png?v=2') no-repeat scroll 0 0 white;
   -webkit-border-radius:5px;
   -moz-border-radius:5px;
   margin-right:6px;
   margin-bottom:6px;
+}
+
+.regularTau {
+  background:url('/static/cards.png?v=2') no-repeat scroll 0 0 white;
+}
+
+.projectiveTau {
+  background:url('/static/projcards.png') no-repeat scroll 0 0 white;
 }
 
 .selectedCard {
