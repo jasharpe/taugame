@@ -215,14 +215,14 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
 
     self.write_message(json.dumps({
         'type' : 'update',
-        'board' : game.board,
+        'board' : game.get_client_board(),
         'paused' : game.paused,
-        'target' : game.target_tau,
+        'target' : game.get_client_target_tau(),
         'scores' : self.get_scores(),
         'avg_number' : numbers_map,
         'number' : len(game.get_all_taus()),
         'time' : time,
-        'hint' : game.get_tau() if args.hints else None,
+        'hint' : game.get_client_tau() if args.hints else None,
         'ended' : game.ended,
         'player_rank_info' : player_rank_info
     }))
@@ -246,7 +246,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
     elif message['type'] == 'submit':
       game = socket_to_game[self]
       if game.started and not game.ended and not game.paused:
-        if game.submit_tau(map(tuple, message['cards']), url_unescape(self.get_secure_cookie("name"))):
+        if game.submit_client_tau(map(tuple, message['cards']), url_unescape(self.get_secure_cookie("name"))):
           if game.ended:
             send_game_list_update_to_all()
             (db_game, score) = save_game(game)
@@ -378,6 +378,7 @@ class GameHandler(tornado.web.RequestHandler):
     "i3tau" : "Insane 3 Tau",
     "e3tau" : "Easy 3 Tau (beta)",
     "4tau" : "4 Tau",
+    "3ptau" : "3 Projective Tau",
   }
 
   @require_name
@@ -410,7 +411,7 @@ class AboutHandler(tornado.web.RequestHandler):
         for number in xrange(3):
           for colour in xrange(3):
             offset = 80 * (shape * 27 + shading * 9 + number * 3 + colour)
-            cards[(shapes[shape], shadings[shading], numbers[number], colours[colour])] = "<div class=\"realCard unselectedCard\" style=\"background-position: -%dpx 0px; display:inline-block;\"></div>" % offset
+            cards[(shapes[shape], shadings[shading], numbers[number], colours[colour])] = "<div class=\"realCard unselectedCard regularTau\" style=\"background-position: -%dpx 0px; display:inline-block;\"></div>" % offset
     self.render(
         "about.html",
         cards=cards
@@ -452,7 +453,7 @@ application = tornado.web.Application([
   (r"/leaderboard/(alltime|thisweek|today)/((?:[^/]+/){2,})(and|or)/?", LeaderboardHandler),
   (r"/graph/([^/]*)", GraphHandler),
   (r"/choose_name", ChooseNameHandler),
-  (r"/new_game/(3tau|6tau|g3tau|i3tau|e3tau|4tau)", NewGameHandler),
+  (r"/new_game/(3tau|6tau|g3tau|i3tau|e3tau|4tau|3ptau)", NewGameHandler),
   (r"/game/(\d+)", GameHandler),
   (r"/websocket/(\d*)", TauWebSocketHandler),
   (r"/gamelistwebsocket/(0|1)", GameListWebSocketHandler),

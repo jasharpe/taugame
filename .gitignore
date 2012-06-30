@@ -9,3 +9,6 @@ localhost.key
 
 # Database file.
 hello
+
+# Secret file.
+secrets.py
