@@ -11,20 +11,20 @@ CARD_COUNT = 63
 
 symbol_coords = [
   (8, 0),
-  (42, 30),
+  (42, 32),
   (12, 70),
 ]
 
 symbols = [
   [
-    u'\u265F', # pawn
     u'\u265D', # bishop
     u'\u265E', # knight
+    u'\u265C', # rook
   ],
   [
-    u'\u265C', # rook
-    u'\u265B', # queen
-    u'\u265A', # king
+    u'\u00A5', # yen
+    u'\u00A3', # pound
+    u'\u0024', # dollar
   ],
   [
     u'\u2663', # club
@@ -33,17 +33,27 @@ symbols = [
   ],
 ]
 
+def to_rgb_tuple(hex_colour):
+  n = int(hex_colour[1:], 16)
+  return (n // (256*256), (n//256)%256, n%256)
+
+colours = map(to_rgb_tuple, [
+  '#000000',
+  '#000000',
+  '#000000',
+])
+
 pygame.font.init()
 symbol_fonts = [
   pygame.font.SysFont('arialunicodems', 36),
-  pygame.font.SysFont('arialunicodems', 36),
+  pygame.font.SysFont('arialunicodems', 36, bold=True),
   pygame.font.Font('/Users/malcolmsharpe/Library/Fonts/Batang.ttf', 36),
 ]
 
 s = pygame.Surface((CARD_WIDTH * CARD_COUNT, CARD_HEIGHT), pygame.SRCALPHA)
 
-def putsymbol(font, ch, coords):
-  t = font.render(ch, True, (0,0,0))
+def putsymbol(font, ch, coords, colour):
+  t = font.render(ch, True, colour)
   s.blit(t, coords)
 
 for i in range(CARD_COUNT):
@@ -56,6 +66,6 @@ for i in range(CARD_COUNT):
     if card[j]:
       x = x_offset + symbol_coords[j][0]
       y = symbol_coords[j][1]
-      putsymbol(symbol_fonts[j], symbols[j][card[j]-1], (x,y))
+      putsymbol(symbol_fonts[j], symbols[j][card[j]-1], (x,y), colours[j])
 
 pygame.image.save(s, '../static/projcards.png')
