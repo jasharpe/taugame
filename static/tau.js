@@ -46,7 +46,7 @@ $(document).ready(function() {
       $("#chat_box").focus();
       return false;
     }
-    if (key === "l") {
+    if (!in_chat_box && key === "l") {
       pause(game_paused ? "unpause" : "pause");
       return false;
     }
@@ -367,7 +367,7 @@ $(document).ready(function() {
 
   function on_chat(e) {
     var chat_box = $("#chat_box");
-    if (event.type == "click" || event.keyCode == '13') {
+    if (chat_box.val() && (e.type == "click" || e.keyCode === 13)) {
       ws.send(JSON.stringify({
         'type' : 'chat',
         'name' : user_name,
