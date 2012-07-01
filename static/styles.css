@@ -210,7 +210,7 @@ table {
 }
 
 .projectiveTau {
-  background:url('/static/projcards.png') no-repeat scroll 0 0 white;
+  background:url('/static/projcards.png?v=2') no-repeat scroll 0 0 white;
 }
 
 .selectedCard {

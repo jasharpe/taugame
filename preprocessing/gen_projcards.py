@@ -9,10 +9,21 @@ CARD_WIDTH = 80
 CARD_HEIGHT = 120
 CARD_COUNT = 63
 
+chess_pad = 3
+chess_width = 30
+chess_offset = (CARD_WIDTH - chess_width)/2 - chess_pad
+
+suit_pad = 2
+suit_width = 24
+suit_offset = (CARD_WIDTH - suit_width)/2 - suit_pad
+
 symbol_coords = [
-  (8, 0),
-  (42, 32),
-  (12, 70),
+  #(8, 0),
+  #(42, 32),
+  #(12, 70),
+  (chess_offset, 0),
+  None,
+  (suit_offset, 70),
 ]
 
 symbols = [
@@ -21,11 +32,7 @@ symbols = [
     u'\u265E', # knight
     u'\u265C', # rook
   ],
-  [
-    u'\u00A5', # yen
-    u'\u00A3', # pound
-    u'\u0024', # dollar
-  ],
+  None,
   [
     u'\u2663', # club
     u'\u2665', # heart
@@ -39,14 +46,16 @@ def to_rgb_tuple(hex_colour):
 
 colours = map(to_rgb_tuple, [
   '#000000',
-  '#000000',
-  '#000000',
+  '#FF0000',
+  '#00FF00',
+  '#0000FF',
 ])
 
 pygame.font.init()
 symbol_fonts = [
   pygame.font.SysFont('arialunicodems', 36),
-  pygame.font.SysFont('arialunicodems', 36, bold=True),
+  None,
+  #pygame.font.SysFont('arialunicodems', 36, bold=True),
   pygame.font.Font('/Users/malcolmsharpe/Library/Fonts/Batang.ttf', 36),
 ]
 
@@ -63,9 +72,9 @@ for i in range(CARD_COUNT):
   x_offset = i * CARD_WIDTH
 
   for j in range(len(card)):
-    if card[j]:
+    if card[j] and symbol_coords[j] is not None:
       x = x_offset + symbol_coords[j][0]
       y = symbol_coords[j][1]
-      putsymbol(symbol_fonts[j], symbols[j][card[j]-1], (x,y), colours[j])
+      putsymbol(symbol_fonts[j], symbols[j][card[j]-1], (x,y), colours[card[1]])
 
 pygame.image.save(s, '../static/projcards.png')
