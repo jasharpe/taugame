@@ -363,7 +363,7 @@ $(document).ready(function() {
   ws.onmessage = function (e) {
     var data = JSON.parse(e.data);
     if (data.type == "update") {
-      update(data.board, data.paused, data.target, data.scores, data.time, data.avg_number, data.number, data.ended, data.hint, data.player_rank_info);
+      update(data.board, data.paused, data.target, data.scores, data.time, data.avg_number, data.number, data.ended, data.hint, data.player_rank_info, data.found_puzzle_taus, data.old_found_puzzle_tau_index);
     } else if (data.type == "scores") {
       update_scores(data.scores, data.ended);
     } else if (data.type == "chat") {

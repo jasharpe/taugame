@@ -228,7 +228,10 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
         'time' : time,
         'hint' : game.get_client_tau() if args.hints else None,
         'ended' : game.ended,
-        'player_rank_info' : player_rank_info
+        'player_rank_info' : player_rank_info,
+        # puzzle mode
+        'found_puzzle_taus' : None,
+        'old_found_puzzle_tau_index' : None,
     }))
 
   def add_chat(self, name, message, message_type):
