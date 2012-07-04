@@ -168,14 +168,6 @@ table {
   background-color:white;
 }
 
-.fakeCard {
-  background-color:transparent;
-}
-
-.realCard {
-  background-color:white;
-}
-
 .bottomRow div {
   margin-bottom:0;
 }
@@ -194,6 +186,7 @@ table {
   height:122px;
   margin-right:6px;
   margin-bottom:6px;
+  background-color:transparent;
 }
 
 .realCard {
@@ -203,10 +196,15 @@ table {
   -moz-border-radius:5px;
   margin-right:6px;
   margin-bottom:6px;
+  background-color:white;
 }
 
 .regularTau {
   background:url('/static/cards.png?v=2') no-repeat scroll 0 0 white;
+}
+
+.smallRegularTau {
+  background:url('/static/smallcards.png?v=1') no-repeat scroll 0 0 white;
 }
 
 .projectiveTau {
@@ -231,11 +229,27 @@ table {
   border-style:solid;
 }
 
+.smallCard {
+  height:60px;
+  width:40px;
+  -webkit-border-radius:2.5px;
+  -moz-border-radius:2.5px;
+  margin-right:3px;
+  margin-bottom:3px;
+  -moz-box-shadow:1px 1px 1px #ddd;
+  -webkit-box-shadow:1px 1px 1px #ddd;
+  box-shadow:1px 1px 1px #ddd;
+  border-color:#bbb;
+  border-width:1px;
+  border-style:solid;
+  display:inline-block;
+}
+
 #found_puzzle_taus {
   margin-left:20px;
-  padding:5px;
-  height:366px;
-  width:120px;
+  padding:5px 2px 5px 5px;
+  height:392px;
+  width:135px;
   border:1px solid #CCC;
   -webkit-border-radius:5px;
   -moz-border-radius:5px;

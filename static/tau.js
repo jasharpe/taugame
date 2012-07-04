@@ -274,16 +274,21 @@ $(document).ready(function() {
     }
     playing_area.append(table);
     if (game_type === "z3tau") {
-      found_puzzle_taus_div = $("<div id=\"found_puzzle_taus\" style=\"float:left;\">");
-      for (i in found_puzzle_taus) {
-        for (j in found_puzzle_taus[i]) {
+      var found_puzzle_taus_div = $("<div id=\"found_puzzle_taus\" style=\"float:left;\">");
+      for (var i in found_puzzle_taus) {
+        var tau_div = $("<div>");
+        for (var j in found_puzzle_taus[i]) {
           card = found_puzzle_taus[i][j];
           var card_number = get_card_number(card);
-          found_puzzle_taus_div.append($("<div>" + card_number + "</div>"));
+          var offset = card_number * 40;
+          var card_div = $('<div class="smallCard smallRegularTau">');
+          card_div.css("background-position", "-" + offset + "px 0");
+          tau_div.append(card_div);
         }
-        console.log(found_puzzle_taus[i]);
+        found_puzzle_taus_div.append(tau_div);
       }
       playing_area.append(found_puzzle_taus_div);
+      playing_area.append($('<div style="clear:both;">'));
     }
     prev_board = this_board;
   }

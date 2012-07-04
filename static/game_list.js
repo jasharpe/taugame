@@ -35,6 +35,8 @@ $(function() {
           game_type = "4 Tau";
         } else if (game_data.type == "3ptau") {
           game_type = "3 Projective Tau";
+        } else if (game_data.type == "z3tau") {
+          game_type = "Puzzle 3 Tau";
         }
 
         section.find(".games_list").append($("<li><a href=\"/game/" + game_data.id + "\">Game " + game_data.id + "</a> (" + game_type + ") - " + players_string + "</li>"));
