@@ -22,6 +22,8 @@ type_to_size_map = {
 
 game_types = type_to_size_map.keys()
 
+Z3TAU_COUNT = 6
+
 def shuffled(xs):
   xs = list(xs)
   random.shuffle(xs)
@@ -97,6 +99,11 @@ class Game(object):
         self.board[i] = None
 
   def compress_and_fill_board(self):
+    # Puzzle 3 Tau only deals once and requires Z3TAU_COUNT taus exactly.
+    if self.type == 'z3tau' and not self.board:
+      while Z3TAU_COUNT != self.count_tau_subsets(self.deck[-self.min_number:], self.size):
+        random.shuffle(self.deck)
+
     # fill in gaps
     if len(self.board) > self.min_number:
       gaps = []
