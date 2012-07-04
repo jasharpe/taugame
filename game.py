@@ -9,8 +9,6 @@ I3TAU_CALCULATION_LOGGING_THRESHOLD = 0.25
 class InvalidGameType(Exception):
   pass
 
-game_types = ['3tau', 'g3tau', '6tau', 'i3tau', 'e3tau', '4tau', '3ptau']
-
 type_to_size_map = {
   '3tau': 3,
   'g3tau': 3,
@@ -19,12 +17,25 @@ type_to_size_map = {
   'e3tau': 3,
   '4tau': 4,
   '3ptau': 3,
+  'z3tau': 3,
 }
+
+game_types = type_to_size_map.keys()
 
 def shuffled(xs):
   xs = list(xs)
   random.shuffle(xs)
   return xs
+
+# Return value for submit_tau and submit_client_tau.
+class SubmitTauResult(object):
+  SUCCESS = 0
+  INVALID = 1
+  OLD_FOUND_PUZZLE = 2
+
+  def __init__(self, status, index=None):
+    self.status = status
+    self.index = index
 
 class Game(object):
   def __init__(self, type, quick=False):
@@ -54,11 +65,16 @@ class Game(object):
 
     if quick:
       # Play the game nearly to completion.
-      while self.deck:
-        self.take_tau()
+      if self.type == 'z3tau':
+        tau_count = self.count_taus()
+        while len(self.taus) < tau_count-1:
+          self.take_tau()
+      else:
+        while self.deck:
+          self.take_tau()
 
   def take_tau(self):
-    self.submit_tau(self.get_tau(), "dummy")
+    self.submit_tau(self.get_hint(), "dummy")
 
   def start(self):
     self.most_recent_start_time = time.time()
@@ -181,7 +197,10 @@ class Game(object):
         return self.space.sum_cards(all_card_subsets[random.randint(0, len(all_card_subsets) - 1)])
 
   def is_over(self):
-    return len(self.deck) == 0 and self.no_subset_is_tau(filter(None, self.board), self.size)
+    if self.type == 'z3tau':
+      return len(self.taus) == self.count_taus()
+    else:
+      return len(self.deck) == 0 and self.no_subset_is_tau(filter(None, self.board), self.size)
 
   def get_all_taus(self):
     taus = []
@@ -190,10 +209,13 @@ class Game(object):
         taus.append(card_subset)
     return taus
 
-  def get_tau(self):
-    for card_subset in itertools.combinations(filter(None, self.board), self.size):
-      if self.is_tau(card_subset):
-        return card_subset
+  def count_taus(self):
+    return len(self.get_all_taus())
+
+  def get_hint(self):
+    for cards in self.get_all_taus():
+      if self.type != 'z3tau' or self.old_found_puzzle_tau_index(cards) is None:
+        return cards
     return []
 
   def board_contains(self, cards):
@@ -206,27 +228,50 @@ class Game(object):
       return time.time() - self.most_recent_start_time + self.previous_time
 
   def submit_tau(self, cards, player):
-    if len(cards) == self.size and self.board_contains(cards) and self.is_tau(cards):
+    if not self.ended and len(cards) == self.size and self.board_contains(cards) and self.is_tau(cards):
+      if self.type == 'z3tau':
+        index = self.old_found_puzzle_tau_index(cards)
+        if index is not None:
+          return SubmitTauResult(SubmitTauResult.OLD_FOUND_PUZZLE, index=index)
+
       if not player in self.scores:
         self.scores[player] = []
       self.scores[player].append(cards)
       self.boards.append(list(self.board))
-      self.taus.append((self.get_total_time(), len(self.get_all_taus()), player, cards))
-      self.remove_cards(cards)
-      self.compress_and_fill_board()
+      self.taus.append((self.get_total_time(), self.count_taus(), player, cards))
+
+      if self.type != 'z3tau':
+        self.remove_cards(cards)
+        self.compress_and_fill_board()
+
       if self.is_over():
         self.total_time = self.get_total_time()
         self.target_tau = None
         self.ended = True
-      return True
+      return SubmitTauResult(SubmitTauResult.SUCCESS)
     else:
-      return False
+      return SubmitTauResult(SubmitTauResult.INVALID)
+
+  def old_found_puzzle_tau_index(self, cards):
+    cards = frozenset(cards)
+    found = map(frozenset, self.get_found_puzzle_taus())
+    
+    try:
+      return found.index(cards)
+    except ValueError:
+      return None
+
+  def get_found_puzzle_taus(self):
+    return [cards for (time, num_taus, player, cards) in self.taus]
+
+  def get_client_found_puzzle_taus(self):
+    return map(self.space.to_client_card, self.get_found_puzzle_taus())
 
   def is_tau_basic(self, cards):
     return not any(self.space.sum_cards(cards))
 
   def is_tau(self, cards):
-    if len(cards) == 3 and self.type in ["3tau", "6tau", "i3tau", "e3tau", "3ptau"]:
+    if len(cards) == 3 and self.type in ["3tau", "6tau", "i3tau", "e3tau", "3ptau", "z3tau"]:
       return self.is_tau_basic(cards)
     elif len(cards) == 3 and self.type in ["g3tau"]:
       return self.space.sum_cards(cards) == self.target_tau
@@ -312,10 +357,10 @@ class Game(object):
   def get_client_target_tau(self):
     return self.space.to_client_card(self.target_tau)
 
-  def get_client_tau(self):
-    server_tau = self.get_tau()
-    return map(self.space.to_client_card, server_tau)
-
   def submit_client_tau(self, cards, player):
     server_cards = map(self.space.from_client_card, cards)
     return self.submit_tau(server_cards, player)
+
+  def get_client_hint(self):
+    server_tau = self.get_hint()
+    return map(self.space.to_client_card, server_tau)
