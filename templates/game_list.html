@@ -38,6 +38,10 @@
   <input type="submit" value="New 3 Projective Tau game" />
 </form>
 
+<form style="display:inline-block;" name="new_game" action="/new_game/z3tau" method="post">
+  <input type="submit" value="New Puzzle 3 Tau game" />
+</form>
+
 <div id="game_panel">
   {% for (id, label) in [("newgames", "New games"), ("startedgames", "Started games"), ("endedgames", "Ended games")] %}
   <div id="{{ id }}" style="display:none;">

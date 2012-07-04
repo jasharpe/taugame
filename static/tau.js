@@ -174,7 +174,7 @@ $(document).ready(function() {
   var prev_board = [];
   var card_to_board_map = {}
   var game_paused = false;
-  function update_board(board, paused, target, number, hint, ended) {
+  function update_board(board, paused, target, number, hint, ended, found_puzzle_taus, old_found_puzzle_tau_index) {
     game_paused = paused;
     console.log("This board has " + number + " taus");
 
@@ -199,7 +199,7 @@ $(document).ready(function() {
       return;
     }
 
-    var table = $('<table style="display:inline-block;">');
+    var table = $('<table style="display:block; float:left;">');
     var max_row = 3;
     var max_col = board.length / max_row;
     card_index_to_div_map = {};
@@ -273,6 +273,12 @@ $(document).ready(function() {
       table.append(row);
     }
     playing_area.append(table);
+    // TODO: remove "true"
+    if (true || game_type === "z3tau") {
+      found_puzzle_taus_div = $("<div id=\"found_puzzle_taus\" style=\"float:left;\">");
+      
+      playing_area.append(found_puzzle_taus_div);
+    }
     prev_board = this_board;
   }
 
@@ -335,13 +341,13 @@ $(document).ready(function() {
     }
   };
 
-  function update(board, paused, target, scores, time, avg_number, number, ended, hint, player_rank_info) {
+  function update(board, paused, target, scores, time, avg_number, number, ended, hint, player_rank_info, found_puzzle_taus, old_found_puzzle_tau_index) {
     update_scores(scores, ended);
     
     update_time(time, paused, avg_number, ended, player_rank_info);
 
     // update board
-    update_board(board, paused, target, number, hint, ended);
+    update_board(board, paused, target, number, hint, ended, found_puzzle_taus, old_found_puzzle_tau_index);
 
     if (ended) {
       $("body").addClass("ended");
@@ -363,7 +369,7 @@ $(document).ready(function() {
   ws.onmessage = function (e) {
     var data = JSON.parse(e.data);
     if (data.type == "update") {
-      update(data.board, data.paused, data.target, data.scores, data.time, data.avg_number, data.number, data.ended, data.hint, data.player_rank_info, data.found_puzzle_taus, data.old_found_puzzle_tau_index);
+      update(data.board, data.paused, data.target, data.scores, data.time, data.avg_number, data.number, data.ended, data.hint, data.player_rank_info, data.found_puzzle_taus);
     } else if (data.type == "scores") {
       update_scores(data.scores, data.ended);
     } else if (data.type == "chat") {
@@ -377,6 +383,7 @@ $(document).ready(function() {
       });
       $("#chat_box").removeAttr("disabled");
       $("#say").removeAttr("disabled");
+    } else if (data.type == "") {
     }
   }
 
