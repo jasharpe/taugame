@@ -73,6 +73,10 @@ public class SpriteGenerator {
       ys = new int[] {
         yBase + height - height / 3,
               yBase + height / 3 };
+      if (!LARGE) {
+        ys[1] += 1;
+        ys[0] -= 1;
+      }
     } else {
       xs = new int[] {
         xBase + width / 3,
@@ -82,6 +86,9 @@ public class SpriteGenerator {
         yBase + height / 2 + width / 6,
               yBase + height / 2 - width / 6,
               yBase + height / 2 + width / 6 };
+      if (!LARGE) {
+        ys[1] -= 1;
+      }
     }
 
     List<Shape> shapes = new ArrayList<Shape>();
