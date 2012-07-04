@@ -47,7 +47,7 @@ def get_players_in_game(game_id):
   players = set()
   for socket in game_to_sockets[game_id]:
     try:
-      players.add(url_unescape(socket.get_secure_cookie("name")))
+      players.add(socket.name)
     except:
       pass
   return sorted(players)
@@ -55,6 +55,7 @@ def get_players_in_game(game_id):
 class GameListWebSocketHandler(tornado.websocket.WebSocketHandler):
   def open(self, see_more_ended):
     self.see_more_ended = int(see_more_ended)
+    self.name = url_unescape(self.get_secure_cookie("name"))
     game_list_sockets.append(self)
     self.send_player_list_update_to_all()
   
@@ -83,7 +84,7 @@ class GameListWebSocketHandler(tornado.websocket.WebSocketHandler):
     players = []
     for socket in game_list_sockets:
       try:
-        players.append(url_unescape(socket.get_secure_cookie("name")))
+        players.append(socket.name)
       except:
         pass
     return players
@@ -107,6 +108,8 @@ class GameListWebSocketHandler(tornado.websocket.WebSocketHandler):
 class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
   def open(self, game_id):
     self.game_id = int(game_id)
+    self.name = url_unescape(self.get_secure_cookie("name"))
+    self.add_chat(self.name, self.name + " has joined", "status")
     if not self.game_id in games:
       raise ValueError("game_id %d is bad!" % self.game_id)
     sockets.append(self)
@@ -130,6 +133,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
       del socket_to_game[self]
     if self in game_to_sockets[self.game_id]:
       game_to_sockets[self.game_id].remove(self)
+    self.add_chat(self.name, self.name + " has left", "status")
     self.send_scores_update_to_all()
     send_game_list_update_to_all()
     if paused:
@@ -151,7 +155,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
     
     scores = {}
     for socket in game_to_sockets[self.game_id]:
-      name = url_unescape(socket.get_secure_cookie("name"))
+      name = self.name
       if name in game.scores.keys():
         scores[name] = game.scores[name]
       else:
@@ -174,15 +178,16 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
         'ended' : game.ended
     }))
 
-  def send_message_update_to_all(self, name, message):
+  def send_message_update_to_all(self, name, message, message_type):
     for socket in game_to_sockets[self.game_id]:
-      socket.send_message_update(name, message)
+      socket.send_message_update(name, message, message_type)
 
-  def send_message_update(self, name, message):
+  def send_message_update(self, name, message, message_type):
     self.write_message(json.dumps({
         'type' : 'chat',
         'name' : name,
-        'message' : message
+        'message' : message,
+        'message_type' : message_type,
     }))
 
   def send_update_to_all(self):
@@ -192,7 +197,6 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
   def send_update(self):
     game = socket_to_game[self]
     time = game.total_time if game.ended else game.get_total_time()
-    name = url_unescape(self.get_secure_cookie("name"))
 
     numbers_map = None
     if game.ended:
@@ -208,8 +212,8 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
         numbers_map[number] = sum(times) / float(len(times))
 
     player_rank_info = None
-    if game.ended and name in game.player_ranks['players']:
-      player_rank_info = game.player_ranks['players'][name]
+    if game.ended and self.name in game.player_ranks['players']:
+      player_rank_info = game.player_ranks['players'][self.name]
     elif game.ended:
       player_rank_info = game.player_ranks['global']
 
@@ -227,6 +231,10 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
         'player_rank_info' : player_rank_info
     }))
 
+  def add_chat(self, name, message, message_type):
+    game_to_messages[self.game_id].append((name, message, message_type))
+    self.send_message_update_to_all(name, message, message_type)
+
   def on_message(self, message_json):
     message = json.loads(message_json)
     if message['type'] == 'start':
@@ -238,8 +246,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
       if socket_to_game[self].started:
         self.send_update()
     elif message['type'] == 'chat':
-      game_to_messages[self.game_id].append((message['name'], message['message']))
-      self.send_message_update_to_all(message['name'], message['message'])
+      self.add_chat(message['name'], message['message'], "chat")
     elif message['type'] == 'pause':
       if self.pause(message['pause']):
         self.send_update_to_all()

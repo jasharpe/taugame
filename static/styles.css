@@ -184,7 +184,7 @@ table {
   background-color:green !important;
 }
 
-.name {
+.name, .status {
   color: #999;
 }
 

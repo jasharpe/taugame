@@ -344,9 +344,13 @@ $(document).ready(function() {
     }
   };
 
-  function update_messages(text_area, name, message) {
+  function update_messages(text_area, name, message, message_type) {
     var is_at_bottom = text_area[0].scrollHeight - text_area.scrollTop() <= text_area.outerHeight();
-    text_area.append($("<div class=\"message\"><span class=\"name\">" + name + ":</span> " + message + "</div>"));
+    if (message_type === "chat") {
+      text_area.append($("<div class=\"message\"><span class=\"name\">" + name + ":</span> " + message + "</div>"));
+    } else if (message_type === "status") {
+      text_area.append($("<div class=\"message\"><span class=\"status\">" + message + "</span></div>"));
+    }
     if (is_at_bottom) {
       text_area.scrollTop(text_area[0].scrollHeight - text_area.outerHeight() + 5);
     }
@@ -360,12 +364,12 @@ $(document).ready(function() {
       update_scores(data.scores, data.ended);
     } else if (data.type == "chat") {
       var text_area = $("#chat");
-      update_messages($("#chat"), data.name, data.message);
+      update_messages($("#chat"), data.name, data.message, data.message_type);
     } else if (data.type == "history") {
       var text_area = $("#chat");
       text_area.html("");
       data.messages.forEach(function(chat_message) {
-        update_messages(text_area, chat_message[0], chat_message[1]);
+        update_messages(text_area, chat_message[0], chat_message[1], chat_message[2]);
       });
       $("#chat_box").removeAttr("disabled");
       $("#say").removeAttr("disabled");
