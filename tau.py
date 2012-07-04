@@ -224,14 +224,19 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
         'target' : game.get_client_target_tau(),
         'scores' : self.get_scores(),
         'avg_number' : numbers_map,
-        'number' : len(game.get_all_taus()),
+        'number' : game.count_taus(),
         'time' : time,
-        'hint' : game.get_client_tau() if args.hints else None,
+        'hint' : game.get_client_hint() if args.hints else None,
         'ended' : game.ended,
         'player_rank_info' : player_rank_info,
         # puzzle mode
-        'found_puzzle_taus' : None,
-        'old_found_puzzle_tau_index' : None,
+        'found_puzzle_taus' : game.get_client_found_puzzle_taus(),
+    }))
+
+  def send_old_found_puzzle_tau_index(self, index):
+    self.write_message(json.dumps({
+        'type' : 'old_found_puzzle_tau',
+        'index' : index,
     }))
 
   def add_chat(self, name, message, message_type):
@@ -256,12 +261,16 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
     elif message['type'] == 'submit':
       game = socket_to_game[self]
       if game.started and not game.ended and not game.paused:
-        if game.submit_client_tau(map(tuple, message['cards']), url_unescape(self.get_secure_cookie("name"))):
+        result = game.submit_client_tau(map(tuple, message['cards']), url_unescape(self.get_secure_cookie("name")))
+
+        if result.status == result.SUCCESS:
           if game.ended:
             send_game_list_update_to_all()
             (db_game, score) = save_game(game)
             game.player_ranks = get_ranks(score.elapsed_time, db_game.game_type, game.scores.keys(), score.num_players)
           self.send_update_to_all()
+        elif result.status == result.OLD_FOUND_PUZZLE:
+          self.send_old_found_puzzle_tau_index(result.index)
 
 def require_name(f):
   from functools import wraps
@@ -389,6 +398,7 @@ class GameHandler(tornado.web.RequestHandler):
     "e3tau" : "Easy 3 Tau (beta)",
     "4tau" : "4 Tau",
     "3ptau" : "3 Projective Tau",
+    "z3tau" : "Puzzle 3 Tau",
   }
 
   @require_name
@@ -466,7 +476,7 @@ def create_application(debug):
     (r"/leaderboard/(alltime|thisweek|today)/((?:[^/]+/){2,})(and|or)/?", LeaderboardHandler),
     (r"/graph/([^/]*)", GraphHandler),
     (r"/choose_name", ChooseNameHandler),
-    (r"/new_game/(3tau|6tau|g3tau|i3tau|e3tau|4tau|3ptau)", NewGameHandler),
+    (r"/new_game/(3tau|6tau|g3tau|i3tau|e3tau|4tau|3ptau|z3tau)", NewGameHandler),
     (r"/game/(\d+)", GameHandler),
     (r"/websocket/(\d*)", TauWebSocketHandler),
     (r"/gamelistwebsocket/(0|1)", GameListWebSocketHandler),
