@@ -273,10 +273,16 @@ $(document).ready(function() {
       table.append(row);
     }
     playing_area.append(table);
-    // TODO: remove "true"
-    if (true || game_type === "z3tau") {
+    if (game_type === "z3tau") {
       found_puzzle_taus_div = $("<div id=\"found_puzzle_taus\" style=\"float:left;\">");
-      
+      for (i in found_puzzle_taus) {
+        for (j in found_puzzle_taus[i]) {
+          card = found_puzzle_taus[i][j];
+          var card_number = get_card_number(card);
+          found_puzzle_taus_div.append($("<div>" + card_number + "</div>"));
+        }
+        console.log(found_puzzle_taus[i]);
+      }
       playing_area.append(found_puzzle_taus_div);
     }
     prev_board = this_board;
@@ -341,13 +347,13 @@ $(document).ready(function() {
     }
   };
 
-  function update(board, paused, target, scores, time, avg_number, number, ended, hint, player_rank_info, found_puzzle_taus, old_found_puzzle_tau_index) {
+  function update(board, paused, target, scores, time, avg_number, number, ended, hint, player_rank_info, found_puzzle_taus) {
     update_scores(scores, ended);
     
     update_time(time, paused, avg_number, ended, player_rank_info);
 
     // update board
-    update_board(board, paused, target, number, hint, ended, found_puzzle_taus, old_found_puzzle_tau_index);
+    update_board(board, paused, target, number, hint, ended, found_puzzle_taus);
 
     if (ended) {
       $("body").addClass("ended");
@@ -368,14 +374,14 @@ $(document).ready(function() {
 
   ws.onmessage = function (e) {
     var data = JSON.parse(e.data);
-    if (data.type == "update") {
+    if (data.type === "update") {
       update(data.board, data.paused, data.target, data.scores, data.time, data.avg_number, data.number, data.ended, data.hint, data.player_rank_info, data.found_puzzle_taus);
-    } else if (data.type == "scores") {
+    } else if (data.type === "scores") {
       update_scores(data.scores, data.ended);
     } else if (data.type == "chat") {
       var text_area = $("#chat");
       update_messages($("#chat"), data.name, data.message, data.message_type);
-    } else if (data.type == "history") {
+    } else if (data.type === "history") {
       var text_area = $("#chat");
       text_area.html("");
       data.messages.forEach(function(chat_message) {
@@ -383,7 +389,8 @@ $(document).ready(function() {
       });
       $("#chat_box").removeAttr("disabled");
       $("#say").removeAttr("disabled");
-    } else if (data.type == "") {
+    } else if (data.type === "old_found_puzzle_tau") {
+      // TODO: fill this in.
     }
   }
 
