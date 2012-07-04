@@ -443,25 +443,28 @@ class LogoutHandler(tornado.web.RequestHandler):
     self.clear_cookie("name")
     self.redirect("/choose_name")
 
-application = tornado.web.Application([
-  (r"/", MainHandler),
-  # 0 players
-  (r"/leaderboard/(alltime|thisweek|today)/?", LeaderboardHandler),
-  # 1 player
-  (r"/leaderboard/(alltime|thisweek|today)/([^/]+)/?", LeaderboardHandler),
-  # 2+ players
-  (r"/leaderboard/(alltime|thisweek|today)/((?:[^/]+/){2,})(and|or)/?", LeaderboardHandler),
-  (r"/graph/([^/]*)", GraphHandler),
-  (r"/choose_name", ChooseNameHandler),
-  (r"/new_game/(3tau|6tau|g3tau|i3tau|e3tau|4tau|3ptau)", NewGameHandler),
-  (r"/game/(\d+)", GameHandler),
-  (r"/websocket/(\d*)", TauWebSocketHandler),
-  (r"/gamelistwebsocket/(0|1)", GameListWebSocketHandler),
-  (r"/time", TimeHandler),
-  (r"/about", AboutHandler),
-  (r"/google", GoogleHandler),
-  (r"/logout", LogoutHandler),
-], **settings)
+def create_application(debug):
+  full_settings = dict(settings)
+  full_settings['debug'] = debug
+  return tornado.web.Application([
+    (r"/", MainHandler),
+    # 0 players
+    (r"/leaderboard/(alltime|thisweek|today)/?", LeaderboardHandler),
+    # 1 player
+    (r"/leaderboard/(alltime|thisweek|today)/([^/]+)/?", LeaderboardHandler),
+    # 2+ players
+    (r"/leaderboard/(alltime|thisweek|today)/((?:[^/]+/){2,})(and|or)/?", LeaderboardHandler),
+    (r"/graph/([^/]*)", GraphHandler),
+    (r"/choose_name", ChooseNameHandler),
+    (r"/new_game/(3tau|6tau|g3tau|i3tau|e3tau|4tau|3ptau)", NewGameHandler),
+    (r"/game/(\d+)", GameHandler),
+    (r"/websocket/(\d*)", TauWebSocketHandler),
+    (r"/gamelistwebsocket/(0|1)", GameListWebSocketHandler),
+    (r"/time", TimeHandler),
+    (r"/about", AboutHandler),
+    (r"/google", GoogleHandler),
+    (r"/logout", LogoutHandler),
+  ], **full_settings)
 
 # returns control to the main thread every 250ms
 def set_ping(ioloop, timeout):
@@ -494,6 +497,7 @@ class OptionalHTTPServer(tornado.httpserver.HTTPServer):
 def main():
   global args
   args = parse_args()
+  application = create_application(args.debug)
   http_server = OptionalHTTPServer(application,
       ssl_options={
           "certfile" : "localhost.crt",
