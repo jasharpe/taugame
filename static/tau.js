@@ -283,7 +283,7 @@ $(document).ready(function() {
       table.append(row);
     }
     playing_area.append(table);
-    if (game_type === "z3tau") {
+    if (found_puzzle_taus != null) {
       var found_puzzle_taus_div = $("<div id=\"found_puzzle_taus\" style=\"float:left;\">");
       for (var i in found_puzzle_taus) {
         var tau_div = $('<div class="found_puzzle_tau">');
