@@ -269,10 +269,15 @@ class Game(object):
       return None
 
   def get_found_puzzle_taus(self):
+    if self.type != 'z3tau':
+      return None
     return [cards for (time, num_taus, player, cards) in self.taus]
 
   def get_client_found_puzzle_taus(self):
-    return map(self.space.to_client_card, self.get_found_puzzle_taus())
+    server_taus = self.get_found_puzzle_taus()
+    if server_taus is None:
+      return None
+    return [map(self.space.to_client_card, cards) for cards in server_taus]
 
   def is_tau_basic(self, cards):
     return not any(self.space.sum_cards(cards))

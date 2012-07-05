@@ -26,9 +26,15 @@ class AffineSpace(Space):
     return all_vectors(3, 4)
 
   def to_client_card(self, point):
+    if point is not None and len(point) != 4:
+      raise ValueError('Point length is %d (expected 4)' % len(point))
+
     return point
 
   def from_client_card(self, card):
+    if card is not None and len(card) != 4:
+      raise ValueError('Card length is %d (should be 4)' % len(card))
+
     return card
 
 # The space P_5 F_2.
@@ -40,12 +46,15 @@ class ProjectiveSpace(Space):
     return filter(any, all_vectors(2, 6))
 
   def to_client_card(self, point):
+    if point is not None and len(point) != 6:
+      raise ValueError('Point length is %d (should be 6)' % len(point))
+
     if point is None:
       return None
     return tuple([(2*point[2*i] + point[2*i+1]) for i in range(3)])
 
   def from_client_card(self, card):
-    if len(card) != 3:
+    if card is not None and len(card) != 3:
       raise ValueError('Card length is %d (should be 3)' % len(card))
 
     if card is None:
