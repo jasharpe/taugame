@@ -87,7 +87,7 @@ class GameListWebSocketHandler(tornado.websocket.WebSocketHandler):
         players.append(socket.name)
       except:
         pass
-    return players
+    return sorted(players)
 
   def transform_games(self, games):
     return [{
@@ -155,7 +155,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
     
     scores = {}
     for socket in game_to_sockets[self.game_id]:
-      name = self.name
+      name = socket.name
       if name in game.scores.keys():
         scores[name] = game.scores[name]
       else:
