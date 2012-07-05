@@ -98,6 +98,7 @@ $(document).ready(function() {
     }
   };
 
+  var game_ended = false;
   var in_chat_box = false;
   var current_time_updater = undefined;
   var card_index_to_div_map = {};
@@ -109,7 +110,16 @@ $(document).ready(function() {
     'selected' : []
   };
 
+  function deselect_all_cards() {
+    while (selection_model['selected'].length > 0) {
+      select_card(selection_model['selected'][0]);
+    }
+  }
+
   function select_card(card_index) {
+    if (game_ended) {
+      return;
+    }
     if (!card_index_to_div_map.hasOwnProperty(card_index)) {
       return;
     }
@@ -276,7 +286,7 @@ $(document).ready(function() {
     if (game_type === "z3tau") {
       var found_puzzle_taus_div = $("<div id=\"found_puzzle_taus\" style=\"float:left;\">");
       for (var i in found_puzzle_taus) {
-        var tau_div = $("<div>");
+        var tau_div = $('<div class="found_puzzle_tau">');
         for (var j in found_puzzle_taus[i]) {
           card = found_puzzle_taus[i][j];
           var card_number = get_card_number(card);
@@ -284,14 +294,22 @@ $(document).ready(function() {
           var card_div = $('<div class="smallCard smallRegularTau">');
           card_div.css("background-position", "-" + offset + "px 0");
           tau_div.append(card_div);
+          if (last_found_puzzle_taus !== null && i >= last_found_puzzle_taus.length) {
+            card_div.css("background-color", "#FF8");
+            card_div.animate({backgroundColor: "#FF8"}, 200)
+                .animate({backgroundColor: "#FFF"}, 1000);
+          }
         }
         found_puzzle_taus_div.append(tau_div);
       }
       playing_area.append(found_puzzle_taus_div);
       playing_area.append($('<div style="clear:both;">'));
+      last_found_puzzle_taus = found_puzzle_taus;
     }
     prev_board = this_board;
   }
+
+  var last_found_puzzle_taus = null;
 
   function get_time(ended) {
     if (ended) {
@@ -353,6 +371,7 @@ $(document).ready(function() {
   };
 
   function update(board, paused, target, scores, time, avg_number, number, ended, hint, player_rank_info, found_puzzle_taus) {
+    game_ended = ended;
     update_scores(scores, ended);
     
     update_time(time, paused, avg_number, ended, player_rank_info);
@@ -395,7 +414,13 @@ $(document).ready(function() {
       $("#chat_box").removeAttr("disabled");
       $("#say").removeAttr("disabled");
     } else if (data.type === "old_found_puzzle_tau") {
-      // TODO: fill this in.
+      var found_puzzle_taus = $($(".found_puzzle_tau")[data.index]).find(".smallCard").each(function (index, raw_card) {
+        var card  = $(raw_card);
+        card.css("background-color", "#FBB");
+        card.animate({backgroundColor: "#FBB"}, 200)
+            .animate({backgroundColor: "#FFF"}, 1000);
+      });
+      deselect_all_cards();
     }
   }
 
