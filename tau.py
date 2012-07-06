@@ -13,6 +13,13 @@ import ssl
 from state import save_game, get_all_high_scores, get_ranks, get_graph_data, check_name, set_name, get_name
 from secrets import cookie_secret
 
+# The time in seconds that games should be allows to live before
+# they are eligible to be hidden if they contain no players.
+GAME_EXPIRY = 1200
+
+# The number of seconds between game cleanup sweeps.
+GAME_CLEANUP_INTERVAL = 600
+
 settings = {
     "template_path" : os.path.join(os.path.dirname(__file__), "templates"),
     "static_path" : os.path.join(os.path.dirname(__file__), "static"),
@@ -22,6 +29,7 @@ settings = {
 # Tau sockets
 sockets = []
 games = {}
+hidden_games = set()
 socket_to_game = {}
 game_to_sockets = {}
 game_to_messages = {}
@@ -29,13 +37,39 @@ game_to_messages = {}
 # game list sockets
 game_list_sockets = []
 
+def maybe_hide_game(game_id):
+  game = games[game_id]
+  sockets = game_to_sockets[game_id]
+  if not game.started and not sockets:
+    hidden_games.add(game_id)
+    send_game_list_update_to_all()
+
+def maybe_unhide_game(game_id):
+  if game_id in hidden_games:
+    hidden_games.remove(game_id)
+    send_game_list_update_to_all()
+
+def cleanup_games():
+  updated = False
+  for (game_id, game) in games.items():
+    sockets = game_to_sockets[game_id]
+    if sockets:
+      continue
+    if game.started and not game.ended and not game_id in hidden_games:
+      if game.get_actual_total_time() > GAME_EXPIRY:
+        hidden_games.add(game_id)
+        updated = True
+  if updated:
+    send_game_list_update_to_all()
+
 def get_games(see_more_ended):
-  new_games = filter(lambda g: not g[1].started, sorted(games.items(), None, lambda game: game[0]))
-  started_games = filter(lambda g: g[1].started and not g[1].ended, sorted(games.items(), None, lambda game: game[0]))
+  sorted_game_items = filter(lambda x: not x[0] in hidden_games, sorted(games.items(), None, lambda game: game[0]))
+  new_games = filter(lambda g: not g[1].started, sorted_game_items)
+  started_games = filter(lambda g: g[1].started and not g[1].ended, sorted_game_items)
   if see_more_ended:
-    ended_games = filter(lambda g: g[1].ended, sorted(games.items(), None, lambda game: game[0]))
+    ended_games = filter(lambda g: g[1].ended, sorted_game_items)
   else:
-    ended_games = filter(lambda g: g[1].ended, sorted(games.items(), None, lambda game: game[0]))[-5:]
+    ended_games = filter(lambda g: g[1].ended, sorted_game_items)[-5:]
   return (new_games, started_games, ended_games)
 
 def send_game_list_update_to_all():
@@ -116,6 +150,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
     socket_to_game[self] = games[self.game_id]
     game_to_sockets[self.game_id].append(self)
     self.send_scores_update_to_all()
+    maybe_unhide_game(self.game_id)
     send_game_list_update_to_all()
     self.write_message(json.dumps({
         'type' : 'history',
@@ -135,6 +170,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
       game_to_sockets[self.game_id].remove(self)
     self.add_chat(self.name, self.name + " has left", "status")
     self.send_scores_update_to_all()
+    maybe_hide_game(self.game_id)
     send_game_list_update_to_all()
     if paused:
       self.send_update_to_all()
@@ -486,9 +522,14 @@ def create_application(debug):
     (r"/logout", LogoutHandler),
   ], **full_settings)
 
-# returns control to the main thread every 250ms
+# returns control to the main thread every timeout, where timeout is a timedelta.
 def set_ping(ioloop, timeout):
-    ioloop.add_timeout(timeout, lambda: set_ping(ioloop, timeout))
+  ioloop.add_timeout(timeout, lambda: set_ping(ioloop, timeout))
+
+# cleans up games every timeout, where timeout is a timedelta.
+def set_game_cleanup(ioloop, timeout):
+  cleanup_games()
+  ioloop.add_timeout(timeout, lambda: set_game_cleanup(ioloop, timeout))
 
 def parse_args():
   parser = argparse.ArgumentParser(description='Run Tau server.')
@@ -528,6 +569,7 @@ def main():
   ioloop = tornado.ioloop.IOLoop.instance()
   if args.debug:
     set_ping(ioloop, datetime.timedelta(seconds=1))
+  set_game_cleanup(ioloop, datetime.timedelta(seconds=GAME_CLEANUP_INTERVAL))
   ioloop.start()
 
 if __name__ == "__main__":

@@ -59,6 +59,7 @@ class Game(object):
     self.target_tau = None
     self.compress_and_fill_board()
     self.started = False
+    self.start_time = 0
     self.most_recent_start_time = 0
     self.previous_time = 0
     self.ended = False
@@ -79,7 +80,8 @@ class Game(object):
     self.submit_tau(self.get_hint(), "dummy")
 
   def start(self):
-    self.most_recent_start_time = time.time()
+    self.start_time = time.time()
+    self.most_recent_start_time = self.start_time
     self.started = True
 
   def is_pausable(self):
@@ -227,6 +229,9 @@ class Game(object):
 
   def board_contains(self, cards):
     return not any([not card in self.board for card in cards])
+
+  def get_actual_total_time(self):
+    return time.time() - self.start_time
 
   def get_total_time(self):
     if self.paused:
