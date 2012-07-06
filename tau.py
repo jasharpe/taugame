@@ -8,13 +8,13 @@ import json
 import os
 from game import Game, InvalidGameType
 import argparse
-import datetime
+import datetime, time
 import ssl
 from state import save_game, get_all_high_scores, get_ranks, get_graph_data, check_name, set_name, get_name
 from secrets import cookie_secret
 
-# The time in seconds that games should be allows to live before
-# they are eligible to be hidden if they contain no players.
+# The time in seconds that games should be allows to live without activity
+# before they are eligible to be hidden if they contain no players.
 GAME_EXPIRY = 1200
 
 # The number of seconds between game cleanup sweeps.
@@ -30,6 +30,7 @@ settings = {
 sockets = []
 games = {}
 hidden_games = set()
+last_activity = {}
 socket_to_game = {}
 game_to_sockets = {}
 game_to_messages = {}
@@ -49,6 +50,9 @@ def maybe_unhide_game(game_id):
     hidden_games.remove(game_id)
     send_game_list_update_to_all()
 
+def activity(game_id):
+  last_activity[game_id] = time.time()
+
 def cleanup_games():
   updated = False
   for (game_id, game) in games.items():
@@ -56,7 +60,7 @@ def cleanup_games():
     if sockets:
       continue
     if game.started and not game.ended and not game_id in hidden_games:
-      if game.get_actual_total_time() > GAME_EXPIRY:
+      if time.time() - last_activity[game_id] > GAME_EXPIRY:
         hidden_games.add(game_id)
         updated = True
   if updated:
@@ -142,6 +146,7 @@ class GameListWebSocketHandler(tornado.websocket.WebSocketHandler):
 class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
   def open(self, game_id):
     self.game_id = int(game_id)
+    activity(self.game_id)
     self.name = url_unescape(self.get_secure_cookie("name"))
     self.add_chat(self.name, self.name + " has joined", "status")
     if not self.game_id in games:
@@ -158,6 +163,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
     }))
 
   def on_close(self):
+    activity(self.game_id)
     game = socket_to_game[self]
     
     paused = False
