@@ -209,7 +209,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
           numbers_map[number] = []
         numbers_map[number].append(time_to_find)
       for (number, times) in numbers_map.items():
-        numbers_map[number] = sum(times) / float(len(times))
+        numbers_map[number] = "avg %.02f %s" % (sum(times) / float(len(times)), str(map(lambda x: "%.02f" % x, times)))
 
     player_rank_info = None
     if game.ended and self.name in game.player_ranks['players']:
