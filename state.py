@@ -35,19 +35,21 @@ def get_numbers(leaderboard_type, players):
     numbers_query = filter_for_players(numbers_query, players)
   return list(numbers_query)
 
-def get_all_high_scores(num_scores, leaderboard_type, players, conjunction):
+def get_all_high_scores(num_scores, leaderboard_type, players, conjunction, unique_players=False):
   session = get_session()
   time_filter = filter_map[leaderboard_type]()
   ret = {}
   for (number, game_type) in get_numbers(leaderboard_type, players):
-    if conjunction == "and":
-      top_scores = session.query(Score).filter_by(num_players=number,game_type=game_type).filter(time_filter).order_by(asc(Score.elapsed_time))
+    top_scores = session.query(Score).filter_by(num_players=number,game_type=game_type).filter(time_filter).order_by(asc(Score.elapsed_time))
+    if players:
       top_scores = filter_for_players(top_scores, players)
+    if conjunction == "and":
       top_scores = top_scores.group_by(Score.id).having(func.count(distinct(DBPlayer.name)) == len(players))
-    else:
-      top_scores = session.query(Score).filter_by(num_players=number,game_type=game_type).filter(time_filter).order_by(asc(Score.elapsed_time))
-      if players:
-        top_scores = filter_for_players(top_scores, players)
+        
+    if unique_players:
+      q = session.query(Score.team_id, func.min(Score.elapsed_time).label('min_elapsed_time')).filter_by(num_players=number,game_type=game_type).group_by(Score.team_id).subquery()
+      top_scores = top_scores.join(q, Score.team_id == q.c.team_id)
+      top_scores = top_scores.filter(Score.elapsed_time == q.c.min_elapsed_time)
     scores = list(top_scores.limit(num_scores))
     if scores:
       if not game_type in ret:
@@ -63,6 +65,16 @@ def get_or_create_dbplayer(session, name):
     player = DBPlayer(name)
     session.add(player)
     return player
+
+# players is a list of DBPlayers
+def get_or_create_team(session, players):
+  team = session.query(Team).join((DBPlayer, Team.players)).filter(or_(*[DBPlayer.id == player.id for player in players])).group_by(Team.id).having(func.count(distinct(DBPlayer.id)) == len(players)).first()
+  if team:
+    return team
+  else:
+    team = Team(players)
+    session.add(team)
+    return team
 
 def get_ranks(total_time, game_type, player_names, num_players):
   import time
@@ -135,7 +147,9 @@ def save_game(game):
     state = State(elapsed_time, board, cards, db_player)
     db_game.states.append(state)
     last_elapsed_time = elapsed_time
-  score = Score(last_elapsed_time, datetime.datetime.utcnow(), db_game, name_to_player_map.values(), player_to_score_map)
+  players = name_to_player_map.values()
+  team = get_or_create_team(session, players)
+  score = Score(last_elapsed_time, datetime.datetime.utcnow(), db_game, players, team, player_to_score_map)
   session.add(score)
   session.add(db_game)
   session.commit()
@@ -157,6 +171,10 @@ score_players = Table("score_players", Base.metadata,
     Column('score_id', Integer, ForeignKey('scores.id')),
     Column('player_id', Integer, ForeignKey('players.id')))
 
+team_players = Table("team_players", Base.metadata,
+    Column('team_id', Integer, ForeignKey('teams.id')),
+    Column('player_id', Integer, ForeignKey('players.id')))
+
 class DBPlayer(Base):
   __tablename__ = 'players'
 
@@ -164,12 +182,21 @@ class DBPlayer(Base):
   name = Column(String)
 
   scores = relationship('Score', secondary=score_players, backref='players')
+  teams = relationship('Team', secondary=team_players, backref='players')
 
   def __init__(self, name):
     self.name = name
 
   def __repr__(self):
     return "<DBPlayer('%s')>" % (self.name)
+
+class Team(Base):
+  __tablename__ = 'teams'
+
+  id = Column(Integer, primary_key=True)
+
+  def __init__(self, players):
+    self.players = players
 
 class Score(Base):
   __tablename__ = 'scores'
@@ -179,14 +206,17 @@ class Score(Base):
   num_players = Column(Integer)
   game_id = Column(Integer, ForeignKey('games.id'))
   game = relationship("DBGame", uselist=False, backref=backref('score'))
+  team_id = Column(Integer, ForeignKey('teams.id'))
+  team = relationship("Team", backref=backref('scores'))
   game_type = Column(String)
   date = Column(DateTime)
   player_scores_json = Column(String)
 
-  def __init__(self, elapsed_time, date, game, players, player_scores):
+  def __init__(self, elapsed_time, date, game, players, team, player_scores):
     self.elapsed_time = elapsed_time
     self.date = date
     self.game = game
+    self.team = team
     self.players = players
     self.num_players = len(players)
     self.game_type = game.game_type

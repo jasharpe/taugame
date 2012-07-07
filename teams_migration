@@ -1,0 +1,16 @@
+ALTER TABLE scores RENAME TO scores_old;
+CREATE TABLE scores (
+        id INTEGER NOT NULL,
+        elapsed_time FLOAT,
+        num_players INTEGER,
+        game_id INTEGER,
+        team_id INTEGER,
+        game_type VARCHAR,
+        date DATETIME,
+        player_scores_json VARCHAR,
+        PRIMARY KEY (id),
+        FOREIGN KEY(game_id) REFERENCES games (id),
+        FOREIGN KEY(team_id) REFERENCES teams (id)
+);
+INSERT INTO scores SELECT id, elapsed_time, num_players, game_id, NULL, game_type, date, player_scores_json FROM scores_old;
+DROP TABLE scores_old;
