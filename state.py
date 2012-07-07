@@ -47,7 +47,7 @@ def get_all_high_scores(num_scores, leaderboard_type, players, conjunction, uniq
       top_scores = top_scores.group_by(Score.id).having(func.count(distinct(DBPlayer.name)) == len(players))
         
     if unique_players:
-      q = session.query(Score.team_id, func.min(Score.elapsed_time).label('min_elapsed_time')).filter_by(num_players=number,game_type=game_type).group_by(Score.team_id).subquery()
+      q = session.query(Score.team_id, func.min(Score.elapsed_time).label('min_elapsed_time')).filter_by(num_players=number,game_type=game_type).filter(time_filter).group_by(Score.team_id).subquery()
       top_scores = top_scores.join(q, Score.team_id == q.c.team_id)
       top_scores = top_scores.filter(Score.elapsed_time == q.c.min_elapsed_time)
     scores = list(top_scores.limit(num_scores))

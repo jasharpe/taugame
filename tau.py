@@ -362,7 +362,8 @@ class LeaderboardHandler(tornado.web.RequestHandler):
       players = filter(None, slash_separated_players.split("/"))
     else:
       players = []
-    all_high_scores = get_all_high_scores(10, leaderboard_type, players, conjunction, unique_players=(leaderboard_object == "players/"))
+    unique_players = leaderboard_object == "players/"
+    all_high_scores = get_all_high_scores(10, leaderboard_type, players, conjunction, unique_players=unique_players)
     try:
       time_offset = int(url_unescape(self.get_cookie("time_offset")))
     except:
@@ -373,6 +374,7 @@ class LeaderboardHandler(tornado.web.RequestHandler):
         all_high_scores=all_high_scores,
         leaderboard_types=[('alltime', 'All Time'), ('thisweek', 'This Week'), ('today', 'Today')],
         selected_leaderboard_type=leaderboard_type,
+        leaderboard_object=("players/" if unique_players else ""),
         time_offset=time_offset,
         conjunction=conjunction)
 

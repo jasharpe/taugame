@@ -8,7 +8,9 @@ var players = ["{{ '", "'.join(players) }}"];
 $(document).ready(function() {
   $("#go_to_user_form").submit(function(e) {
     e.preventDefault();
-    window.location = window.location.origin + "/leaderboard/{{ selected_leaderboard_type }}/" + $("#user_name").val();
+    if ($("#user_name").val()) {
+      window.location = window.location.origin + "/leaderboard/{{ selected_leaderboard_type }}/" + $("#user_name").val();
+    }
   });
   $("#add_user_form").submit(function(e) {
     e.preventDefault();
@@ -18,7 +20,9 @@ $(document).ready(function() {
     {% else %}
     new_url += "/or";
     {% end %}
-    window.location = new_url;
+    if ($("#added_user_name").val()) {
+      window.location = new_url;
+    }
   });
 });
 </script>
@@ -28,8 +32,17 @@ $(document).ready(function() {
 {% from mytime import fmt_time %}
 {% from strlib import oxford %}
 {% from datetime import timedelta %}
+
 <div class="leaderboard_menu">
   <a href="/">Back to games</a>
+</div>
+
+<div class="leaderboard_menu">
+{% if leaderboard_object == "players/" %}
+<a href="/leaderboard/{{ selected_leaderboard_type }}/{% if players %}{{ "/".join(players) }}/{% if conjunction %}{{ conjunction }}{% end %}{% end %}">Top Scores</a> | <span>Top Players</span>
+{% else %}
+  <span>Top Scores</span> | <a href="/leaderboard/players/{{ selected_leaderboard_type }}/{% if players %}{{ "/".join(players) }}/{% if conjunction %}{{ conjunction }}{% end %}{% end %}">Top Players</a>
+{% end %}
 </div>
 
 <div class="leaderboard_menu">
@@ -37,7 +50,7 @@ $(document).ready(function() {
 {% if leaderboard_type == selected_leaderboard_type and not players %}
   <span>{{ leaderboard_type_label }}</span>
 {% else %}
-  <a href="/leaderboard/{{ leaderboard_type }}">{{ leaderboard_type_label }}</a>
+  <a href="/leaderboard/{{ leaderboard_object }}{{ leaderboard_type }}">{{ leaderboard_type_label }}</a>
 {% end %}
 {% if i != len(leaderboard_types) - 1 %}|{% end %}
 {% end %}
@@ -51,9 +64,9 @@ $(document).ready(function() {
     <span>{{ leaderboard_type_label }}</span>
     {% else %}
       {% if conjunction is not None %}
-      <a href="/leaderboard/{{ leaderboard_type }}/{{ "/".join(players) }}/{{ conjunction }}">{{ leaderboard_type_label }}</a>
+      <a href="/leaderboard/{{ leaderboard_object }}{{ leaderboard_type }}/{{ "/".join(players) }}/{{ conjunction }}">{{ leaderboard_type_label }}</a>
       {% else %}
-      <a href="/leaderboard/{{ leaderboard_type }}/{{ "/".join(players) }}">{{ leaderboard_type_label }}</a>
+      <a href="/leaderboard/{{ leaderboard_object }}{{ leaderboard_type }}/{{ "/".join(players) }}">{{ leaderboard_type_label }}</a>
       {% end %}
     {% end %}
     {% if i != len(leaderboard_types) - 1 %}|{% end %}
@@ -61,9 +74,9 @@ $(document).ready(function() {
   {% if conjunction is not None %}
   -
     {% if conjunction == "and" %}
-    <span>and</span> | <a href="/leaderboard/{{ selected_leaderboard_type }}/{{ "/".join(players) }}/or">or</a>
+    <span>and</span> | <a href="/leaderboard/{{ leaderboard_object }}{{ selected_leaderboard_type }}/{{ "/".join(players) }}/or">or</a>
     {% else %}
-    <a href="/leaderboard/{{ selected_leaderboard_type }}/{{ "/".join(players) }}/and">and</a> | <span>or</span>
+    <a href="/leaderboard/{{ leaderboard_object }}{{ selected_leaderboard_type }}/{{ "/".join(players) }}/and">and</a> | <span>or</span>
     {% end %}
   {% end %}
 {% end %}
@@ -96,7 +109,7 @@ $(document).ready(function() {
           <td>
             {% set processed_players = sorted(score.players, None, lambda x: x.name) %}
             {% for (i, player) in enumerate(processed_players) %}
-            <a href="/leaderboard/{{ selected_leaderboard_type }}/{{ player.name }}">{{ player.name }}</a> ({{ score.player_scores()[player.name] }}){% if i != len(score.players) - 1 %}, {% end %}
+            <a href="/leaderboard/{{ leaderboard_object }}{{ selected_leaderboard_type }}/{{ player.name }}">{{ player.name }}</a> ({{ score.player_scores()[player.name] }}){% if i != len(score.players) - 1 %}, {% end %}
             {% end %}
           </td>
           <td>{{ (score.date - timedelta(minutes=time_offset)).strftime("%b %d %Y %I:%M%p") }}</td>
