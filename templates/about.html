@@ -369,7 +369,7 @@
   {% raw projcards[('knight', 'star', '')] %}
   {% raw projcards[('rook', 'meteors', 'heart')] %}
 
-  <p>A 3 Projective Tau is a group of 3 cards such that <b>for each of the 3 properties, the 3 cards are either <i>all blank</i>, or <i>two the same and one blank</i>, or <i>all different</i> in that property</b>. Notice that in Projective Tau, the blank property behaves differently from the other 3 properties. This is a bit different than 3 Tau, in which all 3 values of each property behaved identically.
+  <p>A 3 Projective Tau is a group of 3 cards such that <b>for each of the 3 properties, the 3 cards are either <i>all blank</i>, or <i>two the same and one blank</i>, or <i>all different and non-blank</i> in that property</b>. Notice that in Projective Tau, the blank property behaves differently from the other 3 properties. This is a bit different than 3 Tau, in which all 3 values of each property behaved identically.
 
   <p>For example, the following is a 3 Projective Tau:
 
@@ -402,6 +402,14 @@
   {% raw projcards[('pawn', 'star', 'diamond')] %}
 
   <p>Two cards have blank suit property, but the third is not also blank.
+
+  <p>This is also <i>not</i> a 3 Projective Tau:
+
+  {% raw projcards[('pawn', 'meteors', 'heart')] %}
+  {% raw projcards[('rook', 'sun', 'heart')] %}
+  {% raw projcards[('knight', '', '')] %}
+
+  <p>The cards are all different in the astronomical property, but they are not also all non-blank in that property, so they don't fit the third rule.
 
   <p>A useful restatement of the 3 Projective Tau property is that <b>if two cards are the same, and the third one is not blank, or if two non-blank cards are different, and the third one is not the third non-blank card, it's not a 3 Projective Tau</b>.
 
