@@ -30,6 +30,12 @@
   </ul>
 
   <h2>Rules</h2>
+
+  <ul>
+    {% for (game_type, game_label) in [('3tau', '3 Tau'), ('6tau', '6 Tau'), ('g3tau', 'Generalized 3 Tau'), ('i3tau', 'Insane 3 Tau'), ('e3tau', 'Easy 3 Tau'), ('4tau', '4 Tau'), ('3ptau', '3 Projective Tau'), ('z3tau', 'Puzzle 3 Tau')] %}
+    <li><a href="#rules{{ game_type }}">{{ game_label }}</a></li>
+    {% end %}
+  </ul>
   
   <h3 id="rules3tau">3 Tau</h3>
 
@@ -342,5 +348,9 @@
   <h3 id="rules3ptau">3 Projective Tau</h3>
 
   <p>TODO!
+
+  <h3 id="rulesz3tau">Puzzle 3 Tau</h3>
+
+  <p>Finding taus in Puzzle 3 Tau is the same as in 3 Tau. The variation in this game is that you are given a board of 12 cards containing a total of 6 taus, and finding taus does not remove them from the board. Find all 6 of the taus in the 12 cards to win.
 </div>
 {% end %}

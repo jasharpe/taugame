@@ -94,10 +94,21 @@ $(document).ready(function() {
   <input type="submit" value="Go to user" />
 </form>
 
-{% for (game_type, game_type_string) in [("3tau", "3 Tau"), ("6tau", "6 Tau"), ("g3tau", "Generalized 3 Tau"), ("i3tau", "Insane 3 Tau"), ("e3tau", "Easy 3 Tau (beta)"), ("4tau", "4 Tau"), ("3ptau", "3 Projective Tau"), ("z3tau", "Puzzle 3 Tau")] %}
+{% set game_type_info = [("3tau", "3 Tau"), ("6tau", "6 Tau"), ("g3tau", "Generalized 3 Tau"), ("i3tau", "Insane 3 Tau"), ("e3tau", "Easy 3 Tau (beta)"), ("4tau", "4 Tau"), ("3ptau", "3 Projective Tau"), ("z3tau", "Puzzle 3 Tau")] %}
+
+<div class="leaderboard_menu">
+{% set first = True %}  
+{% for (game_type, game_type_string) in game_type_info %}
+{% if not first %}|{% end %}
+<a href="#{{ game_type }}">{{ game_type_string }}</a>
+{% set first = False %}
+{% end %}
+</div>
+
+{% for (game_type, game_type_string) in game_type_info %}
 {% if game_type in all_high_scores %}
 <div class="leaderboard_container">
-  <h2 id="{{ game_type }}">{{ game_type_string }}</h2>
+  <h2 style="display:inline-block;" id="{{ game_type }}">{{ game_type_string }}</h2> <a class="leaderboard_back_to_top_link" href="#">back to top</a>
   {% for (num_players, scores) in all_high_scores[game_type].items() %}
     <h4>{{ num_players }} players</h4>
     <table class="leaderboard">

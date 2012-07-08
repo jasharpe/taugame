@@ -116,6 +116,13 @@ table {
   padding: 9px 8px 0;
 }
 
+.leaderboard_back_to_top_link {
+  color:#AAA;
+  display:inline-block;
+  float:right;
+  text-decoration:none;
+}
+
 .games_list {
   margin-top:5px;
   margin-bottom:5px;
