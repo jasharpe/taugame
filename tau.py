@@ -1,8 +1,9 @@
+# -- coding: utf-8 --
+
 import tornado.web
 import tornado.auth
 import tornado.websocket
 import tornado.httpserver
-from tornado import template
 from tornado.escape import url_escape, url_unescape
 import json
 import os
