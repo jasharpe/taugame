@@ -18,6 +18,19 @@ type_to_size_map = {
   '4tau': 4,
   '3ptau': 3,
   'z3tau': 3,
+  '4otau': 4,
+}
+
+type_to_min_board_size = {
+  '3tau': 12,
+  'g3tau': 12,
+  '6tau': 12,
+  'i3tau': 12,
+  'e3tau': 12,
+  '4tau': 12,
+  '3ptau': 12,
+  'z3tau': 12,
+  '4otau': 9,
 }
 
 game_types = type_to_size_map.keys()
@@ -50,7 +63,7 @@ class Game(object):
       self.space = fingeo.ProjectiveSpace()
     else:
       self.space = fingeo.AffineSpace()
-    self.min_number = 12
+    self.min_number = type_to_min_board_size[self.type]
     self.scores = {}
     self.deck = shuffled(self.space.all_points())
     self.board = []
@@ -124,7 +137,11 @@ class Game(object):
     while len(filter(None, self.board)) < self.min_number or (self.no_subset_is_tau(filter(None, self.board), self.size) and self.type not in ['g3tau', '4tau']):
       if not self.deck:
         break
-      to_add = self.size
+      num_cards_on_board = len(filter(None, self.board))
+      if num_cards_on_board > self.min_number - 3 and num_cards_on_board < self.min_number:
+        to_add = self.min_number - num_cards_on_board
+      else:
+        to_add = 3
       add_indices = []
       for i in range(0, len(self.board)):
         if to_add > 0 and self.board[i] is None:
@@ -294,6 +311,13 @@ class Game(object):
       return self.space.sum_cards(cards) == self.target_tau
     elif len(cards) == 4 and self.type in ['4tau']:
       return self.space.sum_cards(cards) == self.target_tau
+    elif len(cards) == 4 and self.type in ['4otau']:
+      for i in xrange(1, 4):
+        this_pair = [cards[0], cards[i]]
+        that_pair = map(lambda j: cards[j], [j for j in xrange(1, 4) if not j in [0, i]])
+        if self.space.sum_cards(this_pair) == self.space.sum_cards(that_pair):
+          return True
+      return False
     elif len(cards) == 6:
       return self.is_tau_basic(cards) and self.no_subset_is_tau(cards, 3)
     raise Exception("Cards %s are not valid for this game type: %s" % (cards, self.type))

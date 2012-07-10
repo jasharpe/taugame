@@ -121,7 +121,9 @@ def get_ranks(total_time, game_type, player_names, num_players):
                 'percentile' : percentile,
                 'rank' : better + 1,
             }
-  logging.warning("Took %.03f seconds to fetch player ranks for %d player", time.time() - init_time, num_players)
+  
+  if time.time() - init_time > 0.5:
+    logging.warning("Took %.03f seconds to fetch player ranks for %d player", time.time() - init_time, num_players)
 
   return {
       'global' : global_ranks,
