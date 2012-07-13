@@ -12,7 +12,7 @@
 
   <p>taugame.com was created by <a href="http://jsharpe.ca">Jeremy Sharpe</a>. Its code is available on <a href="https://github.com/jasharpe/websockettau">github</a>. It is implemented using websockets, with a Python server using Tornado, and a javascript client. You can contact me with any questions or comments at <a href="mailto:jsharpe@taugame.com">jsharpe@taugame.com</a>.
 
-  <p>Huge thanks and acknowledgement goes to Marsha Falco and SET{{ u"\u00ae" }} Enterprises for inventing and publishing <a href="http://www.setgame.com/">SET{{ u"\u00ae" }}</a>, the game upon which 3 Tau is based, and the game which is the inspiration for all the variants implemented on this site.
+  <p>Thanks to Marsha Falco and SET{{ u"\u00ae" }} Enterprises for inventing and publishing <a href="http://www.setgame.com/">SET{{ u"\u00ae" }}</a>, the game upon which 3 Tau is based, and the game which is the inspiration for all the variants implemented on this site.
 
   <h2 id="controls">Controls</h2>
 
@@ -95,7 +95,7 @@
 
   <p>Since 6 Tau is a mathematical extension of 3 Tau, its original definition is mathematical. That said, a 6 Tau can be defined in a way analogous to a 3 Tau - but it's questionable if an effective strategy for 6 Tau exists that can be explained in non-mathematical terms.
 
-  <p>A 6 Tau is a group of cards such that <b>for each of the 4 properties, the 6 cards can be split up into 2 groups of 3 cards such that each of the groups is either <i>all the same</i> or <i>all different</i> on that property, and the 6 cards cannot be split into two 3 Taus.</b> Note that a group of 6 cards that can be split into two 3 Taus is called a <i>trivial</i> 6 Tau, and trivial 6 Taus are not allowed because they're too easy to find!
+  <p>A 6 Tau is a group of 6 cards such that <b>for each of the 4 properties, the 6 cards can be split up into 2 groups of 3 cards such that each of the groups is either <i>all the same</i> or <i>all different</i> on that property, and the 6 cards cannot be split into two 3 Taus.</b> Note that a group of 6 cards that can be split into two 3 Taus is called a <i>trivial</i> 6 Tau, and trivial 6 Taus are not allowed because they're too easy to find!
 
   <h4>Mathematical Explanation</h4>
 
@@ -293,7 +293,7 @@
 
   <p>In Generalized 3 Tau, there are up to 13 cards shown at any given time. One of these cards is the <i>target</i> card, which sits to the right, and the rest form a board, similar to the 3 Tau board. A Generalized 3 Tau is a group of 3 cards A, B, and C, such that <b>the sum of the cards A, B, and C, under the assignment of property values to integers given above, is equal to the <i>target</i> card</b>.
   
-  <p>An interesting fact to observe is that if the target card is the <i>0 card</i>, then a Generalized 3 Tau is just a 3 Tau. If the target card has just one non-zero property, then a Generalized 3 Tau is a <i>near 3 Tau</i>. That is, a 3 Tau that is wrong in exactly the one property 
+  <p>An interesting fact to observe is that if the target card is the <i>0 card</i>, then a Generalized 3 Tau is just a 3 Tau (this is why it is called generalized); if the target card has just one non-zero property, then a Generalized 3 Tau is a <i>near 3 Tau</i> (that is, a 3 Tau that is wrong in exactly the one property); etc.
 
   <p>For example, suppose the target card is this:
 
@@ -305,13 +305,42 @@
   {% raw cards[('circle', 'empty', 'three', 'blue')] %}
   {% raw cards[('circle', 'solid', 'one', 'green')] %}
 
-  <!-- <h4>Strategies for Generalized 3 Tau</h4>
+  <h4>Strategy</h4>
 
-  <p>There are a couple of different approaches to take to find Generalized 3 Taus.
+  <p>The definition above can seem a bit intimidating, so here is a simple brute force strategy to get you started. This strategy is similar in flavour to the <a href="4cardstrategy">4 card strategy</a> for 6 Tau, and is fairly effective.
 
-  <h5>Negasum Strategy</h5>
+  <p>Suppose the target card is card T. Choose any card A on the board. Compute the <i>negasum</i> of A with the 0 card (one empty red circle) to get card B. That is, B is the unique third card such that A, 0, B is a 3 Tau. Compute the negasum of B with T to get C. Now, if you can find cards D, E such that D, E, C is a 3 Tau, then A, D, E is a Generalized 3 Tau! If you can't find D, E that work, try with a different card for A.
 
-  <p>This strategy is similar in flavour to the <a href="4cardstrategy">4 card strategy</a> for 6 Tau. -->
+  <p>Here's an example. Suppose the target card is:
+
+  {% raw cards[('square', 'solid', 'two', 'green')] %}
+
+  <p>Choose a card on the board. Suppose this card is on the board:
+
+  {% raw cards[('triangle', 'shaded', 'one', 'blue')] %}
+
+  <p>Calculate the negasum (unique third card) of this card and the 0 card (one empty red circle):
+
+  {% raw cards[('square', 'solid', 'one', 'green')] %}
+
+  <p>Calculate the negasum (unique third card) of this card and the target card:
+
+  {% raw cards[('square', 'solid', 'three', 'green')] %}
+
+  <p>Suppose the following two cards are on the board:
+
+  {% raw cards[('square', 'empty', 'two', 'green')] %}
+  {% raw cards[('square', 'shaded', 'one', 'green')] %}
+
+  <p>These make a 3 Tau with the above card, so this is a Generalized 3 Tau:
+
+  {% raw cards[('triangle', 'shaded', 'one', 'blue')] %}
+  {% raw cards[('square', 'empty', 'two', 'green')] %}
+  {% raw cards[('square', 'shaded', 'one', 'green')] %}
+
+  <p>Why does this work? Well, you're trying to find 3 cards A, B, C such that A + B + C = T. Computing the negasum of A with 0 gives -A (since A + 0 + -A = 0, and is thus a 3 Tau). Computing the negasum of -A with T (or B with T in the explanation above) gives -(-A + T), since (-A + T + -(-A + T) = 0, and is thus a 3 Tau). Now if we find cards B, C that form a 3 Tau with -(-A + T), we have B + C + -(-A + T) = 0. Moving things around, we get A + B + C = T, which is exactly what we want.
+
+  <p>It turns out this strategy is very effective. On a 12 card board, a randomly selected card has at least a 3/12, or 1/4 chance, of being part of a Generalized 3 Tau. In practice, when there is more than one Generalized 3 Tau present on the board, this probability is much higher.  This means that even on pathological boards, there is a greater than 50% chance of finding a Generalized 3 Tau on the first 3 tries. Of course, the drawback of this strategy is it might take up to 10 initial card guesses (assuming perfect checking) to find the Generalized 3 Tau, if it's hiding in the last 3 that you check.
 
   <h3 id="rulesi3tau">Insane 3 Tau</h3>
 
@@ -323,7 +352,9 @@
 
   <h3 id="rules4tau">4 Tau</h3>
 
-  <p>4 Tau is a mathematical extension of 3 Tau that is similar to Generalized 3 Tau but doesn't depend on choice of zero. In 4 Tau, you are given a target card T, and are asked to find 4 cards A, B, C, D such that A+B+C+D = T. This is equivalent to: there are cards X and Y such that A,B,X is a 3 Tau, C,D,Y is a 3 Tau, and X,Y,T is a 3 Tau.
+  <i>Thanks to ara for suggesting 4 Tau, and realizing that 4 Tau does not depend on card property value to number assignments, thus making it a purer version of Generalized 3 Tau.</i>
+
+  <p>4 Tau is a mathematical extension of 3 Tau that is similar to Generalized 3 Tau but doesn't depend on choice of zero. In 4 Tau, you are given a target card T, and are asked to find 4 cards A, B, C, D such that A + B + C + D = T. This is equivalent to: there are cards X and Y such that A, B, X is a 3 Tau, C, D, Y is a 3 Tau, and X, Y, T is a 3 Tau.
 
   <p>For example, suppose the target card is this:
 
@@ -342,17 +373,31 @@
   {% raw cards[('circle', 'shaded', 'two', 'green')] %}
   {% raw cards[('triangle', 'solid', 'two', 'green')] %}
   <br/>
+  <br/>
   {% raw cards[('circle', 'solid', 'two', 'red')] %}
   {% raw cards[('circle', 'solid', 'one', 'blue')] %}
   {% raw cards[('circle', 'solid', 'three', 'green')] %}
+  <br/>
   <br/>
   {% raw cards[('triangle', 'solid', 'two', 'green')] %}
   {% raw cards[('circle', 'solid', 'three', 'green')] %}
   {% raw cards[('square', 'solid', 'one', 'green')] %}
 
+  <h4>Strategy</h4>
+
+  <p>There is a simple brutce force strategy for 4 Tau, similar to that for Generalized 3 Tau (although considerably less efficient).
+
+  <p>Suppose the target card is card T. Choose any two cards A, B on the board. Compute card C, the <i>negasum</i> of A and B (so A, B, and C are a 3 Tau). Now compute D, the negasum of C and T (so D, C, and T are a 3 Tau). If there are cards E, F on the board such that E, F, D are a 3 Tau, then A, B, E, F are a 4 Tau.
+
+  <p>This works because C = -(A + B), and D = -(C + T), and D = -(E + F), so A + B + E + F = -C - D = -C + (C + T) = T, which is exactly what we want.
+
+  <p>It turns out that unlike the bruce force strategy for Generalized 3 Tau, this strategy is not very effective. The problem is that you have to initially choose two cards, instead of just one. This means that the chance of a correct guess is much lower. If, for example, there is only one 4 Tau on the board, then there is only a 4 / 12 * 3 / 11 chance (about 9%) that you will choose two cards out of the 4 Tau, whereas for Generalized 3 Tau there is a 25% chance of correctly choosing the first card. Plus in Generalized 3 Tau, you have to try at most 10 cards before finding one that works, but in 4 Tau, you may have to try up to 66 (11 + 10 + 9 + ... + 1).
+
+  <p>A more effective long-term strategy for 4 Tau is to play it similarly to the 3-card strategy for 6 Tau. This will enable you to "see" 4 Taus, rather than relying on blind brute force.
+
   <h3 id="rules3ptau">3 Projective Tau</h3>
 
-  <p><i>Huge thanks and acknowledgement goes to Benjamin Lent Davis and Diane Maclagan (who wrote <a href="http://homepages.warwick.ac.uk/staff/D.Maclagan/papers/set.pdf">this paper</a>) for describing 3 Projective Tau, and (according to that paper) H. Tracy Hall for devising a good format for the cards.</i>
+  <p><i>Thanks to Benjamin Lent Davis and Diane Maclagan (who wrote <a href="http://homepages.warwick.ac.uk/staff/D.Maclagan/papers/set.pdf">this paper</a>) for describing 3 Projective Tau, and (according to that paper) H. Tracy Hall for devising a good format for the cards.</i>
 
   <p>Unlike many of the other Tau variants, 3 Projective Tau actually uses a different deck, and while its mathematical definition is similar to 3 Tau (although with some significant differences), it feels quite different to play. At first, for someone already good at 3 Tau, it seems much more difficult. Over time, however, you will develop an intuitive sense for 3 Projective Taus, just as in 3 Tau. In fact, 3 Projective Tau is arguably easier than 3 Tau, as there are, on average, more 3 Projective Taus per 12 card board than 3 Taus per 12 card board.
 
@@ -433,6 +478,28 @@
 
   <h3 id="rules4otau">4 Outer Tau</h3>
 
-  <p>TODO
+  <p><i>Thanks to Wei-Hwa Huang for inventing and Tom Magliery for posting the <a href="http://magliery.com/Set/SuperSet.html">"SuperSet" SET{{ u"\u00ae" }} variant</a> on which 4 Outer Tau is based.</i>
+
+  <p>A 4 Outer Tau is a group of 4 cards made up of 2 groups of 2 cards, such that the unique third card (using the rules of 3 Tau) of each pair of cards is the same.
+  
+  <p>Since there tend to be a lot of 4 Outer Taus, the 4 Outer Tau board has only 9 cards by default, dealing only to 12+ cards if there are no Taus in the initial 9 cards.
+
+  <p>4 Outer Tau gets its name from the fact that you are essentially finding the symmetric difference of two Taus (or XOR, or the "Outer" join of two Taus).
+
+  <p>For example, the following is a 4 Outer Tau:
+
+  {% raw cards[('circle', 'shaded', 'two', 'green')] %}
+  {% raw cards[('square', 'empty', 'two', 'green')] %}
+
+  {% raw cards[('triangle', 'solid', 'three', 'blue')] %}
+  {% raw cards[('triangle', 'solid', 'one', 'red')] %}
+
+  <p>This is a 4 Outer Tau since this card makes a 3 Tau with both the first pair, and the second pair:
+
+  {% raw cards[('triangle', 'solid', 'two', 'green')] %}
+
+  <h4>Strategy</h4>
+
+  <p>Here is a very simple brute force strategy for 4 Outer Tau to get you started. Simply select any two cards A, B, on the board, and figure out the unique third card C such that A, B, C is a 3 Tau. Now, if you can find different cards D, E such that C, D, E is a 3 Tau, then A, B, D, E is a 4 Outer Tau. If you can't find D, E, then simply choose a different A, B and try again.
 </div>
 {% end %}

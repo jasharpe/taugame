@@ -28,5 +28,5 @@ For options, type:
 - Add a button to create the game in templates/game_list.html.
 - Add a name mapping to static/game_list.js.
 - Add a name mapping and URL mapping to tau.py.
-- Add a rules description to templates/about.html.
+- Add a rules description and name mapping to templates/about.html.
 - (Sometimes applicable) Add changes to playing area in tau.js.
