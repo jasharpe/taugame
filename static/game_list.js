@@ -39,6 +39,8 @@ $(function() {
           game_type = "Puzzle 3 Tau";
         } else if (game_data.type == "4otau") {
           game_type = "4 Outer Tau";
+        } else if (game_data.type == "n3tau") {
+          game_type = "Near 3 Tau";
         }
 
         section.find(".games_list").append($("<li><a href=\"/game/" + game_data.id + "\">Game " + game_data.id + "</a> (" + game_type + ") - " + players_string + "</li>"));

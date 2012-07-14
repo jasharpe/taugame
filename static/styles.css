@@ -218,6 +218,10 @@ table {
   background:url('/static/projcards.png?v=9') no-repeat scroll 0 0 white;
 }
 
+.nearTau {
+  background:url('/static/neartau.png?v=6') no-repeat scroll 0 0 white;
+}
+
 .selectedCard {
   -moz-box-shadow:2px 2px 2px #fbb;
   -webkit-box-shadow:2px 2px 2px #fbb;

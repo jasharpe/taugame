@@ -291,7 +291,10 @@ $(document).ready(function() {
           row.append(col);
         } else {
           var card_div = $('<div style="position:absolute;" class="realCard unselectedCard">');
-          card_div.append($('<div style="position:relative; left:20px; top:50px;">' + properties[wrong_property] + "</div>"));
+          //card_div.append($('<div style="position:relative; left:20px; top:50px;">' + properties[wrong_property] + "</div>"));
+          card_div.addClass("nearTau");
+          var offset = wrong_property * 80;
+          card_div.css("background-position", "-" + offset + "px 0");
           var col = $('<td>');
           col.append(card_div);
           row.append(col);
