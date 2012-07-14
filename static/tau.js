@@ -13,6 +13,8 @@ $(function(){
 });
 
 $(document).ready(function() {
+  var properties = ['Colour', 'Number', 'Shading', 'Shape'];
+
   var key_map = {
     'q' : 0,
     'a' : 1,
@@ -184,7 +186,7 @@ $(document).ready(function() {
   var prev_board = [];
   var card_to_board_map = {}
   var game_paused = false;
-  function update_board(board, paused, target, number, hint, ended, found_puzzle_taus, old_found_puzzle_tau_index) {
+  function update_board(board, paused, target, wrong_property, number, hint, ended, found_puzzle_taus, old_found_puzzle_tau_index) {
     game_paused = paused;
     console.log("This board has " + number + " taus");
 
@@ -280,6 +282,21 @@ $(document).ready(function() {
           row.append(col);
         }
       }
+      if (wrong_property !== null) {
+        var col = $('<td>');
+        var div = $('<div class="fakeCard">');
+        col.append(div);
+        row.append(col);
+        if (row_index === 0 || row_index === 2) {
+          row.append(col);
+        } else {
+          var card_div = $('<div style="position:absolute;" class="realCard unselectedCard">');
+          card_div.append($('<div style="position:relative; left:20px; top:50px;">' + properties[wrong_property] + "</div>"));
+          var col = $('<td>');
+          col.append(card_div);
+          row.append(col);
+        }
+      }
       table.append(row);
     }
     playing_area.append(table);
@@ -370,14 +387,14 @@ $(document).ready(function() {
     }
   };
 
-  function update(board, paused, target, scores, time, avg_number, number, ended, hint, player_rank_info, found_puzzle_taus) {
+  function update(board, paused, target, wrong_property, scores, time, avg_number, number, ended, hint, player_rank_info, found_puzzle_taus) {
     game_ended = ended;
     update_scores(scores, ended);
     
     update_time(time, paused, avg_number, ended, player_rank_info);
 
     // update board
-    update_board(board, paused, target, number, hint, ended, found_puzzle_taus);
+    update_board(board, paused, target, wrong_property, number, hint, ended, found_puzzle_taus);
 
     if (ended) {
       $("body").addClass("ended");
@@ -399,7 +416,11 @@ $(document).ready(function() {
   ws.onmessage = function (e) {
     var data = JSON.parse(e.data);
     if (data.type === "update") {
-      update(data.board, data.paused, data.target, data.scores, data.time, data.avg_number, data.number, data.ended, data.hint, data.player_rank_info, data.found_puzzle_taus);
+      var wrong_property = null;
+      if (data.wrong_property !== null) {
+        wrong_property = parseInt(data.wrong_property);
+      }
+      update(data.board, data.paused, data.target, wrong_property, data.scores, data.time, data.avg_number, data.number, data.ended, data.hint, data.player_rank_info, data.found_puzzle_taus);
     } else if (data.type === "scores") {
       update_scores(data.scores, data.ended);
     } else if (data.type == "chat") {

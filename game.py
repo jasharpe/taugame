@@ -19,6 +19,7 @@ type_to_size_map = {
   '3ptau': 3,
   'z3tau': 3,
   '4otau': 4,
+  'n3tau': 3,
 }
 
 type_to_min_board_size = {
@@ -31,6 +32,7 @@ type_to_min_board_size = {
   '3ptau': 12,
   'z3tau': 12,
   '4otau': 9,
+  'n3tau': 12,
 }
 
 game_types = type_to_size_map.keys()
@@ -70,6 +72,9 @@ class Game(object):
     self.boards = []
     self.taus = []
     self.target_tau = None
+    # A number between 0 and 3 indicating the wrong property
+    # in n3tau.
+    self.wrong_property = None
     self.compress_and_fill_board()
     self.started = False
     self.start_time = 0
@@ -134,7 +139,7 @@ class Game(object):
       self.board.pop()
 
     # add new cards to fill in gaps
-    while len(filter(None, self.board)) < self.min_number or (self.no_subset_is_tau(filter(None, self.board), self.size) and self.type not in ['g3tau', '4tau']):
+    while len(filter(None, self.board)) < self.min_number or (self.type not in ['g3tau', '4tau'] and self.no_subset_is_tau(filter(None, self.board), self.size)):
       if not self.deck:
         break
       num_cards_on_board = len(filter(None, self.board))
@@ -200,10 +205,11 @@ class Game(object):
           break
         self.board[i] = self.deck.pop()
 
-
     # compute a new target tau for Generalized 3 Tau and 4 Tau
     if self.type in ['g3tau', '4tau']:
       self.target_tau = self.get_random_target(self.board)
+    elif self.type in ['n3tau']:
+      self.wrong_property = self.get_wrong_property(self.board)
 
     # add Nones at the end as necessary
     while len(self.board) < self.min_number:
@@ -213,6 +219,19 @@ class Game(object):
     # randomized, because the first 3 dealt cards always form a Tau.
     if self.type in ['i3tau', 'e3tau'] and len(filter(None, self.board)) + len(self.deck) == 3**4:
       random.shuffle(self.board)
+
+  def get_wrong_property(self, board):
+    no_nones = filter(None, board)
+    if len(no_nones) < self.size:
+      return None
+    counts = []
+    for i in xrange(0, 4):
+      count = self.count_tau_subsets(no_nones, 3, wrong_property=i)
+      if count > 0:
+        counts.append((i, count))
+    if not counts:
+      return None
+    return random.choice(counts)[0]
 
   def get_random_target(self, board):
       no_nones = filter(None, board)
@@ -228,10 +247,10 @@ class Game(object):
     else:
       return len(self.deck) == 0 and self.no_subset_is_tau(filter(None, self.board), self.size)
 
-  def get_all_taus(self):
+  def get_all_taus(self, wrong_property=None):
     taus = []
     for card_subset in itertools.combinations(filter(None, self.board), self.size):
-      if self.is_tau(card_subset):
+      if self.is_tau(card_subset, wrong_property=wrong_property):
         taus.append(card_subset)
     return taus
 
@@ -239,7 +258,7 @@ class Game(object):
     return len(self.get_all_taus())
 
   def get_hint(self):
-    for cards in self.get_all_taus():
+    for cards in self.get_all_taus(wrong_property=self.wrong_property):
       if self.type != 'z3tau' or self.old_found_puzzle_tau_index(cards) is None:
         return cards
     return []
@@ -304,9 +323,18 @@ class Game(object):
   def is_tau_basic(self, cards):
     return not any(self.space.sum_cards(cards))
 
-  def is_tau(self, cards):
+  def is_n3tau(self, cards, wrong_property):
+    correct_properties = map(lambda x: 1 if x else 0, self.space.sum_cards(cards))
+    if wrong_property is not None:
+      return sum(correct_properties) == 1 and correct_properties[wrong_property] == 1
+    else:
+      return sum(correct_properties) == 1
+
+  def is_tau(self, cards, wrong_property=None):
     if len(cards) == 3 and self.type in ["3tau", "6tau", "i3tau", "e3tau", "3ptau", "z3tau"]:
       return self.is_tau_basic(cards)
+    if len(cards) == 3 and self.type in ["n3tau"]:
+      return self.is_n3tau(cards, wrong_property)
     elif len(cards) == 3 and self.type in ["g3tau"]:
       return self.space.sum_cards(cards) == self.target_tau
     elif len(cards) == 4 and self.type in ['4tau']:
@@ -322,10 +350,10 @@ class Game(object):
       return self.is_tau_basic(cards) and self.no_subset_is_tau(cards, 3)
     raise Exception("Cards %s are not valid for this game type: %s" % (cards, self.type))
 
-  def count_tau_subsets(self, cards, subset_size):
+  def count_tau_subsets(self, cards, subset_size, wrong_property=None):
     count = 0
     for card_subset in itertools.combinations(cards, subset_size):
-      if self.is_tau(card_subset):
+      if self.is_tau(card_subset, wrong_property=wrong_property):
         count += 1
     return count
 

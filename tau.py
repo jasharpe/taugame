@@ -265,6 +265,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
         'board' : game.get_client_board(),
         'paused' : game.paused,
         'target' : game.get_client_target_tau(),
+        'wrong_property' : game.wrong_property,
         'scores' : self.get_scores(),
         'avg_number' : numbers_map,
         'number' : game.count_taus(),
@@ -445,6 +446,7 @@ class GameHandler(tornado.web.RequestHandler):
     "3ptau" : "3 Projective Tau",
     "z3tau" : "Puzzle 3 Tau",
     "4otau" : "4 Outer Tau",
+    "n3tau" : "Near 3 Tau",
   }
 
   @require_name
@@ -533,7 +535,7 @@ def create_application(debug):
     (r"/leaderboard/(?P<leaderboard_object>(?:players/)?)(?P<leaderboard_type>alltime|thisweek|today)/(?P<slash_separated_players>(?:[^/]+/){2,})(?P<conjunction>and|or)/?", LeaderboardHandler),
     (r"/graph/([^/]*)", GraphHandler),
     (r"/choose_name", ChooseNameHandler),
-    (r"/new_game/(3tau|6tau|g3tau|i3tau|e3tau|4tau|3ptau|z3tau|4otau)", NewGameHandler),
+    (r"/new_game/(3tau|6tau|g3tau|i3tau|e3tau|4tau|3ptau|z3tau|4otau|n3tau)", NewGameHandler),
     (r"/game/(\d+)", GameHandler),
     (r"/websocket/(\d*)", TauWebSocketHandler),
     (r"/gamelistwebsocket/(0|1)", GameListWebSocketHandler),
