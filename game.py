@@ -255,7 +255,7 @@ class Game(object):
     return taus
 
   def count_taus(self):
-    return len(self.get_all_taus())
+    return len(self.get_all_taus(wrong_property=self.wrong_property))
 
   def get_hint(self):
     for cards in self.get_all_taus(wrong_property=self.wrong_property):
@@ -276,7 +276,7 @@ class Game(object):
       return time.time() - self.most_recent_start_time + self.previous_time
 
   def submit_tau(self, cards, player):
-    if not self.ended and len(cards) == self.size and self.board_contains(cards) and self.is_tau(cards):
+    if not self.ended and len(cards) == self.size and self.board_contains(cards) and self.is_tau(cards, wrong_property=self.wrong_property):
       if self.type == 'z3tau':
         index = self.old_found_puzzle_tau_index(cards)
         if index is not None:
