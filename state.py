@@ -1,5 +1,5 @@
 from db import Base, get_session
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, Text, Table, distinct, func, or_, and_
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, Text, Table, Boolean, distinct, func, or_, and_
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.sql.expression import desc, asc
 import datetime
@@ -14,7 +14,7 @@ def get_graph_data(player):
   ret = {}
   for game_type in game_types:
     time_limit = (600 if game_type == '3tau' else 2700)
-    raw_data = session.query(Score).filter(Score.elapsed_time < time_limit).filter(Score.date > datetime.datetime(year=2012, month=1, day=2)).filter(Score.players.any(name=player)).filter_by(num_players=1,game_type=game_type).order_by(asc(Score.date))
+    raw_data = session.query(Score).filter(Score.elapsed_time < time_limit).filter(Score.date > datetime.datetime(year=2012, month=1, day=2)).filter(Score.players.any(name=player)).filter_by(num_players=1,game_type=game_type).filter(Score.invalid == False).order_by(asc(Score.date))
     ret[game_type] = raw_data
   return ret
 
@@ -30,7 +30,7 @@ def filter_for_players(query, players):
 def get_numbers(leaderboard_type, players):
   session = get_session()
   time_filter = filter_map[leaderboard_type]()
-  numbers_query = session.query(distinct(Score.num_players), Score.game_type).filter(time_filter)
+  numbers_query = session.query(distinct(Score.num_players), Score.game_type).filter(time_filter).filter(Score.invalid == False)
   if players:
     numbers_query = filter_for_players(numbers_query, players)
   return list(numbers_query)
@@ -40,14 +40,14 @@ def get_all_high_scores(num_scores, leaderboard_type, players, conjunction, uniq
   time_filter = filter_map[leaderboard_type]()
   ret = {}
   for (number, game_type) in get_numbers(leaderboard_type, players):
-    top_scores = session.query(Score).filter_by(num_players=number,game_type=game_type).filter(time_filter).order_by(asc(Score.elapsed_time))
+    top_scores = session.query(Score).filter_by(num_players=number,game_type=game_type).filter(time_filter).filter(Score.invalid == False).order_by(asc(Score.elapsed_time))
     if players:
       top_scores = filter_for_players(top_scores, players)
     if conjunction == "and":
       top_scores = top_scores.group_by(Score.id).having(func.count(distinct(DBPlayer.name)) == len(players))
         
     if unique_players:
-      q = session.query(Score.team_id, func.min(Score.elapsed_time).label('min_elapsed_time')).filter_by(num_players=number,game_type=game_type).filter(time_filter).group_by(Score.team_id).subquery()
+      q = session.query(Score.team_id, func.min(Score.elapsed_time).label('min_elapsed_time')).filter_by(num_players=number,game_type=game_type).filter(time_filter).filter(Score.invalid == False).group_by(Score.team_id).subquery()
       top_scores = top_scores.join(q, Score.team_id == q.c.team_id)
       top_scores = top_scores.filter(Score.elapsed_time == q.c.min_elapsed_time)
     scores = list(top_scores.limit(num_scores))
@@ -98,9 +98,9 @@ def get_ranks(total_time, game_type, player_names, num_players):
           time_filter = filter_map[leaderboard_type]()
           elapsed_time_filter = Score.elapsed_time < total_time - (CLOSE_THRESHOLD if close == "close" else 0)
           if leaderboard == "all":
-            num_better_scores = session.query(Score).filter(time_filter).filter(Score.game_type == game_type).filter(Score.num_players == num_players)
+            num_better_scores = session.query(Score).filter(time_filter).filter(Score.game_type == game_type).filter(Score.num_players == num_players).filter(Score.invalid == False)
           else:
-            num_better_scores = session.query(Score).join((DBPlayer, Score.players)).filter(time_filter).filter(Score.game_type == game_type).filter(Score.num_players == num_players).filter(DBPlayer.name == player_name)
+            num_better_scores = session.query(Score).join((DBPlayer, Score.players)).filter(time_filter).filter(Score.game_type == game_type).filter(Score.num_players == num_players).filter(DBPlayer.name == player_name).filter(Score.invalid == False)
           total = num_better_scores.count()
           better = num_better_scores.filter(elapsed_time_filter).count()
           if total == 0:
@@ -213,6 +213,7 @@ class Score(Base):
   game_type = Column(String)
   date = Column(DateTime)
   player_scores_json = Column(String)
+  invalid = Column(Boolean)
 
   def __init__(self, elapsed_time, date, game, players, team, player_scores):
     self.elapsed_time = elapsed_time
@@ -223,6 +224,7 @@ class Score(Base):
     self.num_players = len(players)
     self.game_type = game.game_type
     self.player_scores_json = json.dumps(player_scores)
+    self.invalid = False
 
   def __repr__(self):
     return "<Score(%f, %s, %s, %s, %s)>" % (self.elapsed_time, repr(self.date), self.game, self.players, repr(self.player_scores()))
