@@ -9,6 +9,10 @@ localhost.key
 
 # Database file.
 hello
+hello_predelete
 
 # Secret file.
 secrets.py
+
+# Java bytecode.
+*.class

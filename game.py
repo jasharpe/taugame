@@ -20,6 +20,7 @@ type_to_size_map = {
   'z3tau': 3,
   '4otau': 4,
   'n3tau': 3,
+  'bqtau': 4,
 }
 
 type_to_min_board_size = {
@@ -33,6 +34,7 @@ type_to_min_board_size = {
   'z3tau': 12,
   '4otau': 9,
   'n3tau': 12,
+  'bqtau': 12,
 }
 
 game_types = type_to_size_map.keys()
@@ -63,6 +65,8 @@ class Game(object):
       raise InvalidGameType()
     if self.type == '3ptau':
       self.space = fingeo.ProjectiveSpace()
+    elif self.type == 'bqtau':
+      self.space = fingeo.BooleanSpace()
     else:
       self.space = fingeo.AffineSpace()
     self.min_number = type_to_min_board_size[self.type]
@@ -346,6 +350,8 @@ class Game(object):
         if self.space.sum_cards(this_pair) == self.space.sum_cards(that_pair):
           return True
       return False
+    elif len(cards) == 4 and self.type in ['bqtau']:
+      return self.is_tau_basic(cards)
     elif len(cards) == 6:
       return self.is_tau_basic(cards) and self.no_subset_is_tau(cards, 3)
     raise Exception("Cards %s are not valid for this game type: %s" % (cards, self.type))

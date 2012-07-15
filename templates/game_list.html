@@ -10,45 +10,12 @@
 {% end %}
 
 {% block body %}
-<form style="display:inline-block;" name="new_game" action="/new_game/3tau" method="post">
-  <input type="submit" value="New 3 Tau game" />
+{% for (game_type, game_type_string) in game_type_info %}
+<form style="display:inline-block;" name="new_game" action="/new_game/{{ game_type }}" method="post">
+  <input type="submit" value="New {{ game_type_string }} game" />
 </form>
 
-<form style="display:inline-block;" name="new_game" action="/new_game/6tau" method="post">
-  <input type="submit" value="New 6 Tau game" />
-</form>
-
-<form style="display:inline-block;" name="new_game" action="/new_game/g3tau" method="post">
-  <input type="submit" value="New Generalized 3 Tau game" />
-</form>
-
-<form style="display:inline-block;" name="new_game" action="/new_game/i3tau" method="post">
-  <input type="submit" value="New Insane 3 Tau game" />
-</form>
-
-<form style="display:inline-block;" name="new_game" action="/new_game/e3tau" method="post">
-  <input type="submit" value="New Easy 3 Tau (beta) game" />
-</form>
-
-<form style="display:inline-block;" name="new_game" action="/new_game/4tau" method="post">
-  <input type="submit" value="New 4 Tau game" />
-</form>
-
-<form style="display:inline-block;" name="new_game" action="/new_game/3ptau" method="post">
-  <input type="submit" value="New 3 Projective Tau game" />
-</form>
-
-<form style="display:inline-block;" name="new_game" action="/new_game/z3tau" method="post">
-  <input type="submit" value="New Puzzle 3 Tau game" />
-</form>
-
-<form style="display:inline-block;" name="new_game" action="/new_game/4otau" method="post">
-  <input type="submit" value="New 4 Outer Tau game" />
-</form>
-
-<form style="display:inline-block;" name="new_game" action="/new_game/n3tau" method="post">
-  <input type="submit" value="New Near 3 Tau game" />
-</form>
+{% end %}
 
 <div id="game_panel">
   {% for (id, label) in [("newgames", "New games"), ("startedgames", "Started games"), ("endedgames", "Ended games")] %}
