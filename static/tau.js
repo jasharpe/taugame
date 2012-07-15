@@ -95,6 +95,8 @@ $(document).ready(function() {
   function get_card_number(card) {
     if (game_type === "3ptau") {
       return card[0] + 4 * card[1] + 16 * card[2] - 1;
+    } else if (game_type === "bqtau") {
+      return card[0] + 4 * card[1] + 16 * card[2];
     } else {
       return card[0] + 3 * card[1] + 9 * card[2] + 27 * card[3];
     }
@@ -178,6 +180,8 @@ $(document).ready(function() {
   function getImgClass() {
     if (game_type === "3ptau") {
       return "projectiveTau";
+    } else if (game_type == "bqtau") {
+      return "booleanTau";
     } else {
       return "regularTau";
     }
