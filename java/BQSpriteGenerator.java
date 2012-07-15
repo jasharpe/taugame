@@ -66,27 +66,20 @@ public class BQSpriteGenerator {
       ys = new int[] { yBase + height / 2 };
     } else if (number == 1) {
       xs = new int[] {
-        xBase + width / 2,
-              xBase + width / 2 };
+        xBase + width / 3,
+        xBase + width - width / 3 };
       ys = new int[] {
-        yBase + height - height / 3,
-              yBase + height / 3 };
-      if (!LARGE) {
-        ys[1] += 1;
-        ys[0] -= 1;
-      }
+        yBase + height / 2,
+        yBase + height / 2 };
     } else if (number == 2) {
       xs = new int[] {
         xBase + width / 3,
               xBase + width / 2,
               xBase + width - width / 3 };
       ys = new int[] {
-        yBase + height / 2 + width / 6,
-              yBase + height / 2 - width / 6,
-              yBase + height / 2 + width / 6 };
-      if (!LARGE) {
-        ys[1] -= 1;
-      }
+        yBase + height / 2 - width / 6,
+              yBase + height / 2 + width / 6,
+              yBase + height / 2 - width / 6 };
     } else {
       xs = new int[] {
         xBase + width / 3,
@@ -98,9 +91,6 @@ public class BQSpriteGenerator {
         yBase + height/2 + (width+5) / 6,
         yBase + height/2 - (width+5) / 6,
         yBase + height/2 + (width+5) / 6 };
-      if (!LARGE) {
-        throw new RuntimeException("Don't know how to draw small BQ cards.");
-      }
     }
 
     List<Shape> shapes = new ArrayList<Shape>();
