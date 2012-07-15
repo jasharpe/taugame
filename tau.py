@@ -344,7 +344,8 @@ class MainHandler(tornado.web.RequestHandler):
     self.render(
         "game_list.html",
         see_more_ended=int(self.get_argument('see_more_ended', default=False)),
-        player=url_unescape(self.get_secure_cookie("name")))
+        player=url_unescape(self.get_secure_cookie("name")),
+        game_type_info=game_type_info)
 
 class GraphHandler(tornado.web.RequestHandler):
   def get(self, player):
@@ -378,7 +379,8 @@ class LeaderboardHandler(tornado.web.RequestHandler):
         selected_leaderboard_type=leaderboard_type,
         leaderboard_object=("players/" if unique_players else ""),
         time_offset=time_offset,
-        conjunction=conjunction)
+        conjunction=conjunction,
+        game_type_info=game_type_info)
 
 def get_user(request_handler):
   if request_handler.get_secure_cookie("google_user"):
@@ -435,19 +437,22 @@ class NewGameHandler(tornado.web.RequestHandler):
     send_game_list_update_to_all()
     self.redirect("/game/%d" % next_id)
 
+game_type_info = [
+  ("3tau", "3 Tau"),
+  ("6tau", "6 Tau"),
+  ("g3tau", "Generalized 3 Tau"),
+  ("i3tau", "Insane 3 Tau"),
+  ("e3tau", "Easy 3 Tau (beta)"),
+  ("4tau", "4 Tau"),
+  ("3ptau", "3 Projective Tau"),
+  ("z3tau", "Puzzle 3 Tau"),
+  ("4otau", "4 Outer Tau"),
+  ("n3tau", "Near 3 Tau"),
+  ("bqtau", "Boolean Quadruple Tau"),
+]
+
 class GameHandler(tornado.web.RequestHandler):
-  game_type_to_type_string_map = {
-    "3tau" : "3 Tau",
-    "6tau" : "6 Tau",
-    "g3tau" : "Generalized 3 Tau",
-    "i3tau" : "Insane 3 Tau",
-    "e3tau" : "Easy 3 Tau (beta)",
-    "4tau" : "4 Tau",
-    "3ptau" : "3 Projective Tau",
-    "z3tau" : "Puzzle 3 Tau",
-    "4otau" : "4 Outer Tau",
-    "n3tau" : "Near 3 Tau",
-  }
+  game_type_to_type_string_map = dict(game_type_info)
 
   @require_name
   def get(self, game_id):
@@ -535,7 +540,7 @@ def create_application(debug):
     (r"/leaderboard/(?P<leaderboard_object>(?:players/)?)(?P<leaderboard_type>alltime|thisweek|today)/(?P<slash_separated_players>(?:[^/]+/){2,})(?P<conjunction>and|or)/?", LeaderboardHandler),
     (r"/graph/([^/]*)", GraphHandler),
     (r"/choose_name", ChooseNameHandler),
-    (r"/new_game/(3tau|6tau|g3tau|i3tau|e3tau|4tau|3ptau|z3tau|4otau|n3tau)", NewGameHandler),
+    (r"/new_game/(3tau|6tau|g3tau|i3tau|e3tau|4tau|3ptau|z3tau|4otau|n3tau|bqtau)", NewGameHandler),
     (r"/game/(\d+)", GameHandler),
     (r"/websocket/(\d*)", TauWebSocketHandler),
     (r"/gamelistwebsocket/(0|1)", GameListWebSocketHandler),
