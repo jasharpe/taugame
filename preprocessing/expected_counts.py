@@ -9,6 +9,9 @@ def expected_3taus(k):
   # since after fixing 2 cards, there is a unique third.
   return comb(k, 3) / 79.
 
+def expected_3ptaus(k):
+  return comb(k, 3) / 61.
+
 def expected_bqtaus(k):
   # After fixing 3 cards, there is a unique fourth.
   return comb(k, 4) / 61.
