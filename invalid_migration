@@ -14,5 +14,5 @@ CREATE TABLE scores (
         FOREIGN KEY(team_id) REFERENCES teams (id),
         CHECK (invalid IN (0, 1))
 );
-INSERT INTO scores SELECT id, elapsed_time, num_players, game_id, NULL, game_type, date, player_scores_json, 0 FROM scores_old;
+INSERT INTO scores SELECT id, elapsed_time, num_players, game_id, team_id, game_type, date, player_scores_json, 0 FROM scores_old;
 DROP TABLE scores_old;

@@ -9,12 +9,12 @@ $(document).ready(function() {
   $("#go_to_user_form").submit(function(e) {
     e.preventDefault();
     if ($("#user_name").val()) {
-      window.location = window.location.origin + "/leaderboard/{{ selected_leaderboard_type }}/" + $("#user_name").val();
+      window.location = window.location.origin + "/leaderboard/{{ leaderboard_object }}{{ selected_leaderboard_type }}/" + $("#user_name").val();
     }
   });
   $("#add_user_form").submit(function(e) {
     e.preventDefault();
-    var new_url = window.location.origin + "/leaderboard/{{ selected_leaderboard_type }}/" + "{{ "/".join(players) }}" + "/" + $("#added_user_name").val();
+    var new_url = window.location.origin + "/leaderboard/{{ leaderboard_object }}{{ selected_leaderboard_type }}/" + "{{ "/".join(players) }}" + "/" + $("#added_user_name").val();
     {% if conjunction is not None %}
     new_url += "/{{ conjunction }}";
     {% else %}
@@ -39,9 +39,11 @@ $(document).ready(function() {
 
 <div class="leaderboard_menu">
 {% if leaderboard_object == "players/" %}
-<a href="/leaderboard/{{ selected_leaderboard_type }}/{% if players %}{{ "/".join(players) }}/{% if conjunction %}{{ conjunction }}{% end %}{% end %}">Top Scores</a> | <span>Top Players</span>
+<a href="/leaderboard/{{ selected_leaderboard_type }}/{% if players %}{{ "/".join(players) }}/{% if conjunction %}{{ conjunction }}{% end %}{% end %}">Top Scores</a> | <span>Top Players</span> | <a href="/leaderboard/games/{{ selected_leaderboard_type }}/{% if players %}{{ "/".join(players) }}/{% if conjunction %}{{ conjunction }}{% end %}{% end %}">Top Games Played</a>
+{% elif leaderboard_object == "games/" %}
+<a href="/leaderboard/{{ selected_leaderboard_type }}/{% if players %}{{ "/".join(players) }}/{% if conjunction %}{{ conjunction }}{% end %}{% end %}">Top Scores</a> | <a href="/leaderboard/players/{{ selected_leaderboard_type }}/{% if players %}{{ "/".join(players) }}/{% if conjunction %}{{ conjunction }}{% end %}{% end %}">Top Players</a> | <span>Top Games Played</span>
 {% else %}
-  <span>Top Scores</span> | <a href="/leaderboard/players/{{ selected_leaderboard_type }}/{% if players %}{{ "/".join(players) }}/{% if conjunction %}{{ conjunction }}{% end %}{% end %}">Top Players</a>
+  <span>Top Scores</span> | <a href="/leaderboard/players/{{ selected_leaderboard_type }}/{% if players %}{{ "/".join(players) }}/{% if conjunction %}{{ conjunction }}{% end %}{% end %}">Top Players</a> | <a href="/leaderboard/games/{{ selected_leaderboard_type }}/{% if players %}{{ "/".join(players) }}/{% if conjunction %}{{ conjunction }}{% end %}{% end %}">Top Games Played</a>
 {% end %}
 </div>
 
@@ -50,7 +52,7 @@ $(document).ready(function() {
 {% if leaderboard_type == selected_leaderboard_type and not players %}
   <span>{{ leaderboard_type_label }}</span>
 {% else %}
-  <a href="/leaderboard/{{ leaderboard_object }}{{ leaderboard_type }}">{{ leaderboard_type_label }}</a>
+  <a href="/leaderboard/{{ leaderboard_object }}{{ leaderboard_type }}/{% if players %}{{ "/".join(players) }}/{% if conjunction %}{{ conjunction }}{% end %}{% end %}">{{ leaderboard_type_label }}</a>
 {% end %}
 {% if i != len(leaderboard_types) - 1 %}|{% end %}
 {% end %}
@@ -110,19 +112,39 @@ $(document).ready(function() {
   {% for (num_players, scores) in all_high_scores[game_type].items() %}
     <h4>{{ num_players }} players</h4>
     <table class="leaderboard">
+      {% if leaderboard_object == "games/" %}
+      <thead><tr><th>Players</th><th>Games Played</th><th>Total Time Played</th><th>Average Time</th></tr></thead>
+      {% else %}
       <thead><tr><th>Time</th><th>Players</th><th>Date</th></tr></thead>
+      {% end %}
       <tbody>
-      {% for score in scores %}
-        <tr>
-          <td>{{ fmt_time(score.elapsed_time) }}</td>
-          <td>
-            {% set processed_players = sorted(score.players, None, lambda x: x.name) %}
-            {% for (i, player) in enumerate(processed_players) %}
-            <a href="/leaderboard/{{ leaderboard_object }}{{ selected_leaderboard_type }}/{{ player.name }}">{{ player.name }}</a> ({{ score.player_scores()[player.name] }}){% if i != len(score.players) - 1 %}, {% end %}
-            {% end %}
-          </td>
-          <td>{{ (score.date - timedelta(minutes=time_offset)).strftime("%b %d %Y %I:%M%p") }}</td>
-        </tr>
+      {% if leaderboard_object == "games/" %}
+        {% for (score, count, total_time_played) in scores %}
+          <tr>
+            <td>
+              {% set processed_players = sorted(score.players, None, lambda x: x.name) %}
+              {% for (i, player) in enumerate(processed_players) %}
+              <a href="/leaderboard/{{ leaderboard_object }}{{ selected_leaderboard_type }}/{{ player.name }}">{{ player.name }}</a>{% if i != len(score.players) - 1 %}, {% end %}
+              {% end %}
+            </td>
+            <td>{{ count }}</td>
+            <td>{{ fmt_time(total_time_played) }}</td>
+            <td>{{ fmt_time(total_time_played / count) }}</td>
+          </tr>
+        {% end %}
+      {% else %}
+        {% for score in scores %}
+          <tr>
+            <td>{{ fmt_time(score.elapsed_time) }}</td>
+            <td>
+              {% set processed_players = sorted(score.players, None, lambda x: x.name) %}
+              {% for (i, player) in enumerate(processed_players) %}
+              <a href="/leaderboard/{{ leaderboard_object }}{{ selected_leaderboard_type }}/{{ player.name }}">{{ player.name }}</a> ({{ score.player_scores()[player.name] }}){% if i != len(score.players) - 1 %}, {% end %}
+              {% end %}
+            </td>
+            <td>{{ (score.date - timedelta(minutes=time_offset)).strftime("%b %d %Y %I:%M%p") }}</td>
+          </tr>
+        {% end %}
       {% end %}
       </tbody>
     </table>

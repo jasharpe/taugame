@@ -11,7 +11,7 @@ from game import Game, InvalidGameType
 import argparse
 import datetime, time
 import ssl
-from state import save_game, get_all_high_scores, get_ranks, get_graph_data, check_name, set_name, get_name
+from state import save_game, get_all_high_scores, get_all_high_games, get_ranks, get_graph_data, check_name, set_name, get_name
 from secrets import cookie_secret
 
 # The time in seconds that games should be allows to live without activity
@@ -365,19 +365,24 @@ class LeaderboardHandler(tornado.web.RequestHandler):
       players = filter(None, slash_separated_players.split("/"))
     else:
       players = []
-    unique_players = leaderboard_object == "players/"
-    all_high_scores = get_all_high_scores(10, leaderboard_type, players, conjunction, unique_players=unique_players)
+    if leaderboard_object in ["", "players/"]:
+      unique_players = leaderboard_object == "players/"
+      all_high_scores = get_all_high_scores(10, leaderboard_type, players, conjunction, unique_players=unique_players)
+    elif leaderboard_object in ["games/"]:
+      all_high_scores = get_all_high_games(10, leaderboard_type, players, conjunction)
+
     try:
       time_offset = int(url_unescape(self.get_cookie("time_offset")))
     except:
       time_offset = 0
+    
     self.render(
         "leaderboard.html",
         players=players,
         all_high_scores=all_high_scores,
         leaderboard_types=[('alltime', 'All Time'), ('thisweek', 'This Week'), ('today', 'Today')],
         selected_leaderboard_type=leaderboard_type,
-        leaderboard_object=("players/" if unique_players else ""),
+        leaderboard_object=leaderboard_object,
         time_offset=time_offset,
         conjunction=conjunction,
         game_type_info=game_type_info)
@@ -533,11 +538,11 @@ def create_application(debug):
   return tornado.web.Application([
     (r"/", MainHandler),
     # 0 players
-    (r"/leaderboard/(?P<leaderboard_object>(?:players/)?)(?P<leaderboard_type>alltime|thisweek|today)/?", LeaderboardHandler),
+    (r"/leaderboard/(?P<leaderboard_object>(?:(?:players|games)/)?)(?P<leaderboard_type>alltime|thisweek|today)/?", LeaderboardHandler),
     # 1 player
-    (r"/leaderboard/(?P<leaderboard_object>(?:players/)?)(?P<leaderboard_type>alltime|thisweek|today)/(?P<slash_separated_players>[^/]+)/?", LeaderboardHandler),
+    (r"/leaderboard/(?P<leaderboard_object>(?:(?:players|games)/)?)(?P<leaderboard_type>alltime|thisweek|today)/(?P<slash_separated_players>[^/]+)/?", LeaderboardHandler),
     # 2+ players
-    (r"/leaderboard/(?P<leaderboard_object>(?:players/)?)(?P<leaderboard_type>alltime|thisweek|today)/(?P<slash_separated_players>(?:[^/]+/){2,})(?P<conjunction>and|or)/?", LeaderboardHandler),
+    (r"/leaderboard/(?P<leaderboard_object>(?:(?:players|games)/)?)(?P<leaderboard_type>alltime|thisweek|today)/(?P<slash_separated_players>(?:[^/]+/){2,})(?P<conjunction>and|or)/?", LeaderboardHandler),
     (r"/graph/([^/]*)", GraphHandler),
     (r"/choose_name", ChooseNameHandler),
     (r"/new_game/(3tau|6tau|g3tau|i3tau|e3tau|4tau|3ptau|z3tau|4otau|n3tau|bqtau)", NewGameHandler),
