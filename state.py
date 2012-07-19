@@ -6,6 +6,7 @@ import datetime
 import json
 import logging
 from game import game_types
+from collections import defaultdict
 
 CLOSE_THRESHOLD = 5.0
 
@@ -24,37 +25,60 @@ filter_map = {
     "today" : lambda: Score.date >= datetime.datetime.now() - datetime.timedelta(days=1),
 }
 
-def filter_for_players(query, players):
+def filter_for_players(players, query):
   return query.join((DBPlayer, Score.players)).filter(or_(*[DBPlayer.name == player for player in players]))
+
+def base_score_query(leaderboard_type, query):
+  time_filter = filter_map[leaderboard_type]()
+  return query.filter(time_filter).filter(Score.invalid == False)
 
 def get_numbers(leaderboard_type, players):
   session = get_session()
-  time_filter = filter_map[leaderboard_type]()
-  numbers_query = session.query(distinct(Score.num_players), Score.game_type).filter(time_filter).filter(Score.invalid == False)
+  numbers_query = base_score_query(leaderboard_type, session.query(distinct(Score.num_players), Score.game_type))
   if players:
-    numbers_query = filter_for_players(numbers_query, players)
+    numbers_query = filter_for_players(players, numbers_query)
   return list(numbers_query)
+
+def leaderboard_query(num_players, game_type, query):
+  return query.filter_by(num_players=num_players,game_type=game_type)
+
+def simple_query(leaderboard_type, num_players, game_type, query):
+  return leaderboard_query(num_players, game_type, base_score_query(leaderboard_type, query))
+
+def and_query(players, query):
+  return query.group_by(Score.id).having(func.count(distinct(DBPlayer.name)) == len(players))
 
 def get_all_high_scores(num_scores, leaderboard_type, players, conjunction, unique_players=False):
   session = get_session()
-  time_filter = filter_map[leaderboard_type]()
-  ret = {}
+  ret = defaultdict(dict)
   for (number, game_type) in get_numbers(leaderboard_type, players):
-    top_scores = session.query(Score).filter_by(num_players=number,game_type=game_type).filter(time_filter).filter(Score.invalid == False).order_by(asc(Score.elapsed_time))
+    top_scores = simple_query(leaderboard_type, number, game_type, session.query(Score)).order_by(asc(Score.elapsed_time))
     if players:
-      top_scores = filter_for_players(top_scores, players)
+      top_scores = filter_for_players(players, top_scores)
     if conjunction == "and":
-      top_scores = top_scores.group_by(Score.id).having(func.count(distinct(DBPlayer.name)) == len(players))
+      top_scores = and_query(players, top_scores)
         
     if unique_players:
-      q = session.query(Score.team_id, func.min(Score.elapsed_time).label('min_elapsed_time')).filter_by(num_players=number,game_type=game_type).filter(time_filter).filter(Score.invalid == False).group_by(Score.team_id).subquery()
+      q = simple_query(leaderboard_type, number, game_type, session.query(Score.team_id, func.min(Score.elapsed_time).label('min_elapsed_time'))).group_by(Score.team_id).subquery()
       top_scores = top_scores.join(q, Score.team_id == q.c.team_id)
       top_scores = top_scores.filter(Score.elapsed_time == q.c.min_elapsed_time)
     scores = list(top_scores.limit(num_scores))
     if scores:
-      if not game_type in ret:
-        ret[game_type] = {}
       ret[game_type][number] = scores
+  return ret
+
+def get_all_high_games(num_results, leaderboard_type, players, conjunction):
+  session = get_session()
+  ret = defaultdict(dict)
+  for (number, game_type) in get_numbers(leaderboard_type, players):
+    query = simple_query(leaderboard_type, number, game_type, session.query(Score)).filter(Score.elapsed_time < 3600)
+    if players:
+      query = filter_for_players(players, query).group_by(Score.id)
+    if conjunction == "and":
+      query = and_query(players, query)
+    results = list(query.from_self(Score, func.count().label("num_games"), func.sum(Score.elapsed_time)).group_by(Score.team_id).order_by('num_games desc').limit(num_results))
+    if results:
+      ret[game_type][number] = results
   return ret
 
 def get_or_create_dbplayer(session, name):
@@ -95,12 +119,11 @@ def get_ranks(total_time, game_type, player_names, num_players):
         if leaderboard == "all":
           global_ranks[close][leaderboard] = {}
         for leaderboard_type in ["alltime", "thisweek", "today"]:
-          time_filter = filter_map[leaderboard_type]()
           elapsed_time_filter = Score.elapsed_time < total_time - (CLOSE_THRESHOLD if close == "close" else 0)
           if leaderboard == "all":
-            num_better_scores = session.query(Score).filter(time_filter).filter(Score.game_type == game_type).filter(Score.num_players == num_players).filter(Score.invalid == False)
+            num_better_scores = base_score_query(leaderboard_type, session.query(Score)).filter(Score.game_type == game_type).filter(Score.num_players == num_players)
           else:
-            num_better_scores = session.query(Score).join((DBPlayer, Score.players)).filter(time_filter).filter(Score.game_type == game_type).filter(Score.num_players == num_players).filter(DBPlayer.name == player_name).filter(Score.invalid == False)
+            num_better_scores = base_score_query(leaderboard_type, session.query(Score)).join((DBPlayer, Score.players)).filter(Score.game_type == game_type).filter(Score.num_players == num_players).filter(DBPlayer.name == player_name)
           total = num_better_scores.count()
           better = num_better_scores.filter(elapsed_time_filter).count()
           if total == 0:
