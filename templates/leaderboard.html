@@ -142,7 +142,7 @@ $(document).ready(function() {
               <a href="/leaderboard/{{ leaderboard_object }}{{ selected_leaderboard_type }}/{{ player.name }}">{{ player.name }}</a> ({{ score.player_scores()[player.name] }}){% if i != len(score.players) - 1 %}, {% end %}
               {% end %}
             </td>
-            <td>{{ (score.date - timedelta(minutes=time_offset)).strftime("%b %d %Y %I:%M%p") }}</td>
+            <td><a class="recap_link" href="/recap/{{ score.id }}">{{ (score.date - timedelta(minutes=time_offset)).strftime("%b %d %Y %I:%M%p") }}</a></td>
           </tr>
         {% end %}
       {% end %}

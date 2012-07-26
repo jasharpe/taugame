@@ -11,7 +11,7 @@ from game import Game, InvalidGameType
 import argparse
 import datetime, time
 import ssl
-from state import save_game, get_all_high_scores, get_all_high_games, get_ranks, get_graph_data, check_name, set_name, get_name
+from state import save_game, get_all_high_scores, get_all_high_games, get_ranks, get_rank, get_graph_data, check_name, set_name, get_name, get_score
 from secrets import cookie_secret
 
 # The time in seconds that games should be allows to live without activity
@@ -477,6 +477,27 @@ class TimeHandler(tornado.web.RequestHandler):
     new_time_offset = url_escape(self.get_argument("time_offset"))
     self.set_cookie("time_offset", new_time_offset)
 
+class RecapHandler(tornado.web.RequestHandler):
+  def get(self, score_id):
+    score = get_score(score_id)
+    if score is None:
+      raise tornado.web.HTTPError(404)
+
+    try:
+      time_offset = int(url_unescape(self.get_cookie("time_offset")))
+    except:
+      time_offset = 0
+
+    (percentile, rank) = get_rank(score.elapsed_time, "alltime", score.num_players, score.game_type, "all", "exact", None)
+
+    self.render(
+        "recap.html",
+        score=score,
+        time_offset=time_offset,
+        game_type_info=dict(game_type_info),
+        percentile=percentile,
+        rank=rank)
+
 class AboutHandler(tornado.web.RequestHandler):
   def get(self):
     cards = {}
@@ -547,6 +568,7 @@ def create_application(debug):
     (r"/choose_name", ChooseNameHandler),
     (r"/new_game/(3tau|6tau|g3tau|i3tau|e3tau|4tau|3ptau|z3tau|4otau|n3tau|bqtau)", NewGameHandler),
     (r"/game/(\d+)", GameHandler),
+    (r"/recap/(\d+)", RecapHandler),
     (r"/websocket/(\d*)", TauWebSocketHandler),
     (r"/gamelistwebsocket/(0|1)", GameListWebSocketHandler),
     (r"/time", TimeHandler),

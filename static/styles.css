@@ -116,6 +116,15 @@ table {
   padding: 9px 8px 0;
 }
 
+.leaderboard .recap_link {
+  color: #669;
+  text-decoration:none;
+}
+
+.leaderboard .recap_link:hover {
+  color: #009;
+}
+
 .leaderboard_back_to_top_link {
   color:#AAA;
   display:inline-block;
