@@ -82,6 +82,22 @@ def send_game_list_update_to_all():
     (new_games, started_games, ended_games) = get_games(socket.see_more_ended)
     socket.send_game_list_update(new_games, started_games, ended_games)
 
+def send_scores_update_to_all(game_id):
+  for socket in game_to_sockets[game_id]:
+    socket.send_scores_update()
+
+def send_message_update_to_all(game_id, name, message, message_type):
+  for socket in game_to_sockets[game_id]:
+    socket.send_message_update(name, message, message_type)
+
+def send_update_to_all(game_id):
+  for socket in game_to_sockets[game_id]:
+    socket.send_update()
+
+def add_chat(game_id, name, message, message_type):
+  game_to_messages[game_id].append((name, message, message_type))
+  send_message_update_to_all(game_id, name, message, message_type)
+
 def get_players_in_game(game_id):
   players = set()
   for socket in game_to_sockets[game_id]:
@@ -209,8 +225,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
     return scores
 
   def send_scores_update_to_all(self):
-    for socket in game_to_sockets[self.game_id]:
-      socket.send_scores_update()
+    send_scores_update_to_all(self.game_id)
 
   def send_scores_update(self):
     game = socket_to_game[self]
@@ -222,8 +237,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
     }))
 
   def send_message_update_to_all(self, name, message, message_type):
-    for socket in game_to_sockets[self.game_id]:
-      socket.send_message_update(name, message, message_type)
+    send_message_update_to_all(self.game_id, name, message, message_type)
 
   def send_message_update(self, name, message, message_type):
     self.write_message(json.dumps({
@@ -234,8 +248,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
     }))
 
   def send_update_to_all(self):
-    for socket in game_to_sockets[self.game_id]:
-      socket.send_update()
+    send_update_to_all(self.game_id)
 
   def send_update(self):
     game = socket_to_game[self]
@@ -284,8 +297,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
     }))
 
   def add_chat(self, name, message, message_type):
-    game_to_messages[self.game_id].append((name, message, message_type))
-    self.send_message_update_to_all(name, message, message_type)
+    add_chat(self.game_id, name, message, message_type)
 
   def on_message(self, message_json):
     message = json.loads(message_json)
@@ -425,6 +437,11 @@ class ChooseNameHandler(tornado.web.RequestHandler):
 class NewGameHandler(tornado.web.RequestHandler):
   @require_name
   def post(self, type):
+    try:
+      parent = int(self.get_argument("parent"))
+    except:
+      parent = None
+    
     if len(games.keys()) == 0:
       next_id = 0
     else:
@@ -437,6 +454,9 @@ class NewGameHandler(tornado.web.RequestHandler):
       self.redirect('/')
       return
 
+    if parent is not None and parent in games:
+      parent_game = games[parent]
+      add_chat(parent, url_unescape(self.get_secure_cookie("name")), (type, next_id), "new_game")
     game_to_sockets[next_id] = []
     game_to_messages[next_id] = []
     send_game_list_update_to_all()
@@ -470,7 +490,8 @@ class GameHandler(tornado.web.RequestHandler):
         game_id=game_id,
         user_name=url_unescape(self.get_secure_cookie("name")),
         game_type=self.game_type_to_type_string_map[game.type],
-        game=game)
+        game=game,
+        game_type_info=game_type_info)
 
 class TimeHandler(tornado.web.RequestHandler):
   def post(self):
