@@ -394,7 +394,28 @@ $(document).ready(function() {
     }
   };
 
-  function update(board, paused, target, wrong_property, scores, time, avg_number, number, ended, hint, player_rank_info, found_puzzle_taus) {
+  function update_new_game() {
+    var div = $("#new_game");
+    div.html('');
+    var hidden_div = $("<div>");
+    hidden_div.hide();
+    var new_game_type;
+    var tab_index = 10;
+    for (new_game_type in game_type_info) {
+      var game_type_string = game_type_info[new_game_type];
+      hidden_div.append($('<form style="display:inline-block;" name="new_game" action="/new_game/' + new_game_type + '?parent=' + game_id + '" method="post"><input type="submit" tabindex="' + tab_index + '" value="New ' + game_type_string + ' game" /></form>'));
+      tab_index++;
+    }
+    var show_link = $('<a tabindex="10" href="javascript:void(0);">New game?</a>');
+    show_link.click(function() {
+      hidden_div.show();
+      show_link.hide();
+    });
+    div.append(show_link);
+    div.append(hidden_div);
+  }
+
+  function update(board, paused, target, wrong_property, scores, time, avg_number, number, ended, hint, player_rank_info, found_puzzle_taus, new_games) {
     game_ended = ended;
     update_scores(scores, ended);
     
@@ -402,6 +423,10 @@ $(document).ready(function() {
 
     // update board
     update_board(board, paused, target, wrong_property, number, hint, ended, found_puzzle_taus);
+
+    if (ended) {
+      update_new_game();
+    }
 
     if (ended) {
       $("body").addClass("ended");
@@ -414,6 +439,8 @@ $(document).ready(function() {
       text_area.append($("<div class=\"message\"><span class=\"name\">" + name + ":</span> " + message + "</div>"));
     } else if (message_type === "status") {
       text_area.append($("<div class=\"message\"><span class=\"status\">" + message + "</span></div>"));
+    } else if (message_type === "new_game") {
+      text_area.append($('<div class="message"><span class="status">' + name + ' has started <a href="/game/' + message[1] + '">game ' + message[1] + '</a> (' + game_type_info[message[0]] + ')</span></div>'));
     }
     if (is_at_bottom) {
       text_area.scrollTop(text_area[0].scrollHeight - text_area.outerHeight() + 5);
@@ -427,7 +454,7 @@ $(document).ready(function() {
       if (data.wrong_property !== null) {
         wrong_property = parseInt(data.wrong_property);
       }
-      update(data.board, data.paused, data.target, wrong_property, data.scores, data.time, data.avg_number, data.number, data.ended, data.hint, data.player_rank_info, data.found_puzzle_taus);
+      update(data.board, data.paused, data.target, wrong_property, data.scores, data.time, data.avg_number, data.number, data.ended, data.hint, data.player_rank_info, data.found_puzzle_taus, data.new_games);
     } else if (data.type === "scores") {
       update_scores(data.scores, data.ended);
     } else if (data.type == "chat") {

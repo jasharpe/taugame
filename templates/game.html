@@ -8,6 +8,11 @@
   var game_size = {{ game.size }};
   var game_type = "{{ game.type }}";
   var user_name = "{{ user_name }}";
+  var game_type_info = {
+    {% for (game_type1, game_type_string) in game_type_info %}
+    "{{ game_type1 }}" : "{{ game_type_string }}",
+    {% end %}
+  };
 </script>
 <script type="text/javascript" src="{{ static_url("jquery-ui.min.js") }}"></script>
 <script type="text/javascript" src="{{ static_url("tau.js") }}"></script>
@@ -22,11 +27,12 @@
   </div>
   <div id="playing_area">
     {% if not game.started %}
-      <a id="start" tabindex="1" href="javascript:void(0);">Start</a>
+      <a id="start" tabindex="5" href="javascript:void(0);">Start</a>
     {% end %}
   </div>
   <div id="time"></div>
   <div id="rank"></div>
+  <div id="new_game"></div>
 </div>
 
 <div>
@@ -39,6 +45,6 @@
 </div>
 
 <div>
-  <a href="/" tabindex="2">Back to games</a> | <a href="/about#rules{{ game.type }}">Rules</a>
+  <a href="/" tabindex="50">Back to games</a> | <a href="/about#rules{{ game.type }}">Rules</a>
 </div>
 {% end %}

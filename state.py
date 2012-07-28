@@ -5,10 +5,21 @@ from sqlalchemy.sql.expression import desc, asc
 import datetime
 import json
 import logging
+import itertools
 from game import game_types
 from collections import defaultdict
 
 CLOSE_THRESHOLD = 5.0
+
+# recursive defaultdict
+def rdefaultdict(): return defaultdict(rdefaultdict)
+
+def get_score(score_id):
+  session = get_session()
+  try:
+    return session.query(Score).filter_by(id=score_id).first()
+  except:
+    return None
 
 def get_graph_data(player):
   session = get_session()
@@ -47,6 +58,9 @@ def simple_query(leaderboard_type, num_players, game_type, query):
 
 def and_query(players, query):
   return query.group_by(Score.id).having(func.count(distinct(DBPlayer.name)) == len(players))
+
+def num_better_than_query(elapsed_time, query):
+  return query.filter(Score.elapsed_time < elapsed_time).count()
 
 def get_all_high_scores(num_scores, leaderboard_type, players, conjunction, unique_players=False):
   session = get_session()
@@ -100,50 +114,55 @@ def get_or_create_team(session, players):
     session.add(team)
     return team
 
+def get_percentile(total, better):
+  if total == 0:
+    percentile = 0
+  elif better == 0:
+    percentile = 100
+  else:
+    percentile = round(100 * ((total - better) / float(total)))
+    if percentile == 100:
+      percentile = 99
+  return percentile
+
+def get_rank(elapsed_time, leaderboard_type, num_players, game_type, leaderboard, close, player_name):
+  session = get_session()
+
+  num_better_scores = simple_query(leaderboard_type, num_players, game_type, session.query(Score))
+  if leaderboard != "all":
+    num_better_scores = simple_query(leaderboard_type, num_players, game_type, session.query(Score)).join((DBPlayer, Score.players)).filter(DBPlayer.name == player_name)
+  if close == "close":
+    better = num_better_than_query(elapsed_time - CLOSE_THRESHOLD, num_better_scores)
+  else:
+    better = num_better_than_query(elapsed_time, num_better_scores)
+  
+  percentile = get_percentile(num_better_scores.count(), better)
+
+  return (percentile, better + 1)
+
 def get_ranks(total_time, game_type, player_names, num_players):
   import time
   init_time = time.time()
 
-  global_ranks = {
-      "close" : { "personal" : None },
-      "exact" : { "personal" : None }
-  }
-  player_ranks = {}
-  session = get_session()
-  for player_name in player_names:
-    player_ranks[player_name] = {}
-    for close in ["close", "exact"]:
-      player_ranks[player_name][close] = {}
-      for leaderboard in ["personal", "all"]:
-        player_ranks[player_name][close][leaderboard] = {}
-        if leaderboard == "all":
-          global_ranks[close][leaderboard] = {}
-        for leaderboard_type in ["alltime", "thisweek", "today"]:
-          elapsed_time_filter = Score.elapsed_time < total_time - (CLOSE_THRESHOLD if close == "close" else 0)
-          if leaderboard == "all":
-            num_better_scores = base_score_query(leaderboard_type, session.query(Score)).filter(Score.game_type == game_type).filter(Score.num_players == num_players)
-          else:
-            num_better_scores = base_score_query(leaderboard_type, session.query(Score)).join((DBPlayer, Score.players)).filter(Score.game_type == game_type).filter(Score.num_players == num_players).filter(DBPlayer.name == player_name)
-          total = num_better_scores.count()
-          better = num_better_scores.filter(elapsed_time_filter).count()
-          if total == 0:
-            percentile = 0
-          elif better == 0:
-            percentile = 100
-          else:
-            percentile = round(100 * ((total - better) / float(total)))
-            if percentile == 100:
-              percentile = 99
-          
-          player_ranks[player_name][close][leaderboard][leaderboard_type] = {
-              'percentile' : percentile,
-              'rank' : better + 1,
-          }
-          if leaderboard == "all":
-            global_ranks[close][leaderboard][leaderboard_type] = {
-                'percentile' : percentile,
-                'rank' : better + 1,
-            }
+  global_ranks = rdefaultdict()
+  global_ranks["close"]["personal"] = None
+  global_ranks["exact"]["personal"] = None
+
+  player_ranks = rdefaultdict()
+
+  arguments = [
+    player_names,
+    ["close", "exact"],
+    ["personal", "all"],
+    ["alltime", "thisweek", "today"]
+  ]
+
+  for (player_name, close, leaderboard, leaderboard_type) in itertools.product(*arguments):
+    (percentile, rank) = get_rank(total_time, leaderboard_type, num_players, game_type, leaderboard, close, player_name)
+    rank_object = { 'percentile' : percentile, 'rank' : rank }          
+    player_ranks[player_name][close][leaderboard][leaderboard_type] = rank_object
+    if leaderboard == "all":
+      global_ranks[close][leaderboard][leaderboard_type] = rank_object
   
   if time.time() - init_time > 0.5:
     logging.warning("Took %.03f seconds to fetch player ranks for %d player", time.time() - init_time, num_players)
