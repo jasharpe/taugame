@@ -342,7 +342,7 @@ class State(Base):
     self.player = player
 
   def board(self):
-    return json.loads(board_json)
+    return json.loads(self.board_json)
 
   def cards(self):
-    return json.loads(cards_json)
+    return json.loads(self.cards_json)
