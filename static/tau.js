@@ -89,7 +89,8 @@ $(document).ready(function() {
         var card_number = get_card_number(cards[i]);
         var div = card_number_to_div_map[card_number];
         div.stop();
-        div.animate({backgroundColor: "#FFF"}, 0)
+        div.css("background-color", "#FFF");
+        div.animate({backgroundColor: "#FFF"}, 100)
            .animate({backgroundColor: "#DFD"}, 400);
       }
       deselect_all_cards();
