@@ -276,6 +276,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
     self.write_message(json.dumps({
         'type' : 'update',
         'board' : game.get_client_board(),
+        'all_taus' : game.get_all_client_taus(),
         'paused' : game.paused,
         'target' : game.get_client_target_tau(),
         'wrong_property' : game.wrong_property,

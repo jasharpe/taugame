@@ -79,10 +79,29 @@ $(document).ready(function() {
   };
 
   function submit_tau(cards) {
-    ws.send(JSON.stringify({
-        'type' : 'submit',
-        'cards' : cards
-    }));
+    if (all_card_number_taus[get_tau_number(cards)]) {
+      ws.send(JSON.stringify({
+          'type' : 'submit',
+          'cards' : cards
+      }));
+      for (i in cards) {
+        var card_number = get_card_number(cards[i]);
+        var div = card_number_to_div_map[card_number];
+        div.stop();
+        div.animate({backgroundColor: "#FFF"}, 0)
+           .animate({backgroundColor: "#DFD"}, 400);
+      }
+      deselect_all_cards();
+    } else {
+      for (i in cards) {
+        var card_number = get_card_number(cards[i]);
+        var div = card_number_to_div_map[card_number];
+        div.stop();
+        div.css("background-color", "#FEE");
+        div.animate({backgroundColor: "#FEE"}, 200)
+           .animate({backgroundColor: "#FFF"}, 500);
+      }
+    }
   };
 
   function pause(pause_or_unpause) {
@@ -102,9 +121,26 @@ $(document).ready(function() {
     }
   };
 
+  function get_tau_number(tau) {
+    var j = 0;
+    var card_numbers = [];
+    for (var i in tau) {
+      card_numbers.push(get_card_number(tau[i]));
+    }
+    card_numbers = card_numbers.sort();
+    var tau_number = 0;
+    for (var i in card_numbers) {
+      tau_number += card_numbers[i] * Math.pow(card_numbers.length, j); 
+      j++;
+    }
+    return tau_number;
+  }
+
+  var all_taus = {};
   var game_ended = false;
   var in_chat_box = false;
   var current_time_updater = undefined;
+  var card_number_to_div_map = {};
   var card_index_to_div_map = {};
   var card_index_to_card_map = {};
   var last_server_time = 0;
@@ -218,6 +254,7 @@ $(document).ready(function() {
     var table = $('<table style="display:block; float:left;">');
     var max_row = 3;
     var max_col = board.length / max_row;
+    card_number_to_div_map = {};
     card_index_to_div_map = {};
     card_index_to_card_map = {};
     var this_board = [];
@@ -236,6 +273,7 @@ $(document).ready(function() {
         } else {
           var div = $('<div class="realCard unselectedCard" data-card-index="' + card_index + '" data-card="' + card + '">');
           div.addClass(getImgClass());
+          card_number_to_div_map[get_card_number(card)] = div;
           card_index_to_div_map[card_index] = div;
           card_index_to_card_map[card_index] = card;
 
@@ -415,7 +453,11 @@ $(document).ready(function() {
     div.append(hidden_div);
   }
 
-  function update(board, paused, target, wrong_property, scores, time, avg_number, number, ended, hint, player_rank_info, found_puzzle_taus, new_games) {
+  function update(board, all_taus, paused, target, wrong_property, scores, time, avg_number, number, ended, hint, player_rank_info, found_puzzle_taus, new_games) {
+    all_card_number_taus = {};
+    for (var i in all_taus) {
+      all_card_number_taus[get_tau_number(all_taus[i])] = true;
+    }
     game_ended = ended;
     update_scores(scores, ended);
     
@@ -454,7 +496,7 @@ $(document).ready(function() {
       if (data.wrong_property !== null) {
         wrong_property = parseInt(data.wrong_property);
       }
-      update(data.board, data.paused, data.target, wrong_property, data.scores, data.time, data.avg_number, data.number, data.ended, data.hint, data.player_rank_info, data.found_puzzle_taus, data.new_games);
+      update(data.board, data.all_taus, data.paused, data.target, wrong_property, data.scores, data.time, data.avg_number, data.number, data.ended, data.hint, data.player_rank_info, data.found_puzzle_taus, data.new_games);
     } else if (data.type === "scores") {
       update_scores(data.scores, data.ended);
     } else if (data.type == "chat") {
