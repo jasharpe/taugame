@@ -84,6 +84,7 @@ $(document).ready(function() {
           'type' : 'submit',
           'cards' : cards
       }));
+      last_submit_time = new Date().getTime();
       for (i in cards) {
         var card_number = get_card_number(cards[i]);
         var div = card_number_to_div_map[card_number];
@@ -136,6 +137,7 @@ $(document).ready(function() {
     return tau_number;
   }
 
+  var last_submit_time = 0;
   var all_taus = {};
   var game_ended = false;
   var in_chat_box = false;
@@ -454,6 +456,9 @@ $(document).ready(function() {
   }
 
   function update(board, all_taus, paused, target, wrong_property, scores, time, avg_number, number, ended, hint, player_rank_info, found_puzzle_taus, new_games) {
+    if (debug) {
+      console.log("Time since last submit: " + (new Date().getTime() - last_submit_time) + "ms");
+    }
     all_card_number_taus = {};
     for (var i in all_taus) {
       all_card_number_taus[get_tau_number(all_taus[i])] = true;
