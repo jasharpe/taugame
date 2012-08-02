@@ -93,7 +93,9 @@ $(document).ready(function() {
         div.animate({backgroundColor: "#FFF"}, 100)
            .animate({backgroundColor: "#DFD"}, 400);
       }
-      deselect_all_cards();
+      setTimeout(function() {
+        deselect_all_cards();
+      }, 100);
     } else {
       for (i in cards) {
         var card_number = get_card_number(cards[i]);
