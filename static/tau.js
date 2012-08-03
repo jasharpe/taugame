@@ -440,22 +440,13 @@ $(document).ready(function() {
   function update_new_game() {
     var div = $("#new_game");
     div.html('');
-    var hidden_div = $("<div>");
-    hidden_div.hide();
     var new_game_type;
     var tab_index = 10;
     for (new_game_type in game_type_info) {
       var game_type_string = game_type_info[new_game_type];
-      hidden_div.append($('<form style="display:inline-block;" name="new_game" action="/new_game/' + new_game_type + '?parent=' + game_id + '" method="post"><input type="submit" tabindex="' + tab_index + '" value="New ' + game_type_string + ' game" /></form>'));
+      div.append($('<form style="display:inline-block;" name="new_game" action="/new_game/' + new_game_type + '?parent=' + game_id + '" method="post"><input type="submit" tabindex="' + tab_index + '" value="New ' + game_type_string + ' game" /></form>'));
       tab_index++;
     }
-    var show_link = $('<a tabindex="10" href="javascript:void(0);">New game?</a>');
-    show_link.click(function() {
-      hidden_div.show();
-      show_link.hide();
-    });
-    div.append(show_link);
-    div.append(hidden_div);
   }
 
   function update(board, all_taus, paused, target, wrong_property, scores, time, avg_number, number, ended, hint, player_rank_info, found_puzzle_taus, new_games) {
