@@ -2,11 +2,15 @@ from game import Game
 from state import save_game, get_ranks
 import time
 
+
+
 class InvalidGameId(Exception):
   pass
 
 class Lobby(object):
-  def __init__(self):
+  def __init__(self, game_expiry):
+    self.game_expiry = game_expiry
+
     self.sockets = []
     self.games = {}
     self.hidden_games = set()
@@ -71,7 +75,7 @@ class Lobby(object):
       if sockets:
         continue
       if game.started and not game.ended and not game_id in self.hidden_games:
-        if time.time() - self.last_activity[game_id] > GAME_EXPIRY:
+        if time.time() - self.last_activity[game_id] > self.game_expiry:
           self.hidden_games.add(game_id)
           updated = True
     if updated:

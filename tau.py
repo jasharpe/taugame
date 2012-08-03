@@ -28,7 +28,7 @@ settings = {
     "cookie_secret" : cookie_secret,
 }
 
-lobby = Lobby()
+lobby = Lobby(GAME_EXPIRY)
 
 class GameListWebSocketHandler(tornado.websocket.WebSocketHandler):
   def open(self, see_more_ended):
