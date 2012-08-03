@@ -15,6 +15,6 @@ Choose a name:
   {% if user is not None %}
   Logged in with Google account with email {{ user['email'] }} (<a href="/google">switch</a>, <a href="/logout">logout</a>).
   {% else %}
-  Not logged in. Log in with <a href="/google">Google</a>?
+  Not logged in. Optionally log in with <a href="/google">Google</a> to have your user name reserved.
   {% end %}
 {% end %}
