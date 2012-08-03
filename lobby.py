@@ -225,9 +225,6 @@ class Lobby(object):
     self.activity(socket.game_id)
     game = self.socket_to_game[socket]
     
-    paused = False
-    if len(self.game_to_sockets[game_id]) < 2:
-      paused = self.pause(game_id, "pause", delay_update=True)
     self.sockets.remove(socket)
     if socket in self.socket_to_game.keys():
       del self.socket_to_game[socket]
@@ -237,8 +234,15 @@ class Lobby(object):
     self.send_scores_update_to_all(game_id)
     self.maybe_hide_game(game_id)
     self.send_game_list_update_to_all()
-    if paused:
-      self.send_update_to_all(game_id)
+    
+    if not self.get_number_unique_players(game_id):
+      self.pause(game_id, "pause")
+
+  def get_number_unique_players(self, game_id):
+    names = set()
+    for socket in self.game_to_sockets[game_id]:
+      names.add(socket.name)
+    return len(names)
 
   def request_update(self, socket):
     if self.socket_to_game[socket].started:
@@ -254,7 +258,7 @@ class Lobby(object):
   def pause(self, game_id, pause, delay_update=False):
     game = self.games[game_id]
     if game.is_pausable():
-      if pause == "pause" and not game.paused and len(self.game_to_sockets[game_id]) < 2:
+      if pause == "pause" and not game.paused and self.get_number_unique_players(game_id) < 2:
         game.pause()
         if not delay_update:
           self.send_update_to_all(game_id)
