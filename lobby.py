@@ -171,10 +171,10 @@ class Lobby(object):
     self.game_to_messages[game_id].append((name, message, message_type))
     self.send_message_update_to_all(game_id, name, message, message_type)
 
-  def submit_tau(self, socket, name, cards):
+  def submit_tau(self, socket, cards):
     game = self.socket_to_game[socket]
     if game.started and not game.ended and not game.paused:
-      result = game.submit_client_tau(map(tuple, cards), name)
+      result = game.submit_client_tau(map(tuple, cards), socket.name)
 
       if result.status == result.SUCCESS:
         if game.ended:

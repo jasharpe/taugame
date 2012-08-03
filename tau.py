@@ -133,7 +133,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
     elif message['type'] == 'pause':
       self.lobby.pause(self.game_id, message['pause'])
     elif message['type'] == 'submit':
-      self.lobby.submit_tau(self, url_unescape(self.get_secure_cookie("name")), message['cards'])
+      self.lobby.submit_tau(self, message['cards'])
 
 def require_name(f):
   from functools import wraps
