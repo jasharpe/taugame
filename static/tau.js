@@ -79,7 +79,7 @@ $(document).ready(function() {
   };
 
   function submit_tau(cards) {
-    if (all_card_number_taus[get_tau_number(cards)]) {
+    if (all_tau_strings[tau_to_string(cards)]) {
       ws.send(JSON.stringify({
           'type' : 'submit',
           'cards' : cards
@@ -125,19 +125,17 @@ $(document).ready(function() {
     }
   };
 
-  function get_tau_number(tau) {
-    var j = 0;
+  function tau_to_string(tau) {
     var card_numbers = [];
     for (var i in tau) {
       card_numbers.push(get_card_number(tau[i]));
     }
     card_numbers = card_numbers.sort();
-    var tau_number = 0;
+    var tau_string = "";
     for (var i in card_numbers) {
-      tau_number += card_numbers[i] * Math.pow(card_numbers.length, j); 
-      j++;
+      tau_string += card_numbers[i] + ","
     }
-    return tau_number;
+    return tau_string;
   }
 
   var last_submit_time = 0;
@@ -453,9 +451,9 @@ $(document).ready(function() {
     if (debug) {
       console.log("Time since last submit: " + (new Date().getTime() - last_submit_time) + "ms");
     }
-    all_card_number_taus = {};
+    all_tau_strings = {};
     for (var i in all_taus) {
-      all_card_number_taus[get_tau_number(all_taus[i])] = true;
+      all_tau_strings[tau_to_string(all_taus[i])] = true;
     }
     game_ended = ended;
     update_scores(scores, ended);
