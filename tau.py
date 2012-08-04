@@ -276,6 +276,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
     self.write_message(json.dumps({
         'type' : 'update',
         'board' : game.get_client_board(),
+        'all_taus' : game.get_all_client_taus(),
         'paused' : game.paused,
         'target' : game.get_client_target_tau(),
         'wrong_property' : game.wrong_property,
@@ -490,6 +491,7 @@ class GameHandler(tornado.web.RequestHandler):
         game_id=game_id,
         user_name=url_unescape(self.get_secure_cookie("name")),
         game_type=self.game_type_to_type_string_map[game.type],
+        debug=int(self.get_argument('debug', default=0)),
         game=game,
         game_type_info=game_type_info)
 
