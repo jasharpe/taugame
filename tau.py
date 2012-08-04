@@ -8,6 +8,7 @@ from tornado.escape import url_escape, url_unescape
 import json
 import os
 from game import Game, InvalidGameType
+from lobby import Lobby, InvalidGameId
 import argparse
 import datetime, time
 import ssl
@@ -27,107 +28,22 @@ settings = {
     "cookie_secret" : cookie_secret,
 }
 
-# Tau sockets
-sockets = []
-games = {}
-hidden_games = set()
-last_activity = {}
-socket_to_game = {}
-game_to_sockets = {}
-game_to_messages = {}
-
-# game list sockets
-game_list_sockets = []
-
-def maybe_hide_game(game_id):
-  game = games[game_id]
-  sockets = game_to_sockets[game_id]
-  if not game.started and not sockets:
-    hidden_games.add(game_id)
-    send_game_list_update_to_all()
-
-def maybe_unhide_game(game_id):
-  if game_id in hidden_games:
-    hidden_games.remove(game_id)
-    send_game_list_update_to_all()
-
-def activity(game_id):
-  last_activity[game_id] = time.time()
-
-def cleanup_games():
-  updated = False
-  for (game_id, game) in games.items():
-    sockets = game_to_sockets[game_id]
-    if sockets:
-      continue
-    if game.started and not game.ended and not game_id in hidden_games:
-      if time.time() - last_activity[game_id] > GAME_EXPIRY:
-        hidden_games.add(game_id)
-        updated = True
-  if updated:
-    send_game_list_update_to_all()
-
-def get_games(see_more_ended):
-  sorted_game_items = filter(lambda x: not x[0] in hidden_games, sorted(games.items(), None, lambda game: game[0]))
-  new_games = filter(lambda g: not g[1].started, sorted_game_items)
-  started_games = filter(lambda g: g[1].started and not g[1].ended, sorted_game_items)
-  if see_more_ended:
-    ended_games = filter(lambda g: g[1].ended, sorted_game_items)
-  else:
-    ended_games = filter(lambda g: g[1].ended, sorted_game_items)[-5:]
-  return (new_games, started_games, ended_games)
-
-def send_game_list_update_to_all():
-  for socket in game_list_sockets:
-    (new_games, started_games, ended_games) = get_games(socket.see_more_ended)
-    socket.send_game_list_update(new_games, started_games, ended_games)
-
-def send_scores_update_to_all(game_id):
-  for socket in game_to_sockets[game_id]:
-    socket.send_scores_update()
-
-def send_message_update_to_all(game_id, name, message, message_type):
-  for socket in game_to_sockets[game_id]:
-    socket.send_message_update(name, message, message_type)
-
-def send_update_to_all(game_id):
-  for socket in game_to_sockets[game_id]:
-    socket.send_update()
-
-def add_chat(game_id, name, message, message_type):
-  game_to_messages[game_id].append((name, message, message_type))
-  send_message_update_to_all(game_id, name, message, message_type)
-
-def get_players_in_game(game_id):
-  players = set()
-  for socket in game_to_sockets[game_id]:
-    try:
-      players.add(socket.name)
-    except:
-      pass
-  return sorted(players)
+lobby = Lobby(GAME_EXPIRY)
 
 class GameListWebSocketHandler(tornado.websocket.WebSocketHandler):
   def open(self, see_more_ended):
     self.see_more_ended = int(see_more_ended)
+    self.lobby = lobby
     self.name = url_unescape(self.get_secure_cookie("name"))
-    game_list_sockets.append(self)
-    self.send_player_list_update_to_all()
+    self.lobby.open_game_list_socket(self)
   
   def on_close(self):
-    game_list_sockets.remove(self)
-    self.send_player_list_update_to_all()
+    self.lobby.close_game_list_socket(self)
 
   def on_message(self, message_json):
     message = json.loads(message_json)
     if message['type'] == 'update':
-      self.send_player_list_update(self.get_players())
-      self.send_game_list_update(*get_games(self.see_more_ended))
-
-  def send_player_list_update_to_all(self):
-    players = self.get_players()
-    for socket in game_list_sockets:
-      socket.send_player_list_update(players)
+      self.lobby.update_game_list_socket(self, self.see_more_ended)
 
   def send_player_list_update(self, players):
     self.write_message(json.dumps({
@@ -135,109 +51,43 @@ class GameListWebSocketHandler(tornado.websocket.WebSocketHandler):
         'players' : players
     }))
 
-  def get_players(self):
-    players = []
-    for socket in game_list_sockets:
-      try:
-        players.append(socket.name)
-      except:
-        pass
-    return sorted(players)
-
-  def transform_games(self, games):
-    return [{
-      'id' : game_id,
-      'size' : game.size,
-      'type' : game.type,
-      'players' : get_players_in_game(game_id),
-    } for (game_id, game) in games]
-
   def send_game_list_update(self, new_games, started_games, ended_games):
     self.write_message(json.dumps({
         'type' : 'games',
-        'new_games' : self.transform_games(new_games),
-        'started_games' : self.transform_games(started_games),
-        'ended_games' : self.transform_games(ended_games)
+        'new_games' : new_games,
+        'started_games' : started_games,
+        'ended_games' : ended_games
     }))
 
 class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
   def open(self, game_id):
     self.game_id = int(game_id)
-    activity(self.game_id)
     self.name = url_unescape(self.get_secure_cookie("name"))
-    self.add_chat(self.name, self.name + " has joined", "status")
-    if not self.game_id in games:
-      raise ValueError("game_id %d is bad!" % self.game_id)
-    sockets.append(self)
-    socket_to_game[self] = games[self.game_id]
-    game_to_sockets[self.game_id].append(self)
-    self.send_scores_update_to_all()
-    maybe_unhide_game(self.game_id)
-    send_game_list_update_to_all()
-    self.write_message(json.dumps({
-        'type' : 'history',
-        'messages' : game_to_messages[self.game_id]
-    }))
+    self.lobby = lobby
+
+    try:
+      game = self.lobby.get_game(self.game_id)
+    except InvalidGameId:
+      self.close()
+      return
+
+    self.lobby.open_game_socket(self)
 
   def on_close(self):
-    activity(self.game_id)
-    game = socket_to_game[self]
-    
-    paused = False
-    if len(game_to_sockets[self.game_id]) < 2:
-      paused = self.pause("pause")
-    sockets.remove(self)
-    if self in socket_to_game.keys():
-      del socket_to_game[self]
-    if self in game_to_sockets[self.game_id]:
-      game_to_sockets[self.game_id].remove(self)
-    self.add_chat(self.name, self.name + " has left", "status")
-    self.send_scores_update_to_all()
-    maybe_hide_game(self.game_id)
-    send_game_list_update_to_all()
-    if paused:
-      self.send_update_to_all()
+    self.lobby.close_game_socket(self)
 
-  def pause(self, pause):
-    game = socket_to_game[self]
-    if game.is_pausable():
-      if pause == "pause" and not game.paused and len(game_to_sockets[self.game_id]) < 2:
-        game.pause()
-        return True
-      elif pause != "pause" and game.paused:
-        game.unpause()
-        return True
-    return False
-
-  def get_scores(self):
-    game = socket_to_game[self]
-    
-    scores = {}
-    for socket in game_to_sockets[self.game_id]:
-      name = socket.name
-      if name in game.scores.keys():
-        scores[name] = game.scores[name]
-      else:
-        scores[name] = []
-    for (name, score) in game.scores.items():
-      if not name in scores.keys():
-        scores[name + " (ABSENT)"] = score
-    return scores
-
-  def send_scores_update_to_all(self):
-    send_scores_update_to_all(self.game_id)
-
-  def send_scores_update(self):
-    game = socket_to_game[self]
-
+  def send_history_update(self, messages):
     self.write_message(json.dumps({
-        'type' : 'scores',
-        'scores' : self.get_scores(),
-        'ended' : game.ended
+        'type' : 'history',
+        'messages' : messages
     }))
 
-  def send_message_update_to_all(self, name, message, message_type):
-    send_message_update_to_all(self.game_id, name, message, message_type)
+  def send_scores_update(self, scores, ended):
+    self.write_message(json.dumps({
+        'type' : 'scores',
+        'scores' : scores,
+        'ended' : ended
+    }))
 
   def send_message_update(self, name, message, message_type):
     self.write_message(json.dumps({
@@ -247,48 +97,23 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
         'message_type' : message_type,
     }))
 
-  def send_update_to_all(self):
-    send_update_to_all(self.game_id)
-
-  def send_update(self):
-    game = socket_to_game[self]
-    time = game.total_time if game.ended else game.get_total_time()
-
-    numbers_map = None
-    if game.ended:
-      numbers_map = {}
-      last_time = 0
-      for (tau_time, number, player, cards) in game.taus:
-        time_to_find = tau_time - last_time
-        last_time = tau_time
-        if not number in numbers_map:
-          numbers_map[number] = []
-        numbers_map[number].append(time_to_find)
-      for (number, times) in numbers_map.items():
-        numbers_map[number] = "avg %.02f %s" % (sum(times) / float(len(times)), str(map(lambda x: "%.02f" % x, times)))
-
-    player_rank_info = None
-    if game.ended and self.name in game.player_ranks['players']:
-      player_rank_info = game.player_ranks['players'][self.name]
-    elif game.ended:
-      player_rank_info = game.player_ranks['global']
-
+  def send_update(self, board, all_taus, paused, target, wrong_property, scores, avg_number, number, time, hint, ended, player_rank_info, found_puzzle_taus):
     self.write_message(json.dumps({
         'type' : 'update',
-        'board' : game.get_client_board(),
-        'all_taus' : game.get_all_client_taus(),
-        'paused' : game.paused,
-        'target' : game.get_client_target_tau(),
-        'wrong_property' : game.wrong_property,
-        'scores' : self.get_scores(),
-        'avg_number' : numbers_map,
-        'number' : game.count_taus(),
+        'board' : board,
+        'all_taus' : all_taus,
+        'paused' : paused,
+        'target' : target,
+        'wrong_property' : wrong_property,
+        'scores' : scores,
+        'avg_number' : avg_number,
+        'number' : number,
         'time' : time,
-        'hint' : game.get_client_hint() if args.hints else None,
-        'ended' : game.ended,
+        'hint' : hint if args.hints else None,
+        'ended' : ended,
         'player_rank_info' : player_rank_info,
         # puzzle mode
-        'found_puzzle_taus' : game.get_client_found_puzzle_taus(),
+        'found_puzzle_taus' : found_puzzle_taus,
     }))
 
   def send_old_found_puzzle_tau_index(self, index):
@@ -297,37 +122,18 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
         'index' : index,
     }))
 
-  def add_chat(self, name, message, message_type):
-    add_chat(self.game_id, name, message, message_type)
-
   def on_message(self, message_json):
     message = json.loads(message_json)
     if message['type'] == 'start':
-      if not socket_to_game[self].started:
-        socket_to_game[self].start()
-      send_game_list_update_to_all()
-      self.send_update_to_all()
+      self.lobby.start_game(self.game_id)
     elif message['type'] == 'update':
-      if socket_to_game[self].started:
-        self.send_update()
+      self.lobby.request_update(self)
     elif message['type'] == 'chat':
-      self.add_chat(message['name'], message['message'], "chat")
+      self.lobby.add_chat(self.game_id, message['name'], message['message'], "chat")
     elif message['type'] == 'pause':
-      if self.pause(message['pause']):
-        self.send_update_to_all()
+      self.lobby.pause(self.game_id, message['pause'])
     elif message['type'] == 'submit':
-      game = socket_to_game[self]
-      if game.started and not game.ended and not game.paused:
-        result = game.submit_client_tau(map(tuple, message['cards']), url_unescape(self.get_secure_cookie("name")))
-
-        if result.status == result.SUCCESS:
-          if game.ended:
-            send_game_list_update_to_all()
-            (db_game, score) = save_game(game)
-            game.player_ranks = get_ranks(score.elapsed_time, db_game.game_type, game.scores.keys(), score.num_players)
-          self.send_update_to_all()
-        elif result.status == result.OLD_FOUND_PUZZLE:
-          self.send_old_found_puzzle_tau_index(result.index)
+      self.lobby.submit_tau(self, message['cards'])
 
 def require_name(f):
   from functools import wraps
@@ -443,25 +249,16 @@ class NewGameHandler(tornado.web.RequestHandler):
     except:
       parent = None
     
-    if len(games.keys()) == 0:
-      next_id = 0
-    else:
-      next_id = max(games.keys()) + 1
+    name = url_unescape(self.get_secure_cookie("name"))
 
     try:
-      games[next_id] = Game(type, args.quick)
+      game_id = lobby.new_game(type, name, parent, args.quick)
     except InvalidGameType:
-      print 'Invalid game type: ' + type
       self.redirect('/')
       return
-
-    if parent is not None and parent in games:
-      parent_game = games[parent]
-      add_chat(parent, url_unescape(self.get_secure_cookie("name")), (type, next_id), "new_game")
-    game_to_sockets[next_id] = []
-    game_to_messages[next_id] = []
-    send_game_list_update_to_all()
-    self.redirect("/game/%d" % next_id)
+    
+    self.redirect("/game/%d" % game_id)
+    return
 
 game_type_info = [
   ("3tau", "3 Tau"),
@@ -482,10 +279,11 @@ class GameHandler(tornado.web.RequestHandler):
 
   @require_name
   def get(self, game_id):
-    if not int(game_id) in games:
+    try:
+      game = lobby.get_game(int(game_id))
+    except InvalidGameId:
       self.redirect("/?invalid_game_id_error=1")
       return
-    game = games[int(game_id)]
     self.render(
         "game.html",
         game_id=game_id,
@@ -606,7 +404,7 @@ def set_ping(ioloop, timeout):
 
 # cleans up games every timeout, where timeout is a timedelta.
 def set_game_cleanup(ioloop, timeout):
-  cleanup_games()
+  lobby.cleanup_games()
   ioloop.add_timeout(timeout, lambda: set_game_cleanup(ioloop, timeout))
 
 def parse_args():

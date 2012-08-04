@@ -79,7 +79,7 @@ $(document).ready(function() {
   };
 
   function submit_tau(cards) {
-    if (all_card_number_taus[get_tau_number(cards)]) {
+    if (all_tau_strings[tau_to_string(cards)]) {
       ws.send(JSON.stringify({
           'type' : 'submit',
           'cards' : cards
@@ -93,7 +93,9 @@ $(document).ready(function() {
         div.animate({backgroundColor: "#FFF"}, 100)
            .animate({backgroundColor: "#DFD"}, 400);
       }
-      deselect_all_cards();
+      setTimeout(function() {
+        deselect_all_cards();
+      }, 100);
     } else {
       for (i in cards) {
         var card_number = get_card_number(cards[i]);
@@ -123,19 +125,17 @@ $(document).ready(function() {
     }
   };
 
-  function get_tau_number(tau) {
-    var j = 0;
+  function tau_to_string(tau) {
     var card_numbers = [];
     for (var i in tau) {
       card_numbers.push(get_card_number(tau[i]));
     }
     card_numbers = card_numbers.sort();
-    var tau_number = 0;
+    var tau_string = "";
     for (var i in card_numbers) {
-      tau_number += card_numbers[i] * Math.pow(card_numbers.length, j); 
-      j++;
+      tau_string += card_numbers[i] + ","
     }
-    return tau_number;
+    return tau_string;
   }
 
   var last_submit_time = 0;
@@ -438,31 +438,22 @@ $(document).ready(function() {
   function update_new_game() {
     var div = $("#new_game");
     div.html('');
-    var hidden_div = $("<div>");
-    hidden_div.hide();
     var new_game_type;
     var tab_index = 10;
     for (new_game_type in game_type_info) {
       var game_type_string = game_type_info[new_game_type];
-      hidden_div.append($('<form style="display:inline-block;" name="new_game" action="/new_game/' + new_game_type + '?parent=' + game_id + '" method="post"><input type="submit" tabindex="' + tab_index + '" value="New ' + game_type_string + ' game" /></form>'));
+      div.append($('<form style="display:inline-block;" name="new_game" action="/new_game/' + new_game_type + '?parent=' + game_id + '" method="post"><input type="submit" tabindex="' + tab_index + '" value="New ' + game_type_string + ' game" /></form>'));
       tab_index++;
     }
-    var show_link = $('<a tabindex="10" href="javascript:void(0);">New game?</a>');
-    show_link.click(function() {
-      hidden_div.show();
-      show_link.hide();
-    });
-    div.append(show_link);
-    div.append(hidden_div);
   }
 
   function update(board, all_taus, paused, target, wrong_property, scores, time, avg_number, number, ended, hint, player_rank_info, found_puzzle_taus, new_games) {
     if (debug) {
       console.log("Time since last submit: " + (new Date().getTime() - last_submit_time) + "ms");
     }
-    all_card_number_taus = {};
+    all_tau_strings = {};
     for (var i in all_taus) {
-      all_card_number_taus[get_tau_number(all_taus[i])] = true;
+      all_tau_strings[tau_to_string(all_taus[i])] = true;
     }
     game_ended = ended;
     update_scores(scores, ended);
