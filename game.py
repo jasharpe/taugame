@@ -4,7 +4,7 @@ from operator import mod
 
 import fingeo
 
-I3TAU_CALCULATION_LOGGING_THRESHOLD = 0.25
+I3TAU_CALCULATION_LOGGING_THRESHOLD = 0.0#0.25
 
 class InvalidGameType(Exception):
   pass
@@ -14,6 +14,7 @@ type_to_size_map = {
   'g3tau': 3,
   '6tau': 6,
   'i3tau': 3,
+  'm3tau': 3,
   'e3tau': 3,
   '4tau': 4,
   '3ptau': 3,
@@ -28,6 +29,7 @@ type_to_min_board_size = {
   'g3tau': 12,
   '6tau': 12,
   'i3tau': 12,
+  'm3tau': 12,
   'e3tau': 12,
   '4tau': 12,
   '3ptau': 12,
@@ -190,6 +192,26 @@ class Game(object):
             self.board[i] = card
           add_indices = []
 
+      if self.type == 'm3tau':
+        # Try to do an Master 3 Tau deal.
+        # If it fails, fall back to normal behaviour.
+        init_time = time.time()
+        m3tau_new_cards = self.find_m3tau_new_cards()
+        calculation_time = time.time() - init_time
+        if calculation_time > I3TAU_CALCULATION_LOGGING_THRESHOLD:
+          logging.warning('Took %.03f seconds to deal 3 new cards for Master 3 Tau',
+              calculation_time)
+
+        if m3tau_new_cards is not None:
+          # Randomize the order of the new cards.
+          # FIXME: Should make the tau far apart.
+          m3tau_new_cards = shuffled(m3tau_new_cards)
+
+          for i, card in zip(add_indices, m3tau_new_cards):
+            self.deck.remove(card)
+            self.board[i] = card
+          add_indices = []
+
       if self.type == 'e3tau':
         # Do an Easy 3 Tau deal. That means to try to create a large number of
         # taus after dealing.
@@ -221,7 +243,8 @@ class Game(object):
 
     # For Insane 3 Tau and Easy 3 Tau, the initial positions of cards must be
     # randomized, because the first 3 dealt cards always form a Tau.
-    if self.type in ['i3tau', 'e3tau'] and len(filter(None, self.board)) + len(self.deck) == 3**4:
+    # FIXME: Master 3 Tau should make the positions hard!
+    if self.type in ['i3tau', 'e3tau', 'm3tau'] and len(filter(None, self.board)) + len(self.deck) == 3**4:
       random.shuffle(self.board)
 
   def get_wrong_property(self, board):
@@ -335,7 +358,7 @@ class Game(object):
       return sum(correct_properties) == 1
 
   def is_tau(self, cards, wrong_property=None):
-    if len(cards) == 3 and self.type in ["3tau", "6tau", "i3tau", "e3tau", "3ptau", "z3tau"]:
+    if len(cards) == 3 and self.type in ["3tau", "6tau", "i3tau", "m3tau", "e3tau", "3ptau", "z3tau"]:
       return self.is_tau_basic(cards)
     if len(cards) == 3 and self.type in ["n3tau"]:
       return self.is_n3tau(cards, wrong_property)
@@ -356,12 +379,15 @@ class Game(object):
       return self.is_tau_basic(cards) and self.no_subset_is_tau(cards, 3)
     raise Exception("Cards %s are not valid for this game type: %s" % (cards, self.type))
 
-  def count_tau_subsets(self, cards, subset_size, wrong_property=None):
-    count = 0
+  def get_tau_subsets(self, cards, subset_size, wrong_property=None):
+    ret = []
     for card_subset in itertools.combinations(cards, subset_size):
       if self.is_tau(card_subset, wrong_property=wrong_property):
-        count += 1
-    return count
+        ret.append(card_subset)
+    return ret
+
+  def count_tau_subsets(self, cards, subset_size, wrong_property=None):
+    return len(self.get_tau_subsets(cards, subset_size, wrong_property))
 
   def no_subset_is_tau(self, cards, subset_size):
     return not self.count_tau_subsets(cards, subset_size)
@@ -373,7 +399,6 @@ class Game(object):
     # more than a single set, then we don't iterate through choices of a
     # third card. (The straightforward approach was tested and found to be
     # too slow.)
-    i3tau_new_cards = None
     candidate_board = filter(None, self.board)
 
     def rec(start, to_add):
@@ -391,6 +416,56 @@ class Game(object):
       return None
 
     return candidate_board[-self.size:]
+
+  def is_all_same_property(self, cards, i):
+    return 1 == len(set(c[i] for c in cards))
+
+  def find_m3tau_new_cards(self):
+    # Master 3 Tau dealing requirements (in decreasing order of importance):
+    # 1. There is exactly 1 tau present after dealing.
+    # 2. Minimize the number of new cards involved.
+    # 3. Maximize the number of different properties.
+    # Returns None on failure.
+    candidate_board = filter(None, self.board)
+    board_set = frozenset(candidate_board)
+    best = {
+      'cards': None,
+      'new': None,
+      'props': None,
+    }
+
+    def rec(start, to_add):
+      if to_add == 0:
+        tau_subsets = self.get_tau_subsets(candidate_board, self.size)
+        if len(tau_subsets) == 1:
+          the_tau = tau_subsets[0]
+          cur_new = self.size - len(frozenset(the_tau) & board_set)
+          cur_props = sum(not self.is_all_same_property(the_tau, i) for i in range(len(the_tau[0])))
+
+          if (best['new'] is None or cur_new < best['new'] or (cur_new == best['new'] and (
+              best['props'] is None or cur_props > best['props']))):
+            best['new'] = cur_new
+            best['props'] = cur_props
+            best['cards'] = candidate_board[-self.size:]
+        return
+
+      for i in range(start, len(self.deck)):
+        candidate_board.append(self.deck[i])
+        if self.count_tau_subsets(candidate_board, self.size) <= 1:
+          rec(i+1, to_add-1)
+        candidate_board.pop()
+
+        # In the best case, terminate the search.
+        # FIXME: Shouldn't hardcode number of properties here.
+        if ((best['new'] == 1 or not board_set or self.count_taus())
+            and best['props'] == 4):
+          return
+
+    rec(0, self.size)
+
+    logging.warning('Weh: %s %s' % (best['new'], best['props']))
+
+    return best['cards']
 
   def find_e3tau_new_card(self):
     # Find the earliest card that maximizes the number of taus present.

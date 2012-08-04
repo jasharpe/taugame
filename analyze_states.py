@@ -7,6 +7,7 @@ import numpy as np
 from state import *
 
 NUM_PROP = 4
+NUM_VAL = 3
 
 # Modify these to see different stats.
 name = 'jsharpe'
@@ -54,6 +55,25 @@ def get_spacing(cards, board):
 def get_diff_vector(cards):
   return tuple([not is_same_in(cards,i) for i in range(NUM_PROP)])
 
+def get_cards_posns(cards, board):
+  return set([get_card_posn(c, board) for c in cards])
+
+def negasum(a, b):
+  return tuple([(- a[i] - b[i])%NUM_VAL for i in range(NUM_PROP)])
+
+def count_3taus(board):
+  cards = frozenset(map(tuple, filter(None, board)))
+
+  ret = 0
+  for a in cards:
+    for b in cards:
+      if a != b:
+        ret += (negasum(a,b) in cards)
+  return ret / 6
+
+# All times.
+all_stats = []
+
 # Find times by number of differing properties.
 differ_stats = defaultdict(lambda: [])
 
@@ -66,12 +86,19 @@ same_stats = defaultdict(lambda: [])
 # Find times by which properties are different.
 diffvec_stats = defaultdict(lambda: [])
 
+# Find times by how many positions shared with previous tau.
+shared_stats = defaultdict(lambda: [])
+
+# Find times by how many taus are present.
+num_taus_stats = defaultdict(lambda: [])
+
 print 'Processing scores...'
 S = 0
 for score in scores:
   S += 1
   game = score.game
   prev_time = 0.
+  prev_posns = None
   for state in game.states:
     cur_time = state.elapsed_time
     delta = cur_time - prev_time
@@ -79,6 +106,8 @@ for score in scores:
 
     cards = state.cards()
     board = state.board()
+
+    all_stats.append(delta)
     differ_stats[num_different(cards)].append(delta)
     if len(board) == STANDARD_SIZE:
       posn_stats[get_spacing(cards, board)].append(delta)
@@ -88,6 +117,15 @@ for score in scores:
         same_stats[i].append(delta)
 
     diffvec_stats[get_diff_vector(cards)].append(delta)
+
+    cur_posns = get_cards_posns(cards, board)
+    if prev_posns is not None:
+      shared_posns = cur_posns & prev_posns
+      shared_stats[len(shared_posns)].append(delta)
+    prev_posns = cur_posns
+
+    num_taus_stats[count_3taus(board)].append(delta)
+
 
 print 'All done!'
 print '(There were %d scores.)' % S
@@ -140,4 +178,20 @@ for v in sorted(diffvec_stats, key=sum):
   deltas = diffvec_stats[v]
 
   print 'Different properties = %s' % ', '.join(PROP_NAMES[i] for i in range(NUM_PROP) if v[i])
+  pr_deltas(deltas)
+
+pr_hr()
+print '*** Shared card positions'
+for x in sorted(shared_stats):
+  deltas = shared_stats[x]
+
+  print '# shared positions = %d' % x
+  pr_deltas(deltas)
+
+pr_hr()
+print '*** Number taus present'
+for x in sorted(num_taus_stats):
+  deltas = num_taus_stats[x]
+
+  print '# taus = %d' % x
   pr_deltas(deltas)
