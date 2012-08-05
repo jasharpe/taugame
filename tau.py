@@ -97,11 +97,12 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
         'message_type' : message_type,
     }))
 
-  def send_update(self, board, all_taus, paused, target, wrong_property, scores, avg_number, number, time, hint, ended, player_rank_info, found_puzzle_taus):
+  def send_update(self, board, all_taus, all_stale_taus, paused, target, wrong_property, scores, avg_number, number, time, hint, ended, player_rank_info, found_puzzle_taus):
     self.write_message(json.dumps({
         'type' : 'update',
         'board' : board,
         'all_taus' : all_taus,
+        'all_stale_taus' : all_stale_taus,
         'paused' : paused,
         'target' : target,
         'wrong_property' : wrong_property,

@@ -151,7 +151,9 @@ class Lobby(object):
     elif game.ended:
       player_rank_info = game.player_ranks['global']
 
-    socket.send_update(game.get_client_board(), game.get_all_client_taus(), game.paused, game.get_client_target_tau(), game.wrong_property, self.get_scores(game_id), numbers_map, game.count_taus(), time, game.get_client_hint(), game.ended, player_rank_info, game.get_client_found_puzzle_taus())
+    (all_taus, all_stale_taus) = game.get_all_client_taus()
+
+    socket.send_update(game.get_client_board(), all_taus, all_stale_taus, game.paused, game.get_client_target_tau(), game.wrong_property, self.get_scores(game_id), numbers_map, game.count_taus(), time, game.get_client_hint(), game.ended, player_rank_info, game.get_client_found_puzzle_taus())
 
   def get_players_in_lobby(self):
     players = []
