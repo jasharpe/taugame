@@ -2,7 +2,7 @@ body.ended {
   background-color:lightgreen;
 }
 
-#about p {
+#about p, #welcome p {
   line-height:15px;
   margin-top:9px;
   margin-bottom:15px;

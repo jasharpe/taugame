@@ -3,18 +3,21 @@
 {% block title %}Choose Name{% end %}
 
 {% block body %}
-Choose a name:
-<form name="choose_name" action="/choose_name" method="post">
-  {% if name is not None %}
-  <input type="text" name="name" value="{{ name }}"/>
-  {% else %}
-  <input type="text" name="name"/>
-  {% end %}
-  <input type="submit" value="Choose" />
-</form>
+<div id="welcome">
+  <p>Welcome to <a href="/about">Tau</a>.
+  <p>Choose a name:
+  <form name="choose_name" action="/choose_name" method="post">
+    {% if name is not None %}
+    <input type="text" name="name" value="{{ name }}"/>
+    {% else %}
+    <input type="text" name="name"/>
+    {% end %}
+    <input type="submit" value="Choose" />
+  </form>
   {% if user is not None %}
-  Logged in with Google account with email {{ user['email'] }} (<a href="/google">switch</a>, <a href="/logout">logout</a>).
+  <p>Currently logged in with Google account with email {{ user['email'] }} (<a href="/google">switch</a>, <a href="/logout">logout</a>).
   {% else %}
-  Not logged in. Log in with <a href="/google">Google</a>?
+  <p>Not logged in. Optionally log in with <a href="/google">Google</a> to have your name reserved. If you change it later, it will become unreserved.
   {% end %}
+</div>
 {% end %}

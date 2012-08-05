@@ -79,10 +79,47 @@ $(document).ready(function() {
   };
 
   function submit_tau(cards) {
-    ws.send(JSON.stringify({
-        'type' : 'submit',
-        'cards' : cards
-    }));
+    if (all_tau_strings[tau_to_string(cards)]) {
+      ws.send(JSON.stringify({
+          'type' : 'submit',
+          'cards' : cards
+      }));
+      last_submit_time = new Date().getTime();
+      for (i in cards) {
+        var card_number = get_card_number(cards[i]);
+        var div = card_number_to_div_map[card_number];
+        div.stop();
+        div.css("background-color", "#FFF");
+        div.animate({backgroundColor: "#FFF"}, 100)
+           .animate({backgroundColor: "#DFD"}, 400);
+      }
+      setTimeout(function() {
+        deselect_all_cards();
+      }, 100);
+    } else if (all_stale_tau_strings[tau_to_string(cards)]) {
+      if (game_type === "z3tau") {
+        var index = stale_tau_to_index_map[tau_to_string(cards)];
+        var found_puzzle_taus = $($(".found_puzzle_tau")[index]).find(".smallCard").each(function (index, raw_card) {
+          var card  = $(raw_card);
+          card.stop();
+          card.css("background-color", "#FBB");
+          card.animate({backgroundColor: "#FBB"}, 200)
+              .animate({backgroundColor: "#FFF"}, 1000);
+        });
+        setTimeout(function() {
+          deselect_all_cards();
+        }, 100);
+      }
+    } else {
+      for (i in cards) {
+        var card_number = get_card_number(cards[i]);
+        var div = card_number_to_div_map[card_number];
+        div.stop();
+        div.css("background-color", "#FEE");
+        div.animate({backgroundColor: "#FEE"}, 200)
+           .animate({backgroundColor: "#FFF"}, 500);
+      }
+    }
   };
 
   function pause(pause_or_unpause) {
@@ -102,11 +139,29 @@ $(document).ready(function() {
     }
   };
 
+  function tau_to_string(tau) {
+    var card_numbers = [];
+    for (var i in tau) {
+      card_numbers.push(get_card_number(tau[i]));
+    }
+    card_numbers = card_numbers.sort();
+    var tau_string = "";
+    for (var i in card_numbers) {
+      tau_string += card_numbers[i] + ","
+    }
+    return tau_string;
+  }
+
+  var last_submit_time = 0;
+  var all_tau_strings = {};
+  var all_stale_tau_strings = {};
   var game_ended = false;
   var in_chat_box = false;
   var current_time_updater = undefined;
+  var card_number_to_div_map = {};
   var card_index_to_div_map = {};
   var card_index_to_card_map = {};
+  var stale_tau_to_index_map = {};
   var last_server_time = 0;
   var last_server_time_browser_time = 0;
 
@@ -218,6 +273,7 @@ $(document).ready(function() {
     var table = $('<table style="display:block; float:left;">');
     var max_row = 3;
     var max_col = board.length / max_row;
+    card_number_to_div_map = {};
     card_index_to_div_map = {};
     card_index_to_card_map = {};
     var this_board = [];
@@ -236,6 +292,7 @@ $(document).ready(function() {
         } else {
           var div = $('<div class="realCard unselectedCard" data-card-index="' + card_index + '" data-card="' + card + '">');
           div.addClass(getImgClass());
+          card_number_to_div_map[get_card_number(card)] = div;
           card_index_to_div_map[card_index] = div;
           card_index_to_card_map[card_index] = card;
 
@@ -397,31 +454,39 @@ $(document).ready(function() {
   function update_new_game() {
     var div = $("#new_game");
     div.html('');
-    var hidden_div = $("<div>");
-    hidden_div.hide();
     var new_game_type;
     var tab_index = 10;
     for (new_game_type in game_type_info) {
       var game_type_string = game_type_info[new_game_type];
-      hidden_div.append($('<form style="display:inline-block;" name="new_game" action="/new_game/' + new_game_type + '?parent=' + game_id + '" method="post"><input type="submit" tabindex="' + tab_index + '" value="New ' + game_type_string + ' game" /></form>'));
+      div.append($('<form style="display:inline-block;" name="new_game" action="/new_game/' + new_game_type + '?parent=' + game_id + '" method="post"><input type="submit" tabindex="' + tab_index + '" value="New ' + game_type_string + ' game" /></form>'));
       tab_index++;
     }
-    var show_link = $('<a tabindex="10" href="javascript:void(0);">New game?</a>');
-    show_link.click(function() {
-      hidden_div.show();
-      show_link.hide();
-    });
-    div.append(show_link);
-    div.append(hidden_div);
   }
 
-  function update(board, paused, target, wrong_property, scores, time, avg_number, number, ended, hint, player_rank_info, found_puzzle_taus, new_games) {
+  function update(board, all_taus, all_stale_taus, paused, target, wrong_property, scores, time, avg_number, number, ended, hint, player_rank_info, found_puzzle_taus, new_games) {
+    if (debug) {
+      console.log("Time since last submit: " + (new Date().getTime() - last_submit_time) + "ms");
+    }
+    all_tau_strings = {};
+    for (var i in all_taus) {
+      all_tau_strings[tau_to_string(all_taus[i])] = true;
+    }
+    all_stale_tau_strings = {};
+    for (var i in all_stale_taus) {
+      all_stale_tau_strings[tau_to_string(all_stale_taus[i])] = true;
+    }
     game_ended = ended;
     update_scores(scores, ended);
     
     update_time(time, paused, avg_number, ended, player_rank_info);
 
     // update board
+    stale_tau_to_index_map = {};
+    var j = 0;
+    for (var i in found_puzzle_taus) {
+      stale_tau_to_index_map[tau_to_string(found_puzzle_taus[i])] = j;
+      j++;
+    }
     update_board(board, paused, target, wrong_property, number, hint, ended, found_puzzle_taus);
 
     if (ended) {
@@ -454,7 +519,7 @@ $(document).ready(function() {
       if (data.wrong_property !== null) {
         wrong_property = parseInt(data.wrong_property);
       }
-      update(data.board, data.paused, data.target, wrong_property, data.scores, data.time, data.avg_number, data.number, data.ended, data.hint, data.player_rank_info, data.found_puzzle_taus, data.new_games);
+      update(data.board, data.all_taus, data.all_stale_taus, data.paused, data.target, wrong_property, data.scores, data.time, data.avg_number, data.number, data.ended, data.hint, data.player_rank_info, data.found_puzzle_taus, data.new_games);
     } else if (data.type === "scores") {
       update_scores(data.scores, data.ended);
     } else if (data.type == "chat") {
@@ -471,6 +536,7 @@ $(document).ready(function() {
     } else if (data.type === "old_found_puzzle_tau") {
       var found_puzzle_taus = $($(".found_puzzle_tau")[data.index]).find(".smallCard").each(function (index, raw_card) {
         var card  = $(raw_card);
+        card.stop();
         card.css("background-color", "#FBB");
         card.animate({backgroundColor: "#FBB"}, 200)
             .animate({backgroundColor: "#FFF"}, 1000);
