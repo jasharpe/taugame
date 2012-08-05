@@ -261,8 +261,8 @@ class Game(object):
   def get_all_client_taus(self):
     taus =  [map(self.space.to_client_card, tau) for tau in self.get_all_taus(wrong_property=self.wrong_property)]
     if self.type == 'z3tau':
-      return filter(lambda cards: self.old_found_puzzle_tau_index(cards) is None, taus)
-    return taus
+      return (filter(lambda cards: self.old_found_puzzle_tau_index(cards) is None, taus), filter(lambda cards: self.old_found_puzzle_tau_index(cards) is not None, taus))
+    return (taus, None)
 
   def count_taus(self):
     return len(self.get_all_taus(wrong_property=self.wrong_property))
