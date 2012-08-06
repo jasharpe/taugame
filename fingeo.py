@@ -22,6 +22,8 @@ class Space(object):
 
 # The space F_3^4.
 class AffineSpace(Space):
+  COORDS = 4
+
   def __init__(self):
     self.p = 3
 
@@ -39,6 +41,23 @@ class AffineSpace(Space):
       raise ValueError('Card length is %d (should be 4)' % len(card))
 
     return card
+
+  # Methods and fields specific to AffineSpace.
+  SIZE = 3**4
+
+  def to_int(self, point):
+    ret = 0
+    for x in point:
+      ret = self.p * ret + x
+    return ret
+
+  def from_int(self, x):
+    ret = []
+    for i in range(self.COORDS):
+      ret.append(x % self.p)
+      x /= self.p
+    ret.reverse()
+    return tuple(ret)
 
 
 # Routines for converting between boolean 6-tuples and 4-valued 3-tuples.
@@ -65,6 +84,8 @@ def card_to_binary_point(card):
 
 # The space P_5 F_2.
 class ProjectiveSpace(Space):
+  COORDS = 6
+
   def __init__(self):
     self.p = 2
 
@@ -80,6 +101,8 @@ class ProjectiveSpace(Space):
 
 # The space F_2^6.
 class BooleanSpace(Space):
+  COORDS = 6
+
   def __init__(self):
     self.p = 2
 
