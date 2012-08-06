@@ -22,11 +22,26 @@ GAME_EXPIRY = 1200
 # The number of seconds between game cleanup sweeps.
 GAME_CLEANUP_INTERVAL = 600
 
-settings = {
+SETTINGS = {
     "template_path" : os.path.join(os.path.dirname(__file__), "templates"),
     "static_path" : os.path.join(os.path.dirname(__file__), "static"),
     "cookie_secret" : cookie_secret,
 }
+
+GAME_TYPE_INFO = [
+  ("3tau", "3 Tau"),
+  ("6tau", "6 Tau"),
+  ("g3tau", "Generalized 3 Tau"),
+  ("i3tau", "Insane 3 Tau"),
+  ("m3tau", "Master 3 Tau (beta)"),
+  ("e3tau", "Easy 3 Tau (beta)"),
+  ("4tau", "4 Tau"),
+  ("3ptau", "3 Projective Tau"),
+  ("z3tau", "Puzzle 3 Tau"),
+  ("4otau", "4 Outer Tau"),
+  ("n3tau", "Near 3 Tau"),
+  ("bqtau", "Boolean Quadruple Tau"),
+]
 
 lobby = Lobby(GAME_EXPIRY)
 
@@ -61,20 +76,22 @@ class GameListWebSocketHandler(tornado.websocket.WebSocketHandler):
 
 class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
   def open(self, game_id):
-    self.game_id = int(game_id)
-    self.name = url_unescape(self.get_secure_cookie("name"))
-    self.lobby = lobby
+    self.opened = False
 
+    game_id = int(game_id)
+    self.name = url_unescape(self.get_secure_cookie("name"))
     try:
-      game = self.lobby.get_game(self.game_id)
-    except InvalidGameId:
+      self.game = lobby.game_id_to_game[game_id]
+    except KeyError:
       self.close()
       return
 
-    self.lobby.open_game_socket(self)
+    self.game.open_game_socket(self)
+    self.opened = True
 
   def on_close(self):
-    self.lobby.close_game_socket(self)
+    if self.opened:
+      self.game.close_game_socket(self)
 
   def send_history_update(self, messages):
     self.write_message(json.dumps({
@@ -126,15 +143,15 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
   def on_message(self, message_json):
     message = json.loads(message_json)
     if message['type'] == 'start':
-      self.lobby.start_game(self.game_id)
+      self.game.start_game()
     elif message['type'] == 'update':
-      self.lobby.request_update(self)
+      self.game.request_update(self)
     elif message['type'] == 'chat':
-      self.lobby.add_chat(self.game_id, message['name'], message['message'], "chat")
+      self.game.add_chat(message['name'], message['message'], "chat")
     elif message['type'] == 'pause':
-      self.lobby.pause(self.game_id, message['pause'])
+      self.game.pause(message['pause'])
     elif message['type'] == 'submit':
-      self.lobby.submit_tau(self, message['cards'])
+      self.game.submit_tau(self, message['cards'])
 
 def require_name(f):
   from functools import wraps
@@ -165,7 +182,7 @@ class MainHandler(tornado.web.RequestHandler):
         "game_list.html",
         see_more_ended=int(self.get_argument('see_more_ended', default=False)),
         player=url_unescape(self.get_secure_cookie("name")),
-        game_type_info=game_type_info)
+        game_type_info=GAME_TYPE_INFO)
 
 class GraphHandler(tornado.web.RequestHandler):
   def get(self, player):
@@ -205,7 +222,7 @@ class LeaderboardHandler(tornado.web.RequestHandler):
         leaderboard_object=leaderboard_object,
         time_offset=time_offset,
         conjunction=conjunction,
-        game_type_info=game_type_info)
+        game_type_info=GAME_TYPE_INFO)
 
 def get_user(request_handler):
   if request_handler.get_secure_cookie("google_user"):
@@ -253,31 +270,16 @@ class NewGameHandler(tornado.web.RequestHandler):
     name = url_unescape(self.get_secure_cookie("name"))
 
     try:
-      game_id = lobby.new_game(type, name, parent, args.quick)
+      game = lobby.new_game(type, name, parent, args.quick)
     except InvalidGameType:
       self.redirect('/')
       return
     
-    self.redirect("/game/%d" % game_id)
+    self.redirect("/game/%d" % game.id)
     return
 
-game_type_info = [
-  ("3tau", "3 Tau"),
-  ("6tau", "6 Tau"),
-  ("g3tau", "Generalized 3 Tau"),
-  ("i3tau", "Insane 3 Tau"),
-  ("m3tau", "Master 3 Tau (beta)"),
-  ("e3tau", "Easy 3 Tau (beta)"),
-  ("4tau", "4 Tau"),
-  ("3ptau", "3 Projective Tau"),
-  ("z3tau", "Puzzle 3 Tau"),
-  ("4otau", "4 Outer Tau"),
-  ("n3tau", "Near 3 Tau"),
-  ("bqtau", "Boolean Quadruple Tau"),
-]
-
 class GameHandler(tornado.web.RequestHandler):
-  game_type_to_type_string_map = dict(game_type_info)
+  game_type_to_type_string_map = dict(GAME_TYPE_INFO)
 
   @require_name
   def get(self, game_id):
@@ -290,10 +292,10 @@ class GameHandler(tornado.web.RequestHandler):
         "game.html",
         game_id=game_id,
         user_name=url_unescape(self.get_secure_cookie("name")),
-        game_type=self.game_type_to_type_string_map[game.type],
+        game_type=self.game_type_to_type_string_map[game.game.type],
         debug=int(self.get_argument('debug', default=0)),
-        game=game,
-        game_type_info=game_type_info)
+        game=game.game,
+        game_type_info=GAME_TYPE_INFO)
 
 class TimeHandler(tornado.web.RequestHandler):
   def post(self):
@@ -317,7 +319,7 @@ class RecapHandler(tornado.web.RequestHandler):
         "recap.html",
         score=score,
         time_offset=time_offset,
-        game_type_info=dict(game_type_info),
+        game_type_info=dict(GAME_TYPE_INFO),
         percentile=percentile,
         rank=rank)
 
@@ -377,8 +379,7 @@ class LogoutHandler(tornado.web.RequestHandler):
     self.redirect("/choose_name")
 
 def create_application(debug):
-  full_settings = dict(settings)
-  #full_settings['debug'] = debug
+  full_settings = dict(SETTINGS)
   return tornado.web.Application([
     (r"/", MainHandler),
     # 0 players
