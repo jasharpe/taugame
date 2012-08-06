@@ -201,8 +201,12 @@ class Game(object):
         m3tau_new_cards = self.find_m3tau_new_cards()
         calculation_time = time.time() - init_time
         if calculation_time > I3TAU_CALCULATION_LOGGING_THRESHOLD:
-          logging.warning('Took %.03f seconds to deal 3 new cards for Master 3 Tau',
-              calculation_time)
+          num_new_cards = 0
+          if m3tau_new_cards is not None:
+            num_new_cards = len(m3tau_new_cards)
+          logging.warning('Took %.03f seconds to deal %d new cards for Master 3 Tau',
+              calculation_time,
+              num_new_cards)
 
         if m3tau_new_cards is not None:
           # Randomize the order of the new cards.
@@ -426,48 +430,66 @@ class Game(object):
     return candidate_board[-self.size:]
 
   def find_m3tau_new_cards(self):
+    no_nones = filter(None, self.board)
+
+    # Group remaining cards by whether they complete a tau with the current
+    # board.
+    lookup_all = self.space.SIZE * [0]
+    lookup_sames = [self.space.SIZE * [0] for i in range(self.space.COORDS)]
+
+    for a,b in itertools.combinations(no_nones, 2):
+      c = self.space.negasum(a,b)
+      cint = self.space.to_int(c)
+      lookup_all[cint] += 1
+      num_same = sum(a[i] == b[i] for i in range(self.space.COORDS))
+      lookup_sames[num_same][cint] += 1
+
+    group_completes = []
+    group_decoy = []
+    completes_num_same = {}
+
+    for c in self.deck:
+      cint = self.space.to_int(c)
+      if lookup_all[cint] == 0:
+        group_decoy.append(c)
+      if lookup_all[cint] == 1:
+        group_completes.append(c)
+        for i in range(self.space.COORDS):
+          if lookup_sames[i][cint] == 1:
+            completes_num_same[c] = i
+
+    # We will look at all-differents first, then one-sames, etc.
+    group_completes.sort(key=completes_num_same.get)
+
+    # Search, using the groups. Return the first success.
     board = fast_board.Board()
-    for card in filter(None, self.board):
+    for card in no_nones:
       board.push(card)
 
-    ideal_obj = (1, 1, 0)
+    if len(no_nones) < 9:
+      # At the beginning of the game, just deal cards up to 9,
+      # making no tau yet. group_decoy should be non-empty
+      # at the beginning of the game.
+      if group_decoy:
+        return group_decoy[:1]
 
-    best_obj = None
-    best_cards = None
+    if self.count_taus() == 0:
+      # The normal case, where we want to deal a tau.
+      for ci in group_completes:
+        if board.taus_completer.peek(ci) > 1: continue
+        board.push(ci)
+        for j in range(len(group_decoy)):
+          cj = group_decoy[j]
+          if board.taus_completer.peek(cj) > 1: continue
+          board.push(cj)
+          for k in range(j+1, len(group_decoy)):
+            ck = group_decoy[k]
+            if board.taus_completer.peek(ck) > 1: continue
 
-    REACH = 25
-    deck = self.deck[:REACH]
-    D = len(deck)
-    for i in range(D):
-      ci = deck[i]
-      if board.taus_completer.peek(ci) > 1: continue
-      board.push(ci)
-      for j in range(i+1, D):
-        cj = deck[j]
-        if board.taus_completer.peek(cj) > 1: continue
-        board.push(cj)
-        for k in range(j+1, D):
-          ck = deck[k]
-          if board.taus_completer.peek(ck) > 1: continue
+            return [ci, cj, ck]
 
-          cur_obj = (board.initial_9_completer.peek(ck),
-                     board.all_different_completer.peek(ck),
-                     board.one_same_completer.peek(ck))
-          if best_obj is None or cur_obj > best_obj:
-            best_obj = cur_obj
-            best_cards = [ci, cj, ck]
-
-            if best_obj == ideal_obj:
-              break
-
-        board.pop()
-        if best_obj == ideal_obj:
-          break
-      board.pop()
-      if best_obj == ideal_obj:
-        break
-
-    return best_cards
+    # Fall back to i3tau behaviour.
+    return self.find_i3tau_new_cards()
 
 
   def find_e3tau_new_card(self):
