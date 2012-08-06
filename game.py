@@ -2,7 +2,9 @@ import logging
 import random, itertools, time
 from operator import mod
 
+import fast_board
 import fingeo
+import m3tau
 
 I3TAU_CALCULATION_LOGGING_THRESHOLD = 0.25
 
@@ -14,6 +16,7 @@ type_to_size_map = {
   'g3tau': 3,
   '6tau': 6,
   'i3tau': 3,
+  'm3tau': 3,
   'e3tau': 3,
   '4tau': 4,
   '3ptau': 3,
@@ -28,6 +31,7 @@ type_to_min_board_size = {
   'g3tau': 12,
   '6tau': 12,
   'i3tau': 12,
+  'm3tau': 12,
   'e3tau': 12,
   '4tau': 12,
   '3ptau': 12,
@@ -190,6 +194,43 @@ class Game(object):
             self.board[i] = card
           add_indices = []
 
+      if self.type == 'm3tau':
+        # Try to do an Master 3 Tau deal.
+        # If it fails, fall back to normal behaviour.
+        init_time = time.time()
+        m3tau_new_cards = self.find_m3tau_new_cards()
+        calculation_time = time.time() - init_time
+        if calculation_time > I3TAU_CALCULATION_LOGGING_THRESHOLD:
+          num_new_cards = 0
+          if m3tau_new_cards is not None:
+            num_new_cards = len(m3tau_new_cards)
+          logging.warning('Took %.03f seconds to deal %d new cards for Master 3 Tau',
+              calculation_time,
+              num_new_cards)
+
+        if m3tau_new_cards is not None:
+          # Randomize the order of the new cards.
+          m3tau_new_cards = shuffled(m3tau_new_cards)
+
+          new_idxs = []
+          new_cards = []
+          for i, card in zip(add_indices, m3tau_new_cards):
+            self.deck.remove(card)
+            new_idxs.append(i)
+            new_cards.append(card)
+          add_indices = []
+
+          best_board = None
+          best_spreadness = None
+          for sigma in itertools.permutations(new_idxs):
+            for i, card in zip(sigma, new_cards):
+              self.board[i] = card
+            cur_spreadness = self.compute_board_spreadness()
+            if best_spreadness is None or cur_spreadness > best_spreadness:
+              best_board = list(self.board)
+              best_spreadness = cur_spreadness
+          self.board = best_board
+
       if self.type == 'e3tau':
         # Do an Easy 3 Tau deal. That means to try to create a large number of
         # taus after dealing.
@@ -221,8 +262,11 @@ class Game(object):
 
     # For Insane 3 Tau and Easy 3 Tau, the initial positions of cards must be
     # randomized, because the first 3 dealt cards always form a Tau.
-    if self.type in ['i3tau', 'e3tau'] and len(filter(None, self.board)) + len(self.deck) == 3**4:
-      random.shuffle(self.board)
+    if self.type in ['i3tau', 'e3tau', 'm3tau'] and len(filter(None, self.board)) + len(self.deck) == 3**4:
+      # For Master 3 Tau, the positions of the last 3 cards dealt are chosen
+      # to be hard, so don't mess them up.
+      if self.type != 'm3tau' or len(filter(None, self.board)) <= 9:
+        random.shuffle(self.board)
 
   def get_wrong_property(self, board):
     no_nones = filter(None, board)
@@ -341,7 +385,7 @@ class Game(object):
       return sum(correct_properties) == 1
 
   def is_tau(self, cards, wrong_property=None):
-    if len(cards) == 3 and self.type in ["3tau", "6tau", "i3tau", "e3tau", "3ptau", "z3tau"]:
+    if len(cards) == 3 and self.type in ["3tau", "6tau", "i3tau", "m3tau", "e3tau", "3ptau", "z3tau"]:
       return self.is_tau_basic(cards)
     if len(cards) == 3 and self.type in ["n3tau"]:
       return self.is_n3tau(cards, wrong_property)
@@ -362,12 +406,15 @@ class Game(object):
       return self.is_tau_basic(cards) and self.no_subset_is_tau(cards, 3)
     raise Exception("Cards %s are not valid for this game type: %s" % (cards, self.type))
 
-  def count_tau_subsets(self, cards, subset_size, wrong_property=None):
-    count = 0
+  def get_tau_subsets(self, cards, subset_size, wrong_property=None):
+    ret = []
     for card_subset in itertools.combinations(cards, subset_size):
       if self.is_tau(card_subset, wrong_property=wrong_property):
-        count += 1
-    return count
+        ret.append(card_subset)
+    return ret
+
+  def count_tau_subsets(self, cards, subset_size, wrong_property=None):
+    return len(self.get_tau_subsets(cards, subset_size, wrong_property))
 
   def no_subset_is_tau(self, cards, subset_size):
     return not self.count_tau_subsets(cards, subset_size)
@@ -379,7 +426,6 @@ class Game(object):
     # more than a single set, then we don't iterate through choices of a
     # third card. (The straightforward approach was tested and found to be
     # too slow.)
-    i3tau_new_cards = None
     candidate_board = filter(None, self.board)
 
     def rec(start, to_add):
@@ -397,6 +443,103 @@ class Game(object):
       return None
 
     return candidate_board[-self.size:]
+
+  def board_index_to_position(self, i):
+    # Position is a (row, column) tuple.
+    ROWS = 3
+    return (i % ROWS, i // ROWS)
+
+  def compute_board_spreadness(self):
+    # For now, since this is used by m3tau, just use one tau.
+    tau = self.get_hint()
+    if not tau:
+      return 0
+
+    return self.compute_spreadness(map(self.board.index, tau))
+
+  def compute_spreadness(self, ixs):
+    # Return some measure of how spread out cards are.
+    # Higher values indicate more spread out.
+    # For now, uses the area of the bounding box.
+
+    posns = map(self.board_index_to_position, ixs)
+
+    mnr = min(p[0] for p in posns)
+    mxr = max(p[0] for p in posns)
+    mnc = min(p[1] for p in posns)
+    mxc = max(p[1] for p in posns)
+
+    return (mxr-mnr+1) * (mxc-mnc+1)
+
+  def find_m3tau_new_cards(self):
+    no_nones = filter(None, self.board)
+
+    # Group remaining cards by whether they complete a tau with the current
+    # board.
+    lookup = [[] for i in range(self.space.SIZE)]
+
+    for a,b in itertools.combinations(no_nones, 2):
+      c = self.space.negasum(a,b)
+      cint = self.space.to_int(c)
+      lookup[cint].append((a,b))
+
+    group_completes = []
+    group_decoy = []
+    completes_num_same = {}
+    completes_spreadness = {}
+
+    none_idxs = [i for i in range(len(self.board)) if self.board[i] is None]
+
+    for c in self.deck:
+      cint = self.space.to_int(c)
+      if len(lookup[cint]) == 0:
+        group_decoy.append(c)
+      if len(lookup[cint]) == 1:
+        group_completes.append(c)
+        a, b = lookup[cint][0]
+        a_idx = self.board.index(a)
+        b_idx = self.board.index(b)
+
+        num_same = sum(a[i] == b[i] for i in range(self.space.COORDS))
+        completes_num_same[c] = num_same
+
+        spreadness = max(
+          self.compute_spreadness([a_idx, b_idx, c_idx]) for c_idx in none_idxs)
+        completes_spreadness[c] = spreadness
+
+    # We will look at all-differents first, then one-sames, etc.
+    group_completes.sort(key=lambda c: (completes_num_same[c], -completes_spreadness[c]))
+
+    # Search, using the groups. Return the first success.
+    board = fast_board.Board()
+    for card in no_nones:
+      board.push(card)
+
+    if len(no_nones) < 9:
+      # At the beginning of the game, just deal cards up to 9,
+      # making no tau yet. group_decoy should be non-empty
+      # at the beginning of the game.
+      if group_decoy:
+        return group_decoy[:1]
+
+    if self.count_taus() == 0:
+      # The normal case, where we want to deal a tau.
+      for ci in group_completes:
+        if board.taus_completer.peek(ci) > 1: continue
+        board.push(ci)
+        for j in range(len(group_decoy)):
+          cj = group_decoy[j]
+          if board.taus_completer.peek(cj) > 1: continue
+          board.push(cj)
+          for k in range(j+1, len(group_decoy)):
+            ck = group_decoy[k]
+            if board.taus_completer.peek(ck) > 1: continue
+
+            return [ci, cj, ck]
+
+    # Fall back to i3tau behaviour.
+    return self.find_i3tau_new_cards()
+
 
   def find_e3tau_new_card(self):
     # Find the earliest card that maximizes the number of taus present.
