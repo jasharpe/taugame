@@ -2,7 +2,9 @@ import logging
 import random, itertools, time
 from operator import mod
 
+import fast_board
 import fingeo
+import m3tau
 
 I3TAU_CALCULATION_LOGGING_THRESHOLD = 0.0#0.25
 
@@ -423,55 +425,50 @@ class Game(object):
 
     return candidate_board[-self.size:]
 
-  def is_all_same_property(self, cards, i):
-    return 1 == len(set(c[i] for c in cards))
-
   def find_m3tau_new_cards(self):
-    # Master 3 Tau dealing requirements (in decreasing order of importance):
-    # 1. There is exactly 1 tau present after dealing.
-    # 2. Minimize the number of new cards involved.
-    # 3. Maximize the number of different properties.
-    # Returns None on failure.
-    candidate_board = filter(None, self.board)
-    board_set = frozenset(candidate_board)
-    best = {
-      'cards': None,
-      'new': None,
-      'props': None,
-    }
+    board = fast_board.Board()
+    for card in filter(None, self.board):
+      board.push(card)
 
-    def rec(start, to_add):
-      if to_add == 0:
-        tau_subsets = self.get_tau_subsets(candidate_board, self.size)
-        if len(tau_subsets) == 1:
-          the_tau = tau_subsets[0]
-          cur_new = self.size - len(frozenset(the_tau) & board_set)
-          cur_props = sum(not self.is_all_same_property(the_tau, i) for i in range(len(the_tau[0])))
+    ideal_obj = (1, 1, 0)
 
-          if (best['new'] is None or cur_new < best['new'] or (cur_new == best['new'] and (
-              best['props'] is None or cur_props > best['props']))):
-            best['new'] = cur_new
-            best['props'] = cur_props
-            best['cards'] = candidate_board[-self.size:]
-        return
+    best_obj = None
+    best_cards = None
 
-      for i in range(start, len(self.deck)):
-        candidate_board.append(self.deck[i])
-        if self.count_tau_subsets(candidate_board, self.size) <= 1:
-          rec(i+1, to_add-1)
-        candidate_board.pop()
+    REACH = 25
+    deck = self.deck[:REACH]
+    D = len(deck)
+    for i in range(D):
+      ci = deck[i]
+      if board.taus_completer.peek(ci) > 1: continue
+      board.push(ci)
+      for j in range(i+1, D):
+        cj = deck[j]
+        if board.taus_completer.peek(cj) > 1: continue
+        board.push(cj)
+        for k in range(j+1, D):
+          ck = deck[k]
+          if board.taus_completer.peek(ck) > 1: continue
 
-        # In the best case, terminate the search.
-        # FIXME: Shouldn't hardcode number of properties here.
-        if ((best['new'] == 1 or not board_set or self.count_taus())
-            and best['props'] == 4):
-          return
+          cur_obj = (board.initial_9_completer.peek(ck),
+                     board.all_different_completer.peek(ck),
+                     board.one_same_completer.peek(ck))
+          if best_obj is None or cur_obj > best_obj:
+            best_obj = cur_obj
+            best_cards = [ci, cj, ck]
 
-    rec(0, self.size)
+            if best_obj == ideal_obj:
+              break
 
-    logging.warning('Weh: %s %s' % (best['new'], best['props']))
+        board.pop()
+        if best_obj == ideal_obj:
+          break
+      board.pop()
+      if best_obj == ideal_obj:
+        break
 
-    return best['cards']
+    return best_cards
+
 
   def find_e3tau_new_card(self):
     # Find the earliest card that maximizes the number of taus present.
