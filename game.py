@@ -4,7 +4,6 @@ from operator import mod
 
 import fast_board
 import fingeo
-import m3tau
 
 I3TAU_CALCULATION_LOGGING_THRESHOLD = 0.25
 
