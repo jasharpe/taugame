@@ -6,7 +6,7 @@ import fast_board
 import fingeo
 import m3tau
 
-I3TAU_CALCULATION_LOGGING_THRESHOLD = 0.0#0.25
+I3TAU_CALCULATION_LOGGING_THRESHOLD = 0.25
 
 class InvalidGameType(Exception):
   pass
@@ -210,13 +210,26 @@ class Game(object):
 
         if m3tau_new_cards is not None:
           # Randomize the order of the new cards.
-          # FIXME: Should make the tau far apart.
           m3tau_new_cards = shuffled(m3tau_new_cards)
 
+          new_idxs = []
+          new_cards = []
           for i, card in zip(add_indices, m3tau_new_cards):
             self.deck.remove(card)
-            self.board[i] = card
+            new_idxs.append(i)
+            new_cards.append(card)
           add_indices = []
+
+          best_board = None
+          best_spreadness = None
+          for sigma in itertools.permutations(new_idxs):
+            for i, card in zip(sigma, new_cards):
+              self.board[i] = card
+            cur_spreadness = self.compute_board_spreadness()
+            if best_spreadness is None or cur_spreadness > best_spreadness:
+              best_board = list(self.board)
+              best_spreadness = cur_spreadness
+          self.board = best_board
 
       if self.type == 'e3tau':
         # Do an Easy 3 Tau deal. That means to try to create a large number of
@@ -249,9 +262,11 @@ class Game(object):
 
     # For Insane 3 Tau and Easy 3 Tau, the initial positions of cards must be
     # randomized, because the first 3 dealt cards always form a Tau.
-    # FIXME: Master 3 Tau should make the positions hard!
     if self.type in ['i3tau', 'e3tau', 'm3tau'] and len(filter(None, self.board)) + len(self.deck) == 3**4:
-      random.shuffle(self.board)
+      # For Master 3 Tau, the positions of the last 3 cards dealt are chosen
+      # to be hard, so don't mess them up.
+      if self.type != 'm3tau' or len(filter(None, self.board)) <= 9:
+        random.shuffle(self.board)
 
   def get_wrong_property(self, board):
     no_nones = filter(None, board)
@@ -429,37 +444,71 @@ class Game(object):
 
     return candidate_board[-self.size:]
 
+  def board_index_to_position(self, i):
+    # Position is a (row, column) tuple.
+    ROWS = 3
+    return (i % ROWS, i // ROWS)
+
+  def compute_board_spreadness(self):
+    # For now, since this is used by m3tau, just use one tau.
+    tau = self.get_hint()
+    if not tau:
+      return 0
+
+    return self.compute_spreadness(map(self.board.index, tau))
+
+  def compute_spreadness(self, ixs):
+    # Return some measure of how spread out cards are.
+    # Higher values indicate more spread out.
+    # For now, uses the area of the bounding box.
+
+    posns = map(self.board_index_to_position, ixs)
+
+    mnr = min(p[0] for p in posns)
+    mxr = max(p[0] for p in posns)
+    mnc = min(p[1] for p in posns)
+    mxc = max(p[1] for p in posns)
+
+    return (mxr-mnr+1) * (mxc-mnc+1)
+
   def find_m3tau_new_cards(self):
     no_nones = filter(None, self.board)
 
     # Group remaining cards by whether they complete a tau with the current
     # board.
-    lookup_all = self.space.SIZE * [0]
-    lookup_sames = [self.space.SIZE * [0] for i in range(self.space.COORDS)]
+    lookup = [[] for i in range(self.space.SIZE)]
 
     for a,b in itertools.combinations(no_nones, 2):
       c = self.space.negasum(a,b)
       cint = self.space.to_int(c)
-      lookup_all[cint] += 1
-      num_same = sum(a[i] == b[i] for i in range(self.space.COORDS))
-      lookup_sames[num_same][cint] += 1
+      lookup[cint].append((a,b))
 
     group_completes = []
     group_decoy = []
     completes_num_same = {}
+    completes_spreadness = {}
+
+    none_idxs = [i for i in range(len(self.board)) if self.board[i] is None]
 
     for c in self.deck:
       cint = self.space.to_int(c)
-      if lookup_all[cint] == 0:
+      if len(lookup[cint]) == 0:
         group_decoy.append(c)
-      if lookup_all[cint] == 1:
+      if len(lookup[cint]) == 1:
         group_completes.append(c)
-        for i in range(self.space.COORDS):
-          if lookup_sames[i][cint] == 1:
-            completes_num_same[c] = i
+        a, b = lookup[cint][0]
+        a_idx = self.board.index(a)
+        b_idx = self.board.index(b)
+
+        num_same = sum(a[i] == b[i] for i in range(self.space.COORDS))
+        completes_num_same[c] = num_same
+
+        spreadness = max(
+          self.compute_spreadness([a_idx, b_idx, c_idx]) for c_idx in none_idxs)
+        completes_spreadness[c] = spreadness
 
     # We will look at all-differents first, then one-sames, etc.
-    group_completes.sort(key=completes_num_same.get)
+    group_completes.sort(key=lambda c: (completes_num_same[c], -completes_spreadness[c]))
 
     # Search, using the groups. Return the first success.
     board = fast_board.Board()
