@@ -1,6 +1,6 @@
 {% extends chrome.html %}
 
-{% block title %}Game {{ game_id }} ({{ game_type }}){% end %}
+{% block title %}Game {{ game_id }} ({{ game_type }}){% if training %} (Training){% end %}{% end %}
 
 {% block scripts %}
 <script type="text/javascript">
@@ -14,13 +14,14 @@
     "{{ game_type1 }}" : "{{ game_type_string }}",
     {% end %}
   };
+  var training = {{ "true" if training else "false" }};
 </script>
 <script type="text/javascript" src="{{ static_url("jquery-ui.min.js") }}"></script>
 <script type="text/javascript" src="{{ static_url("tau.js") }}"></script>
 {% end %}
 
 {% block body %}
-<h2>Tau - Game {{ game_id }} ({{ game_type }})</h2>
+<h2>Tau - Game {{ game_id }} ({{ game_type }}){% if training %} (Training){% end %}</h2>
 <div>
   <div id="scores">
     <h4>Scores</h4>

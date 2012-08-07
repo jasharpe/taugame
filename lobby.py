@@ -14,14 +14,14 @@ class Lobby(object):
 
     self.game_list_sockets = []
 
-  def new_game(self, type, name, parent, quick):
+  def new_game(self, type, name, parent, quick, training):
     if len(self.games) == 0:
       next_id = 0
     else:
       next_id = max(self.game_id_to_game.keys()) + 1
 
     game = Game(type, quick)
-    lobby_game = LobbyGame(next_id, game, self)
+    lobby_game = LobbyGame(next_id, game, self, training)
     self.games.append(lobby_game)
     self.game_id_to_game[next_id] = lobby_game
 

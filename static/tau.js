@@ -164,7 +164,10 @@ $(document).ready(function() {
   var stale_tau_to_index_map = {};
   var last_server_time = 0;
   var last_server_time_browser_time = 0;
-
+  var last_found_puzzle_taus = null;
+  var last_hint_tau_string = "";
+  var hints_given = 0;
+  var hint_cards = [];
   var selection_model = {
     'selected' : []
   };
@@ -273,9 +276,11 @@ $(document).ready(function() {
     var table = $('<table style="display:block; float:left;">');
     var max_row = 3;
     var max_col = board.length / max_row;
+    var hints_printed = 0;
     card_number_to_div_map = {};
     card_index_to_div_map = {};
     card_index_to_card_map = {};
+    hint_cards = []
     var this_board = [];
     for (var row_index = 0; row_index < max_row; row_index++) {
       var row = $('<tr>');
@@ -296,8 +301,14 @@ $(document).ready(function() {
           card_index_to_div_map[card_index] = div;
           card_index_to_card_map[card_index] = card;
 
-          if (processed_hint.indexOf(get_card_number(card)) != -1) {
+          if (!training && processed_hint.indexOf(get_card_number(card)) != -1) {
             div.addClass("hint");
+          } else if (training && processed_hint.indexOf(get_card_number(card)) != -1) {
+            hint_cards.push(div);
+            if (hints_printed < hints_given) {
+              div.addClass("hint");
+              hints_printed++;
+            }
           }
 
           prev_index = card_to_board_map[get_card_number(card)];
@@ -352,7 +363,6 @@ $(document).ready(function() {
           row.append(col);
         } else {
           var card_div = $('<div style="position:absolute;" class="realCard unselectedCard">');
-          //card_div.append($('<div style="position:relative; left:20px; top:50px;">' + properties[wrong_property] + "</div>"));
           card_div.addClass("nearTau");
           var offset = wrong_property * 80;
           card_div.css("background-position", "-" + offset + "px 0");
@@ -387,10 +397,19 @@ $(document).ready(function() {
       playing_area.append($('<div style="clear:both;">'));
       last_found_puzzle_taus = found_puzzle_taus;
     }
+    if (!ended && training && hints_given < 3) {
+      var hint_button = $('<button style="clear:both;">Hint</button>');
+      hint_button.click(function() {
+        hint_cards[hints_given].addClass("hint");
+        hints_given++;
+        if (hints_given >= 3) {
+          hint_button.hide();
+        }
+      });
+      playing_area.append(hint_button);
+    }
     prev_board = this_board;
   }
-
-  var last_found_puzzle_taus = null;
 
   function get_time(ended) {
     if (ended) {
@@ -464,6 +483,10 @@ $(document).ready(function() {
   }
 
   function update(board, all_taus, all_stale_taus, paused, target, wrong_property, scores, time, avg_number, number, ended, hint, player_rank_info, found_puzzle_taus, new_games) {
+    if (hint !== null && tau_to_string(hint) !== last_hint_tau_string) {
+      hints_given = 0;
+      last_hint_tau_string = tau_to_string(hint);
+    }
     if (debug) {
       console.log("Time since last submit: " + (new Date().getTime() - last_submit_time) + "ms");
     }

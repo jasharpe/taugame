@@ -1,4 +1,22 @@
 $(function() {
+  $(".new_game_form").submit(function(e) {
+    var params = [
+      { 'name' : 'training', 'value' : $("#training").is(':checked') }
+    ];
+
+    var that = $(this);
+    $.each(params, function(i, param) {
+        var input = $('<input/>').attr('type', 'hidden')
+            .attr('name', param.name)
+            .attr('value', param.value);
+        that.append(input);
+    });
+    
+    return true;
+  });
+});
+
+$(function() {
   var start = (("" + window.location).indexOf("https") == 0) ? "wss" : "ws";
   console.log("Using " + start);
   var ws = new WebSocket(start + "://" + window.location.host + "/gamelistwebsocket/" + see_more_ended);

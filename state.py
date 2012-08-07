@@ -172,7 +172,7 @@ def get_ranks(total_time, game_type, player_names, num_players):
       'players' : player_ranks
   }
 
-def save_game(game):
+def save_game(game, training):
   session = get_session()
   db_game = DBGame(game.type)
   name_to_player_map = {}
@@ -194,9 +194,12 @@ def save_game(game):
   players = name_to_player_map.values()
   team = get_or_create_team(session, players)
   score = Score(last_elapsed_time, datetime.datetime.utcnow(), db_game, players, team, player_to_score_map)
+  if training:
+    score.invalid = True
   session.add(score)
   session.add(db_game)
   session.commit()
+
   return (db_game, score)
 
 class DBGame(Base):

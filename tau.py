@@ -127,7 +127,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
         'avg_number' : avg_number,
         'number' : number,
         'time' : time,
-        'hint' : hint if args.hints else None,
+        'hint' : hint if args.hints or self.game.training else None,
         'ended' : ended,
         'player_rank_info' : player_rank_info,
         # puzzle mode
@@ -266,11 +266,16 @@ class NewGameHandler(tornado.web.RequestHandler):
       parent = int(self.get_argument("parent"))
     except:
       parent = None
+
+    try:
+      training = self.get_argument("training") == "true"
+    except:
+      training = False
     
     name = url_unescape(self.get_secure_cookie("name"))
 
     try:
-      game = lobby.new_game(type, name, parent, args.quick)
+      game = lobby.new_game(type, name, parent, args.quick, training)
     except InvalidGameType:
       self.redirect('/')
       return
@@ -295,7 +300,8 @@ class GameHandler(tornado.web.RequestHandler):
         game_type=self.game_type_to_type_string_map[game.game.type],
         debug=int(self.get_argument('debug', default=0)),
         game=game.game,
-        game_type_info=GAME_TYPE_INFO)
+        game_type_info=GAME_TYPE_INFO,
+        training=game.training)
 
 class TimeHandler(tornado.web.RequestHandler):
   def post(self):

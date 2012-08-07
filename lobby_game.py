@@ -2,10 +2,11 @@ from state import save_game, get_ranks
 import time
 
 class LobbyGame(object):
-  def __init__(self, id, game, lobby):
+  def __init__(self, id, game, lobby, training):
     self.id = id
     self.game = game
     self.lobby = lobby
+    self.training = training
 
     self.sockets = []
     self.messages = []
@@ -22,7 +23,7 @@ class LobbyGame(object):
       if result.status == result.SUCCESS:
         if self.game.ended:
           self.lobby.send_game_list_update_to_all()
-          (db_game, score) = save_game(self.game)
+          (db_game, score) = save_game(self.game, self.training)
           self.game.player_ranks = get_ranks(score.elapsed_time, db_game.game_type, self.game.scores.keys(), score.num_players)
         self.send_update_to_all()
       elif result.status == result.OLD_FOUND_PUZZLE:
