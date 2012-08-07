@@ -28,6 +28,7 @@ $(function() {
   };
 
   function add_games(section, games) {
+    console.log(games);
     section.find(".games_list").html('');
     if (games.length !== 0) {
       for (i in games) {
@@ -64,8 +65,8 @@ $(function() {
         } else if (game_data.type == "bqtau") {
           game_type = "Boolean Quadruple Tau";
         }
-
-        section.find(".games_list").append($("<li><a href=\"/game/" + game_data.id + "\">Game " + game_data.id + "</a> (" + game_type + ") - " + players_string + "</li>"));
+        
+        section.find(".games_list").append($("<li><a href=\"/game/" + game_data.id + "\">Game " + game_data.id + "</a> (" + game_type + ") " + (game_data.training ? "(Training) " : "") + "- " + players_string + "</li>"));
       }
       section.show();
     } else {

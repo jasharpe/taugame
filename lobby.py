@@ -46,6 +46,7 @@ class Lobby(object):
       'id' : game.id,
       'size' : game.game.size,
       'type' : game.game.type,
+      'training' : game.training,
       'players' : self.get_players_in_game(game.id),
     } for game in games]
 

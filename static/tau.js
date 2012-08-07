@@ -477,9 +477,26 @@ $(document).ready(function() {
     var tab_index = 10;
     for (new_game_type in game_type_info) {
       var game_type_string = game_type_info[new_game_type];
-      div.append($('<form style="display:inline-block;" name="new_game" action="/new_game/' + new_game_type + '?parent=' + game_id + '" method="post"><input type="submit" tabindex="' + tab_index + '" value="New ' + game_type_string + ' game" /></form>'));
+      var form = $('<form style="display:inline-block;" name="new_game" action="/new_game/' + new_game_type + '?parent=' + game_id + '" method="post"><input type="submit" tabindex="' + tab_index + '" value="New ' + game_type_string + ' game" /></form>');
+      form.submit(function(e) {
+        var params = [
+          { 'name' : 'training', 'value' : $("#training").is(':checked') }
+        ];
+
+        var that = $(this);
+        $.each(params, function(i, param) {
+            var input = $('<input/>').attr('type', 'hidden')
+                .attr('name', param.name)
+                .attr('value', param.value);
+            that.append(input);
+        });
+        
+        return true;
+      });
+      div.append(form);
       tab_index++;
     }
+    div.append($('<div><input id="training" type="checkbox"/><label for="training">Training</label></div>'));
   }
 
   function update(board, all_taus, all_stale_taus, paused, target, wrong_property, scores, time, avg_number, number, ended, hint, player_rank_info, found_puzzle_taus, new_games) {
