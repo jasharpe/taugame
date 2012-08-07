@@ -52,6 +52,12 @@ $(document).ready(function() {
       pause(game_paused ? "unpause" : "pause");
       return false;
     }
+    if (!in_chat_box && key === "k") {
+      var hint_button = $("#hint");
+      if (hint_button && hint_button.is(":visible")) {
+        hint_button.click();
+      }
+    }
   });
 
   // onfocus from chat box on escape. Helps with button mashing.
@@ -398,7 +404,7 @@ $(document).ready(function() {
       last_found_puzzle_taus = found_puzzle_taus;
     }
     if (!ended && training && hints_given < game_size) {
-      var hint_button = $('<button style="clear:both;">Hint</button>');
+      var hint_button = $('<button id="hint" style="clear:both;">Hint</button>');
       hint_button.click(function() {
         hint_cards[hints_given].addClass("hint");
         hints_given++;
