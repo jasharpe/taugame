@@ -141,7 +141,7 @@ class LobbyGame(object):
     if self.sockets:
       return False
     if self.game.started and not self.game.ended and not self.hidden:
-      if time.time() - self.last_activity > self.game_expiry:
+      if time.time() - self.last_activity > game_expiry:
         self.hidden = True
         return True
     return False

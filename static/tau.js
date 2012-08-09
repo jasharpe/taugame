@@ -326,8 +326,11 @@ $(document).ready(function() {
           card_to_board_map[get_card_number(card)] = card_index;
           this_board.push(get_card_number(card));
 
-          div.click(function(e) {
+          div.bind("touchstart click", function(e) {
             select_card(parseInt($(this).attr("data-card-index")));
+            return false;
+          });
+          div.bind("touchend", function(e) {
             return false;
           });
 
