@@ -82,6 +82,7 @@ class Game(object):
     # A number between 0 and 3 indicating the wrong property
     # in n3tau.
     self.wrong_property = None
+    self.wrong_property_preference = None
     self.compress_and_fill_board()
     self.started = False
     self.start_time = 0
@@ -278,6 +279,8 @@ class Game(object):
         counts.append((i, count))
     if not counts:
       return None
+    if self.wrong_property_preference is not None and self.wrong_property_preference in [count[0] for count in counts]:
+      return self.wrong_property_preference
     return random.choice(counts)[0]
 
   def get_random_target(self, board):

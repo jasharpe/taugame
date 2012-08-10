@@ -1,7 +1,10 @@
 from state import save_game, get_ranks
 import time
 
+TAU_PROPERTIES = ["colour", "number", "shading", "shape"]
+
 class LobbyGame(object):
+
   def __init__(self, id, game, lobby, training):
     self.id = id
     self.game = game
@@ -12,6 +15,33 @@ class LobbyGame(object):
     self.messages = []
     self.hidden = False
     self.activity()
+
+  def set_training_option(self, option, value):
+    if not self.training:
+      return
+
+    updated = False
+    if self.game.type == "n3tau" and option == "property":
+      if value == "all":
+        self.game.wrong_property_preference = None
+        updated = True
+      elif value in TAU_PROPERTIES:
+        self.game.wrong_property_preference = TAU_PROPERTIES.index(value)
+        updated = True
+
+    if updated:
+      self.send_training_options_to_all()
+
+  def send_training_options_to_all(self):
+    training_options = self.get_training_options()
+    for socket in self.sockets:
+      socket.send_training_options(training_options)
+
+  def get_training_options(self):
+    prop = self.game.wrong_property_preference
+    return {
+        'property' : None if prop is None else TAU_PROPERTIES[prop]
+    }
 
   def activity(self):
     self.last_activity = time.time()
@@ -108,7 +138,7 @@ class LobbyGame(object):
 
     (all_taus, all_stale_taus) = self.game.get_all_client_taus()
 
-    socket.send_update(self.game.get_client_board(), all_taus, all_stale_taus, self.game.paused, self.game.get_client_target_tau(), self.game.wrong_property, self.get_scores(), numbers_map, self.game.count_taus(), time, self.game.get_client_hint(), self.game.ended, player_rank_info, self.game.get_client_found_puzzle_taus())
+    socket.send_update(self.game.get_client_board(), all_taus, all_stale_taus, self.game.paused, self.game.get_client_target_tau(), self.game.wrong_property, self.get_scores(), numbers_map, self.game.count_taus(), time, self.game.get_client_hint(), self.game.ended, player_rank_info, self.game.get_client_found_puzzle_taus(), self.get_training_options())
 
   def send_update_to_all(self):
     for socket in self.sockets:

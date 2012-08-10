@@ -254,7 +254,7 @@ $(document).ready(function() {
   var prev_board = [];
   var card_to_board_map = {}
   var game_paused = false;
-  function update_board(board, paused, target, wrong_property, number, hint, ended, found_puzzle_taus, old_found_puzzle_tau_index) {
+  function update_board(board, paused, target, wrong_property, number, hint, ended, found_puzzle_taus, training_options) {
     game_paused = paused;
     console.log("This board has " + number + " taus");
 
@@ -266,9 +266,9 @@ $(document).ready(function() {
     }
 
     var playing_area = $("#playing_area");
+    playing_area.html('');
     old_selected = selection_model['selected'];
     selection_model['selected'] = [];
-    playing_area.html('');
 
     if (paused) {
       var unpause_link = $("<a id=\"unpause\" tabindex=\"1\" href=\"javascript:void(0);\">Unpause</a>");
@@ -277,6 +277,28 @@ $(document).ready(function() {
       });
       playing_area.append(unpause_link);
       return;
+    }
+
+    if (training) {
+      var options = $('<div>');
+      if (game_type === "n3tau") {
+        var property_select = $('<select id="property_picker" name="property"><option value="all">All</option><option value="shape">Shape</option><option value="shading">Shading</option><option value="number">Number</option><option value="colour">Colour</option></select>');
+        if (training_options['property'] !== null) {
+          property_select.val(training_options['property']);
+        }
+        property_select.change(function(e) {
+          var selected = $('#property_picker option:selected');
+          ws.send(JSON.stringify({
+            'type' : 'training_option',
+            'option' : 'property',
+            'value' : selected.val()
+          }));
+        });
+        options.append($('<label for="property">Property:</label>"'));
+        options.append(property_select);
+      }
+      playing_area.append(options);
+      playing_area.append($('<div style="clear:both;"/>'));
     }
 
     var table = $('<table style="display:block; float:left;">');
@@ -416,6 +438,7 @@ $(document).ready(function() {
         }
       });
       playing_area.append(hint_button);
+      playing_area.append($('<div style="clear:both;">'));
     }
     prev_board = this_board;
   }
@@ -508,7 +531,8 @@ $(document).ready(function() {
     div.append($('<div><input id="training" type="checkbox"/><label for="training">Training</label></div>'));
   }
 
-  function update(board, all_taus, all_stale_taus, paused, target, wrong_property, scores, time, avg_number, number, ended, hint, player_rank_info, found_puzzle_taus, new_games) {
+  function update(board, all_taus, all_stale_taus, paused, target, wrong_property, scores, time, avg_number, number, ended, hint, player_rank_info, found_puzzle_taus, new_games, training_options) {
+    console.log(training_options);
     if (hint !== null && tau_to_string(hint) !== last_hint_tau_string) {
       hints_given = 0;
       last_hint_tau_string = tau_to_string(hint);
@@ -536,7 +560,8 @@ $(document).ready(function() {
       stale_tau_to_index_map[tau_to_string(found_puzzle_taus[i])] = j;
       j++;
     }
-    update_board(board, paused, target, wrong_property, number, hint, ended, found_puzzle_taus);
+    
+    update_board(board, paused, target, wrong_property, number, hint, ended, found_puzzle_taus, training_options);
 
     if (ended) {
       update_new_game();
@@ -568,7 +593,7 @@ $(document).ready(function() {
       if (data.wrong_property !== null) {
         wrong_property = parseInt(data.wrong_property);
       }
-      update(data.board, data.all_taus, data.all_stale_taus, data.paused, data.target, wrong_property, data.scores, data.time, data.avg_number, data.number, data.ended, data.hint, data.player_rank_info, data.found_puzzle_taus, data.new_games);
+      update(data.board, data.all_taus, data.all_stale_taus, data.paused, data.target, wrong_property, data.scores, data.time, data.avg_number, data.number, data.ended, data.hint, data.player_rank_info, data.found_puzzle_taus, data.new_games, data.training_options);
     } else if (data.type === "scores") {
       update_scores(data.scores, data.ended);
     } else if (data.type == "chat") {
@@ -591,6 +616,15 @@ $(document).ready(function() {
             .animate({backgroundColor: "#FFF"}, 1000);
       });
       deselect_all_cards();
+    } else if (data.type === "training_options") {
+      var options = data.options;
+      if ($('#property_picker')) {
+        if (options.property === null) {
+          $('#property_picker').val("all");
+        } else {
+          $('#property_picker').val(options.property);
+        }
+      }
     }
   }
 

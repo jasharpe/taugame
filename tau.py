@@ -114,7 +114,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
         'message_type' : message_type,
     }))
 
-  def send_update(self, board, all_taus, all_stale_taus, paused, target, wrong_property, scores, avg_number, number, time, hint, ended, player_rank_info, found_puzzle_taus):
+  def send_update(self, board, all_taus, all_stale_taus, paused, target, wrong_property, scores, avg_number, number, time, hint, ended, player_rank_info, found_puzzle_taus, training_options):
     self.write_message(json.dumps({
         'type' : 'update',
         'board' : board,
@@ -132,12 +132,19 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
         'player_rank_info' : player_rank_info,
         # puzzle mode
         'found_puzzle_taus' : found_puzzle_taus,
+        'training_options' : training_options,
     }))
 
   def send_old_found_puzzle_tau_index(self, index):
     self.write_message(json.dumps({
         'type' : 'old_found_puzzle_tau',
         'index' : index,
+    }))
+
+  def send_training_options(self, training_options):
+    self.write_message(json.dumps({
+      'type' : 'training_options',
+      'options' : training_options,
     }))
 
   def on_message(self, message_json):
@@ -152,6 +159,8 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
       self.game.pause(message['pause'])
     elif message['type'] == 'submit':
       self.game.submit_tau(self, message['cards'])
+    elif message['type'] == 'training_option':
+      self.game.set_training_option(message['option'], message['value'])
 
 def require_name(f):
   from functools import wraps
