@@ -429,15 +429,18 @@ $(document).ready(function() {
       playing_area.append($('<div style="clear:both;">'));
       last_found_puzzle_taus = found_puzzle_taus;
     }
-    if (!ended && training && hints_given < game_size) {
+    if (!ended && training) {
       var hint_button = $('<button id="hint" style="clear:both;">Hint</button>');
       hint_button.click(function() {
         hint_cards[hints_given].addClass("hint");
         hints_given++;
         if (hints_given >= game_size) {
-          hint_button.hide();
+          hint_button.attr("disabled", "disabled");
         }
       });
+      if (hints_given >= game_size) {
+        hint_button.attr("disabled", "disabled");
+      }
       playing_area.append(hint_button);
       playing_area.append($('<div style="clear:both;">'));
     }
