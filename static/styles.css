@@ -188,6 +188,14 @@ table {
   margin-bottom:0;
 }
 
+#training_options {
+  margin-bottom:10px;
+}
+
+#hint {
+  margin-top:10px;
+}
+
 .hint {
   background-color:#EFE !important;
 }

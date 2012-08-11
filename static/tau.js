@@ -279,8 +279,8 @@ $(document).ready(function() {
       return;
     }
 
-    if (training) {
-      var options = $('<div>');
+    if (training && ["n3tau"].indexOf(game_type) !== -1) {
+      var options = $('<div id="training_options">');
       if (game_type === "n3tau") {
         var property_select = $('<select id="property_picker" name="property"><option value="all">All</option><option value="shape">Shape</option><option value="shading">Shading</option><option value="number">Number</option><option value="colour">Colour</option></select>');
         if (training_options['property'] !== null) {
@@ -405,6 +405,7 @@ $(document).ready(function() {
       table.append(row);
     }
     playing_area.append(table);
+    playing_area.append($('<div style="clear:both;">'));
     if (found_puzzle_taus != null) {
       var found_puzzle_taus_div = $("<div id=\"found_puzzle_taus\" style=\"float:left;\">");
       for (var i in found_puzzle_taus) {
