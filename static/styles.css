@@ -1,3 +1,7 @@
+b {
+  font-weight:bold;
+}
+
 body.ended {
   background-color:lightgreen;
 }
