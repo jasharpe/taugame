@@ -381,11 +381,19 @@ class GoogleHandler(tornado.web.RequestHandler, tornado.auth.GoogleMixin):
     self.set_secure_cookie("google_user", url_escape(json.dumps(user)))
     name = get_name(user['email'])
     if name is None:
-      self.redirect("/choose_name")
+      if not self.get_secure_cookie("name"):
+        self.redirect("/choose_name")
+        return
+      try:
+        set_name(user['email'], self.get_secure_cookie("name"))
+        self.redirect("/")
+      except:
+        self.clear_cookie('name')
+        self.redirect("/choose_name")
       return
-    else:
-      self.set_secure_cookie('name', url_escape(name))
-      self.redirect("/")
+    
+    self.set_secure_cookie('name', url_escape(name))
+    self.redirect("/")
 
 class LogoutHandler(tornado.web.RequestHandler):
   def get(self):
