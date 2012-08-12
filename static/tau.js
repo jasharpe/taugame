@@ -298,9 +298,9 @@ $(document).ready(function() {
         options.append(property_select);
       }
       playing_area.append(options);
-      playing_area.append($('<div style="clear:both;"/>'));
     }
 
+    playing_area.append($('<div style="clear:both;"/>'));
     var table = $('<table style="display:block; float:left;">');
     var max_row = 3;
     var max_col = board.length / max_row;
@@ -405,7 +405,7 @@ $(document).ready(function() {
       table.append(row);
     }
     playing_area.append(table);
-    playing_area.append($('<div style="clear:both;">'));
+    
     if (found_puzzle_taus != null) {
       var found_puzzle_taus_div = $("<div id=\"found_puzzle_taus\" style=\"float:left;\">");
       for (var i in found_puzzle_taus) {
@@ -426,9 +426,11 @@ $(document).ready(function() {
         found_puzzle_taus_div.append(tau_div);
       }
       playing_area.append(found_puzzle_taus_div);
-      playing_area.append($('<div style="clear:both;">'));
       last_found_puzzle_taus = found_puzzle_taus;
     }
+    
+    playing_area.append($('<div style="clear:both;"/>'));
+
     if (!ended && training) {
       var hint_button = $('<button id="hint" style="clear:both;">Hint</button>');
       hint_button.click(function() {
