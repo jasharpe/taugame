@@ -171,7 +171,7 @@ table {
   position:relative;
 }
 
-#start, #unpause {
+#start, #paused {
   position:absolute;
   top:45%;
   left:160px;
@@ -196,7 +196,7 @@ table {
   margin-bottom:10px;
 }
 
-#hint {
+#buttons {
   margin-top:10px;
 }
 

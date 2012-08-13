@@ -218,7 +218,7 @@ $(document).ready(function() {
     }
   };
 
-  function update_scores(scores, ended) {
+  function update_scores(scores, ended, is_pausable) {
     score_list_table = $("#score_list");
     score_list_table.html('');
     var winner = undefined;
@@ -255,7 +255,6 @@ $(document).ready(function() {
   var card_to_board_map = {}
   var game_paused = false;
   function update_board(board, paused, target, wrong_property, number, hint, ended, found_puzzle_taus, training_options) {
-    game_paused = paused;
     console.log("This board has " + number + " taus");
 
     var processed_hint = []
@@ -275,7 +274,7 @@ $(document).ready(function() {
       unpause_link.click(function() {
         pause("unpause");
       });
-      playing_area.append(unpause_link);
+      playing_area.append($('<span id="paused">Paused</span>'));
       return;
     }
 
@@ -431,8 +430,25 @@ $(document).ready(function() {
     
     playing_area.append($('<div style="clear:both;"/>'));
 
-    if (!ended && training) {
-      var hint_button = $('<button id="hint" style="clear:both;">Hint</button>');
+    prev_board = this_board;
+  }
+
+  function update_buttons(ended, paused, is_pausable) {
+    var buttons_div = $("#buttons");
+    buttons_div.html('');
+    var pause_button = $('<button id="pause">Pause</button>');
+    if (paused) {
+      pause_button.text("Unpause");
+    }
+    if (ended || (!paused && !is_pausable)) {
+      pause_button.attr('disabled', 'disabled');
+    }
+    pause_button.click(function() {
+      pause(paused ? "unpause" : "pause");
+    });
+    buttons_div.append(pause_button);
+    if (training) {
+      var hint_button = $('<button id="hint">Hint</button>');
       hint_button.click(function() {
         hint_cards[hints_given].addClass("hint");
         hints_given++;
@@ -440,13 +456,11 @@ $(document).ready(function() {
           hint_button.attr("disabled", "disabled");
         }
       });
-      if (hints_given >= game_size) {
+      if (ended || paused || hint_cards.length === 0 || hints_given >= game_size) {
         hint_button.attr("disabled", "disabled");
       }
-      playing_area.append(hint_button);
-      playing_area.append($('<div style="clear:both;">'));
+      buttons_div.append(hint_button);
     }
-    prev_board = this_board;
   }
 
   function get_time(ended) {
@@ -537,7 +551,8 @@ $(document).ready(function() {
     div.append($('<div><input id="training" type="checkbox"/><label for="training">Training</label></div>'));
   }
 
-  function update(board, all_taus, all_stale_taus, paused, target, wrong_property, scores, time, avg_number, number, ended, hint, player_rank_info, found_puzzle_taus, new_games, training_options) {
+  function update(board, all_taus, all_stale_taus, paused, target, wrong_property, scores, time, avg_number, number, ended, hint, player_rank_info, found_puzzle_taus, new_games, training_options, is_pausable) {
+    game_paused = paused;
     console.log(training_options);
     if (hint !== null && tau_to_string(hint) !== last_hint_tau_string) {
       hints_given = 0;
@@ -555,7 +570,7 @@ $(document).ready(function() {
       all_stale_tau_strings[tau_to_string(all_stale_taus[i])] = true;
     }
     game_ended = ended;
-    update_scores(scores, ended);
+    update_scores(scores, ended, is_pausable);
     
     update_time(time, paused, avg_number, ended, player_rank_info);
 
@@ -568,6 +583,7 @@ $(document).ready(function() {
     }
     
     update_board(board, paused, target, wrong_property, number, hint, ended, found_puzzle_taus, training_options);
+    update_buttons(ended, paused, is_pausable);
 
     if (ended) {
       update_new_game();
@@ -599,9 +615,10 @@ $(document).ready(function() {
       if (data.wrong_property !== null) {
         wrong_property = parseInt(data.wrong_property);
       }
-      update(data.board, data.all_taus, data.all_stale_taus, data.paused, data.target, wrong_property, data.scores, data.time, data.avg_number, data.number, data.ended, data.hint, data.player_rank_info, data.found_puzzle_taus, data.new_games, data.training_options);
+      update(data.board, data.all_taus, data.all_stale_taus, data.paused, data.target, wrong_property, data.scores, data.time, data.avg_number, data.number, data.ended, data.hint, data.player_rank_info, data.found_puzzle_taus, data.new_games, data.training_options, data.is_pausable);
     } else if (data.type === "scores") {
       update_scores(data.scores, data.ended);
+      update_buttons(game_ended, game_paused, data.is_pausable);
     } else if (data.type == "chat") {
       var text_area = $("#chat");
       update_messages($("#chat"), data.name, data.message, data.message_type);

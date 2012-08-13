@@ -138,7 +138,9 @@ class LobbyGame(object):
 
     (all_taus, all_stale_taus) = self.game.get_all_client_taus()
 
-    socket.send_update(self.game.get_client_board(), all_taus, all_stale_taus, self.game.paused, self.game.get_client_target_tau(), self.game.wrong_property, self.get_scores(), numbers_map, self.game.count_taus(), time, self.game.get_client_hint(), self.game.ended, player_rank_info, self.game.get_client_found_puzzle_taus(), self.get_training_options())
+    is_pausable = self.game.is_pausable() and self.get_number_unique_players() < 2
+
+    socket.send_update(self.game.get_client_board(), all_taus, all_stale_taus, self.game.paused, self.game.get_client_target_tau(), self.game.wrong_property, self.get_scores(), numbers_map, self.game.count_taus(), time, self.game.get_client_hint(), self.game.ended, player_rank_info, self.game.get_client_found_puzzle_taus(), self.get_training_options(), is_pausable)
 
   def send_update_to_all(self):
     for socket in self.sockets:
@@ -151,8 +153,9 @@ class LobbyGame(object):
   def send_scores_update_to_all(self):
     scores = self.get_scores()
     ended = self.game.ended
+    is_pausable = self.game.is_pausable() and self.get_number_unique_players() < 2
     for socket in self.sockets:
-      socket.send_scores_update(scores, ended)
+      socket.send_scores_update(scores, ended, is_pausable)
 
   def get_scores(self):
     scores = {}
