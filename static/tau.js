@@ -58,7 +58,19 @@ $(document).ready(function() {
         hint_button.click();
       }
     }
+    if (!in_chat_box && key === " ") {
+      if ($("#start").length) {
+        start();
+      } else {
+        deselect_all_cards();
+      }
+      return false;
+    }
   });
+  
+  function start() {
+    ws.send(JSON.stringify({'type' : 'start'}));
+  }
 
   // onfocus from chat box on escape. Helps with button mashing.
   $(document).keyup(function(e) {
@@ -71,13 +83,11 @@ $(document).ready(function() {
     $("body").focus();
   });
 
-  $("#start").click(function() {
-    ws.send(JSON.stringify({'type' : 'start'}));
-  });
+  $("#start").click(start);
 
-  var start = (("" + window.location).indexOf("https") == 0) ? "wss" : "ws";
-  console.log("Using " + start);
-  var ws = new WebSocket(start + "://" + window.location.host + "/websocket/" + game_id);
+  var ws_type = (("" + window.location).indexOf("https") == 0) ? "wss" : "ws";
+  console.log("Using " + ws_type);
+  var ws = new WebSocket(ws_type + "://" + window.location.host + "/websocket/" + game_id);
   ws.onopen = function() {
     ws.send(JSON.stringify({
         'type' : 'update'
@@ -113,7 +123,7 @@ $(document).ready(function() {
               .animate({backgroundColor: "#FFF"}, 1000);
         });
         setTimeout(function() {
-          deselect_all_cards();
+          eselect_all_cards();
         }, 100);
       }
     } else {
