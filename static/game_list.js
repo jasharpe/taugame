@@ -76,9 +76,8 @@ $(function() {
   ws.onmessage = function (e) {
     var data = JSON.parse(e.data);
     if (data.type == "players") {
-      // TODO
+      // TODO: Show players in lobby.
     } else if (data.type == "games") {
-      console.log(data);
       add_games($("#newgames"), data.new_games);
       add_games($("#startedgames"), data.started_games);
       add_games($("#endedgames"), data.ended_games);
