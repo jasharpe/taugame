@@ -41,15 +41,6 @@ class Lobby(object):
       raise InvalidGameId()
     return self.game_id_to_game[game_id]
 
-  def transform_games(self, games):
-    return [{
-      'id' : game.id,
-      'size' : game.game.size,
-      'type' : game.game.type,
-      'training' : game.training,
-      'players' : self.get_players_in_game(game.id),
-    } for game in games]
-
   def cleanup_games(self):
     updated = False
     for game in self.games:
@@ -66,13 +57,10 @@ class Lobby(object):
       ended_games = filter(lambda g: g.game.ended, sorted_games)
     else:
       ended_games = filter(lambda g: g.game.ended, sorted_games)[-5:]
-    return (self.transform_games(new_games),
-        self.transform_games(started_games),
-        self.transform_games(ended_games))
+    return (new_games, started_games, ended_games)
 
   def send_game_list_update_to_all(self):
     for socket in self.game_list_sockets:
-      (new_games, started_games, ended_games) = self.get_games(socket.see_more_ended)
       socket.send_game_list_update(*self.get_games(socket.see_more_ended))
 
   def get_players_in_lobby(self):

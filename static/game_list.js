@@ -28,7 +28,6 @@ $(function() {
   };
 
   function add_games(section, games) {
-    console.log(games);
     section.find(".games_list").html('');
     if (games.length !== 0) {
       for (i in games) {

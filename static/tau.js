@@ -563,7 +563,6 @@ $(document).ready(function() {
 
   function update(board, all_taus, all_stale_taus, paused, target, wrong_property, scores, time, avg_number, number, ended, hint, player_rank_info, found_puzzle_taus, new_games, training_options, is_pausable) {
     game_paused = paused;
-    console.log(training_options);
     if (hint !== null && tau_to_string(hint) !== last_hint_tau_string) {
       hints_given = 0;
       last_hint_tau_string = tau_to_string(hint);

@@ -1,5 +1,6 @@
 from state import save_game, get_ranks
 import time
+from tornado.escape import xhtml_escape
 
 TAU_PROPERTIES = ["colour", "number", "shading", "shape"]
 
@@ -162,12 +163,12 @@ class LobbyGame(object):
     for socket in self.sockets:
       name = socket.name
       if name in self.game.scores:
-        scores[name] = self.game.scores[name]
+        scores[xhtml_escape(name)] = self.game.scores[name]
       else:
-        scores[name] = []
+        scores[xhtml_escape(name)] = []
     for (name, score) in self.game.scores.items():
-      if not name in scores:
-        scores[name + " (ABSENT)"] = score
+      if not xhtml_escape(name) in scores:
+        scores[xhtml_escape(name) + " (ABSENT)"] = score
     return scores
 
   def cleanup(self, game_expiry):

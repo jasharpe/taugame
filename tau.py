@@ -4,9 +4,10 @@ import tornado.web
 import tornado.auth
 import tornado.websocket
 import tornado.httpserver
-from tornado.escape import url_escape, url_unescape
+from tornado.escape import url_escape, url_unescape, xhtml_escape, xhtml_unescape
 import json
 import os
+import re
 from game import Game, InvalidGameType
 from lobby import Lobby, InvalidGameId
 import argparse
@@ -63,15 +64,24 @@ class GameListWebSocketHandler(tornado.websocket.WebSocketHandler):
   def send_player_list_update(self, players):
     self.write_message(json.dumps({
         'type' : 'players',
-        'players' : players
+        'players' : [xhtml_escape(player) for player in players]
     }))
+
+  def transform_games(self, games):
+    return [{
+      'id' : game.id,
+      'size' : game.game.size,
+      'type' : game.game.type,
+      'training' : game.training,
+      'players' : [xhtml_escape(player) for player in self.lobby.get_players_in_game(game.id)],
+    } for game in games]
 
   def send_game_list_update(self, new_games, started_games, ended_games):
     self.write_message(json.dumps({
         'type' : 'games',
-        'new_games' : new_games,
-        'started_games' : started_games,
-        'ended_games' : ended_games
+        'new_games' : self.transform_games(new_games),
+        'started_games' : self.transform_games(started_games),
+        'ended_games' : self.transform_games(ended_games)
     }))
 
 class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
@@ -96,7 +106,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
   def send_history_update(self, messages):
     self.write_message(json.dumps({
         'type' : 'history',
-        'messages' : messages
+        'messages' : [(xhtml_escape(name), xhtml_escape(message), message_type) for (name, message, message_type) in messages]
     }))
 
   def send_scores_update(self, scores, ended, is_pausable):
@@ -110,8 +120,8 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
   def send_message_update(self, name, message, message_type):
     self.write_message(json.dumps({
         'type' : 'chat',
-        'name' : name,
-        'message' : message,
+        'name' : xhtml_escape(name),
+        'message' : xhtml_escape(message),
         'message_type' : message_type,
     }))
 
@@ -156,7 +166,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
     elif message['type'] == 'update':
       self.game.request_update(self)
     elif message['type'] == 'chat':
-      self.game.add_chat(message['name'], message['message'], "chat")
+      self.game.add_chat(xhtml_unescape(message['name']), message['message'], "chat")
     elif message['type'] == 'pause':
       self.game.pause(message['pause'])
     elif message['type'] == 'submit':
@@ -248,12 +258,16 @@ class ChooseNameHandler(tornado.web.RequestHandler):
       name = get_name(user['email'])
     self.render("choose_name.html", user=user, name=name)
 
+  def is_valid_name(self, name):
+    end_chars = 'a-zA-Z0-9!@#$%^&*()\\-_+={}\\[\\]|:;"\'<>,.?~`'
+    middle_only_chars = ' '
+    regex = '^[' + end_chars + '](([' + end_chars + middle_only_chars + '])*[' + end_chars + '])?$'
+    chars_allowed = re.compile(regex)
+    return bool(chars_allowed.match(name))
+
   def post(self):
     name = self.get_argument("name")
-    # validate name
-    if "/" in name:
-      # TODO: put in error code
-      # TODO: escape names properly generally so we don't need to outlaw slashes
+    if not self.is_valid_name(name):
       self.redirect("/choose_name?slash_error=1")
       return
 
