@@ -103,10 +103,16 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
     if self.opened:
       self.game.close_game_socket(self)
 
+  def escape_message(self, message, message_type):
+    if not message_type in ["new_game"]:
+      return xhtml_escape(message)
+    else:
+      return message
+
   def send_history_update(self, messages):
     self.write_message(json.dumps({
         'type' : 'history',
-        'messages' : [(xhtml_escape(name), xhtml_escape(message), message_type) for (name, message, message_type) in messages]
+        'messages' : [(xhtml_escape(name), self.escape_message(message, message_type), message_type) for (name, message, message_type) in messages]
     }))
 
   def send_scores_update(self, scores, ended, is_pausable):
@@ -121,7 +127,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
     self.write_message(json.dumps({
         'type' : 'chat',
         'name' : xhtml_escape(name),
-        'message' : xhtml_escape(message),
+        'message' : self.escape_message(message, message_type),
         'message_type' : message_type,
     }))
 
