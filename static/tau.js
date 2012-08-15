@@ -123,7 +123,7 @@ $(document).ready(function() {
               .animate({backgroundColor: "#FFF"}, 1000);
         });
         setTimeout(function() {
-          eselect_all_cards();
+          deselect_all_cards();
         }, 100);
       }
     } else {
