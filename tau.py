@@ -423,9 +423,16 @@ class LogoutHandler(tornado.web.RequestHandler):
     self.clear_cookie("name")
     self.redirect("/choose_name")
 
+class TestFrameHandler(tornado.web.RequestHandler):
+  def get(self):
+    if not args.debug:
+      raise tornado.web.HTTPError(404)
+
+    self.render("testframe.html")
+
 def create_application(debug):
   full_settings = dict(SETTINGS)
-  return tornado.web.Application([
+  handlers = [
     (r"/", MainHandler),
     # 0 players
     (r"/leaderboard/(?P<leaderboard_object>(?:(?:players|games)/)?)(?P<leaderboard_type>alltime|thisweek|today)/?", LeaderboardHandler),
@@ -444,7 +451,10 @@ def create_application(debug):
     (r"/about", AboutHandler),
     (r"/google", GoogleHandler),
     (r"/logout", LogoutHandler),
-  ], **full_settings)
+  ]
+  if debug:
+    handlers.append((r"/testframe", TestFrameHandler))
+  return tornado.web.Application(handlers, **full_settings)
 
 # returns control to the main thread every timeout, where timeout is a timedelta.
 def set_ping(ioloop, timeout):

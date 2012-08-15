@@ -12,7 +12,21 @@ $(function(){
 	});
 });
 
+function ready() {
+  $("#waiting").text("ready");
+}
+
+function waiting() {
+  if ($("#waiting").length === 0) {
+    $("body").append($('<div id="waiting" style="display:none;">waiting</div>'));
+  } else {
+    $("#waiting").text("waiting");
+  }
+}
+
 $(document).ready(function() {
+  waiting();
+
   var properties = ['Colour', 'Number', 'Shading', 'Shape'];
 
   var key_map = {
@@ -70,6 +84,7 @@ $(document).ready(function() {
   
   function start() {
     ws.send(JSON.stringify({'type' : 'start'}));
+    waiting();
   }
 
   // onfocus from chat box on escape. Helps with button mashing.
@@ -100,6 +115,7 @@ $(document).ready(function() {
           'type' : 'submit',
           'cards' : cards
       }));
+      waiting()
       last_submit_time = new Date().getTime();
       for (i in cards) {
         var card_number = get_card_number(cards[i]);
@@ -625,6 +641,7 @@ $(document).ready(function() {
         wrong_property = parseInt(data.wrong_property);
       }
       update(data.board, data.all_taus, data.all_stale_taus, data.paused, data.target, wrong_property, data.scores, data.time, data.avg_number, data.number, data.ended, data.hint, data.player_rank_info, data.found_puzzle_taus, data.new_games, data.training_options, data.is_pausable);
+      ready();
     } else if (data.type === "scores") {
       update_scores(data.scores, data.ended);
       update_buttons(game_ended, game_paused, data.is_pausable);
@@ -639,6 +656,7 @@ $(document).ready(function() {
       });
       $("#chat_box").removeAttr("disabled");
       $("#say").removeAttr("disabled");
+      ready();
     } else if (data.type === "old_found_puzzle_tau") {
       var found_puzzle_taus = $($(".found_puzzle_tau")[data.index]).find(".smallCard").each(function (index, raw_card) {
         var card  = $(raw_card);

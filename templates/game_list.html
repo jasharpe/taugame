@@ -12,7 +12,7 @@
 {% block body %}
 {% for (game_type, game_type_string) in game_type_info %}
 <form style="display:inline-block;" name="new_game" action="/new_game/{{ game_type }}" class="new_game_form" method="post">
-  <input type="submit" value="New {{ game_type_string }} game" />
+  <input type="submit" id="new_{{game_type}}" value="New {{ game_type_string }} game" />
 </form>
 {% end %}
 <div>
