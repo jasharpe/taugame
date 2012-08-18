@@ -1,0 +1,9 @@
+ALTER TABLE games RENAME TO games_old;
+CREATE TABLE games (
+        id INTEGER NOT NULL,
+        game_type VARCHAR,
+        deck_json VARCHAR,
+        PRIMARY KEY (id)
+);
+INSERT INTO games SELECT id, game_type, '' FROM games_old;
+DROP TABLE games_old;
