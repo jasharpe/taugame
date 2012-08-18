@@ -60,7 +60,7 @@ class SubmitTauResult(object):
     self.index = index
 
 class Game(object):
-  def __init__(self, type, quick=False):
+  def __init__(self, type, quick=False, deck=None, targets=None):
     self.type = type
     try:
       self.size = type_to_size_map[type]
@@ -74,7 +74,13 @@ class Game(object):
       self.space = fingeo.AffineSpace()
     self.min_number = type_to_min_board_size[self.type]
     self.scores = {}
-    self.deck = shuffled(self.space.all_points())
+    if deck:
+      self.deck = list(deck)
+      self.targets = targets
+    else:
+      self.deck = shuffled(self.space.all_points())
+      self.targets = None
+    self.start_deck = list(self.deck)
     self.board = []
     self.boards = []
     self.taus = []
@@ -252,7 +258,10 @@ class Game(object):
 
     # compute a new target tau for Generalized 3 Tau and 4 Tau
     if self.type in ['g3tau', '4tau']:
-      self.target_tau = self.get_random_target(self.board)
+      if self.targets:
+        self.target_tau = self.targets.pop()
+      else:
+        self.target_tau = self.get_random_target(self.board)
     elif self.type in ['n3tau']:
       self.wrong_property = self.get_wrong_property(self.board)
 

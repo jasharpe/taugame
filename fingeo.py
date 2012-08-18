@@ -5,6 +5,14 @@
 
 import itertools
 
+def get_space(game_type):
+  if game_type == '3ptau':
+    return ProjectiveSpace()
+  elif game_type == 'bqtau':
+    return BooleanSpace()
+  else:
+    return AffineSpace()
+
 def all_vectors(p, n):
   return list(itertools.product(*[range(p) for i in range(n)]))
 

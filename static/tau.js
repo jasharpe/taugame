@@ -281,6 +281,11 @@ $(document).ready(function() {
   var card_to_board_map = {}
   var game_paused = false;
   function update_board(board, paused, target, wrong_property, number, hint, ended, found_puzzle_taus, training_options) {
+    var string = "";
+    $.each(board, function(i, tau) {
+      string += "[" + tau + "]";
+    });
+    console.log("Client says board is: " + string);
     console.log("This board has " + number + " taus");
 
     var processed_hint = []

@@ -174,7 +174,7 @@ def get_ranks(total_time, game_type, player_names, num_players):
 
 def save_game(game, training):
   session = get_session()
-  db_game = DBGame(game.type)
+  db_game = DBGame(game.type, game.start_deck)
   name_to_player_map = {}
   player_to_score_map = {}
   last_elapsed_time = 0
@@ -207,9 +207,15 @@ class DBGame(Base):
 
   id = Column(Integer, primary_key=True)
   game_type = Column(String)
+  deck_json = Column(String)
 
-  def __init__(self, game_type):
+  def __init__(self, game_type, deck):
     self.game_type = game_type
+    self.deck_json = json.dumps(deck)
+
+  @property
+  def deck(self):
+    return json.loads(self.deck_json)
 
   def __repr__(self):
     return "<DBGame('%s')>" % (self.game_type)
@@ -344,8 +350,10 @@ class State(Base):
     self.cards_json = json.dumps(cards)
     self.player = player
 
+  @property
   def board(self):
     return json.loads(self.board_json)
 
+  @property
   def cards(self):
     return json.loads(self.cards_json)

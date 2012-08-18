@@ -1,8 +1,14 @@
+{% import json %}
+
 <!DOCTYPE html>
 <html>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <script type="text/javascript" src="{{ static_url("jquery.js") }}"></script>
+    <script type="text/javascript">
+      var game_type = "{{ game_type }}";
+      var taus = {{ json.dumps(taus) }};
+    </script>
     <script type="text/javascript" src="{{ static_url("testframe.js") }}"></script>
   </head>
   <body>

@@ -15,8 +15,11 @@ import datetime, time
 import ssl
 from state import save_game, get_all_high_scores, get_all_high_games, get_ranks, get_rank, get_graph_data, check_name, set_name, get_name, get_score
 from secrets import cookie_secret
+from constants import GAME_TYPE_INFO
+from preset_decks import PRESET_TAUS
+import fingeo
 
-# The time in seconds that games should be allows to live without activity
+# The time in seconds that games should be allowed to live without activity
 # before they are eligible to be hidden if they contain no players.
 GAME_EXPIRY = 1200
 
@@ -28,21 +31,6 @@ SETTINGS = {
     "static_path" : os.path.join(os.path.dirname(__file__), "static"),
     "cookie_secret" : cookie_secret,
 }
-
-GAME_TYPE_INFO = [
-  ("3tau", "3 Tau"),
-  ("6tau", "6 Tau"),
-  ("g3tau", "Generalized 3 Tau"),
-  ("i3tau", "Insane 3 Tau"),
-  ("m3tau", "Master 3 Tau (beta)"),
-  ("e3tau", "Easy 3 Tau (beta)"),
-  ("4tau", "4 Tau"),
-  ("3ptau", "3 Projective Tau"),
-  ("z3tau", "Puzzle 3 Tau"),
-  ("4otau", "4 Outer Tau"),
-  ("n3tau", "Near 3 Tau"),
-  ("bqtau", "Boolean Quadruple Tau"),
-]
 
 lobby = Lobby(GAME_EXPIRY)
 
@@ -306,7 +294,7 @@ class NewGameHandler(tornado.web.RequestHandler):
     name = url_unescape(self.get_secure_cookie("name"))
 
     try:
-      game = lobby.new_game(type, name, parent, args.quick, training)
+      game = lobby.new_game(type, name, parent, args.quick, args.use_preset_decks, training)
     except InvalidGameType:
       self.redirect('/')
       return
@@ -387,7 +375,7 @@ class AboutHandler(tornado.web.RequestHandler):
         "about.html",
         cards=cards,
         projcards=projcards,
-        )
+    )
 
 class GoogleHandler(tornado.web.RequestHandler, tornado.auth.GoogleMixin):
   @tornado.web.asynchronous
@@ -424,11 +412,17 @@ class LogoutHandler(tornado.web.RequestHandler):
     self.redirect("/choose_name")
 
 class TestFrameHandler(tornado.web.RequestHandler):
-  def get(self):
+  def get(self, game_type):
     if not args.debug:
       raise tornado.web.HTTPError(404)
 
-    self.render("testframe.html")
+    space = fingeo.get_space(game_type)
+
+    self.render(
+        "testframe.html",
+        game_type=game_type,
+        taus=map(lambda tau: map(lambda card: space.to_client_card(card), tau), PRESET_TAUS[game_type]),
+    )
 
 def create_application(debug):
   full_settings = dict(SETTINGS)
@@ -453,7 +447,7 @@ def create_application(debug):
     (r"/logout", LogoutHandler),
   ]
   if debug:
-    handlers.append((r"/testframe", TestFrameHandler))
+    handlers.append((r"/testframe/(3tau|6tau|g3tau|i3tau|m3tau|e3tau|4tau|3ptau|z3tau|4otau|n3tau|bqtau)", TestFrameHandler))
   return tornado.web.Application(handlers, **full_settings)
 
 # returns control to the main thread every timeout, where timeout is a timedelta.
@@ -472,6 +466,7 @@ def parse_args():
   parser.add_argument('-d', '--debug', dest='debug', action='store_true',
                       help='Enable debug.')
   parser.add_argument('-q', '--quick', dest='quick', action='store_true', help='Enable quick game. Deck only has 12 cards.')
+  parser.add_argument('-r', '--preset', dest='use_preset_decks', action='store_true', help='Enable preset decks. Each game type will always use the same deck.')
   parser.add_argument('-p', '--port', dest='port', type=int, default=80, help='HTTP port.')
   parser.add_argument('-s', '--ssl_port', dest='ssl_port', type=int, default=443, help='HTTPS port.')
   return parser.parse_args()

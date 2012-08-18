@@ -1,5 +1,6 @@
 from game import Game
 from lobby_game import LobbyGame
+from preset_decks import PRESET_DECKS, PRESET_TARGETS
 
 class InvalidGameId(Exception):
   pass
@@ -14,13 +15,16 @@ class Lobby(object):
 
     self.game_list_sockets = []
 
-  def new_game(self, type, name, parent, quick, training):
+  def new_game(self, type, name, parent, quick, use_preset_decks, training):
     if len(self.games) == 0:
       next_id = 0
     else:
       next_id = max(self.game_id_to_game.keys()) + 1
 
-    game = Game(type, quick)
+    if use_preset_decks:
+      game = Game(type, quick=quick, deck=PRESET_DECKS[type], targets=PRESET_TARGETS[type])
+    else:  
+      game = Game(type, quick=quick)
     lobby_game = LobbyGame(next_id, game, self, training)
     self.games.append(lobby_game)
     self.game_id_to_game[next_id] = lobby_game
