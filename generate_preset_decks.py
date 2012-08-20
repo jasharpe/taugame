@@ -18,10 +18,11 @@ def main():
   tau_lists = {}
   target_lists = {}
   wrong_property_lists = {}
+  seeds = {}
 
   for game_type in map(lambda x: x[0], GAME_TYPE_INFO):
     session = get_session()
-    score = session.query(Score).filter_by(num_players=1,game_type=game_type).order_by(desc(Score.date)).first()
+    score = session.query(Score).filter_by(game_type=game_type).order_by(desc(Score.date)).first()
     try:
       deck = list(reversed(map(tuple, score.game.deck)))
     except:
@@ -44,6 +45,7 @@ def main():
     tau_lists[game_type] = taus
     target_lists[game_type] = list(reversed(targets))
     wrong_property_lists[game_type] = list(reversed(wrong_properties))
+    seeds[game_type] = score.game.seed
   print "PRESET_DECKS = {"
   for (game_type, deck) in decks.items():
     print "'%s' : %s," % (game_type, str(deck))
@@ -59,6 +61,10 @@ def main():
   print "PRESET_WRONG_PROPERTIES = {"
   for (game_type, wrong_properties) in wrong_property_lists.items():
     print "'%s' : %s," % (game_type, str(wrong_properties or None))
+  print "}"
+  print "PRESET_SEEDS = {"
+  for (game_type, seed) in seeds.items():
+    print "'%s' : %d," % (game_type, seed)
   print "}"
 
 if __name__ == "__main__":

@@ -1,5 +1,4 @@
-import logging
-import random, itertools, time
+import logging, random, itertools, time, sys
 from operator import mod
 
 import fast_board
@@ -44,11 +43,6 @@ game_types = type_to_size_map.keys()
 
 Z3TAU_COUNT = 6
 
-def shuffled(xs):
-  xs = list(xs)
-  random.shuffle(xs)
-  return xs
-
 # Return value for submit_tau and submit_client_tau.
 class SubmitTauResult(object):
   SUCCESS = 0
@@ -60,8 +54,13 @@ class SubmitTauResult(object):
     self.index = index
 
 class Game(object):
-  def __init__(self, type, quick=False, deck=None, targets=None):
+  def __init__(self, type, quick=False, deck=None, targets=None, seed=None, wrong_properties=None):
     self.type = type
+    if seed:
+      self.seed = seed
+    else:
+      self.seed = random.randint(0, sys.maxint)
+    self.rand = random.Random(self.seed)
     try:
       self.size = type_to_size_map[type]
     except KeyError:
@@ -74,12 +73,15 @@ class Game(object):
       self.space = fingeo.AffineSpace()
     self.min_number = type_to_min_board_size[self.type]
     self.scores = {}
+    # we have to actually compute this (even if deck is set) to keep
+    # random numbers in sync with original run.
+    self.deck = self.shuffled(self.space.all_points())
+    self.targets = None
+    self.wrong_properties = None
     if deck:
       self.deck = list(deck)
       self.targets = targets
-    else:
-      self.deck = shuffled(self.space.all_points())
-      self.targets = None
+      self.wrong_properties = wrong_properties
     self.start_deck = list(self.deck)
     self.board = []
     self.boards = []
@@ -107,6 +109,11 @@ class Game(object):
       else:
         while self.deck:
           self.take_tau()
+
+  def shuffled(self, xs):
+    xs = list(xs)
+    self.rand.shuffle(xs)
+    return xs
 
   def take_tau(self):
     self.submit_tau(self.get_hint(), "dummy")
@@ -136,7 +143,7 @@ class Game(object):
     # Puzzle 3 Tau only deals once and requires Z3TAU_COUNT taus exactly.
     if self.type == 'z3tau' and not self.board:
       while Z3TAU_COUNT != self.count_tau_subsets(self.deck[-self.min_number:], self.size):
-        random.shuffle(self.deck)
+        self.rand.shuffle(self.deck)
 
     # fill in gaps
     if len(self.board) > self.min_number:
@@ -193,7 +200,7 @@ class Game(object):
           # This means that the probability that a new card is involved in the
           # tau might depend on its corresponding position in the index tuple.
           # Randomizing the order avoids this issue.
-          i3tau_new_cards = shuffled(i3tau_new_cards)
+          i3tau_new_cards = self.shuffled(i3tau_new_cards)
 
           for i, card in zip(add_indices, i3tau_new_cards):
             self.deck.remove(card)
@@ -216,7 +223,7 @@ class Game(object):
 
         if m3tau_new_cards is not None:
           # Randomize the order of the new cards.
-          m3tau_new_cards = shuffled(m3tau_new_cards)
+          m3tau_new_cards = self.shuffled(m3tau_new_cards)
 
           new_idxs = []
           new_cards = []
@@ -258,12 +265,17 @@ class Game(object):
 
     # compute a new target tau for Generalized 3 Tau and 4 Tau
     if self.type in ['g3tau', '4tau']:
+      # Must compute this first for random number generator to remain
+      # in consistent state.
+      self.target_tau = self.get_random_target(self.board)
       if self.targets:
         self.target_tau = self.targets.pop()
-      else:
-        self.target_tau = self.get_random_target(self.board)
     elif self.type in ['n3tau']:
+      # Must compute this first for random number generator to remain
+      # in consistent state.
       self.wrong_property = self.get_wrong_property(self.board)
+      if self.wrong_properties:
+        self.wrong_property = self.wrong_properties.pop()
 
     # add Nones at the end as necessary
     while len(self.board) < self.min_number:
@@ -275,7 +287,7 @@ class Game(object):
       # For Master 3 Tau, the positions of the last 3 cards dealt are chosen
       # to be hard, so don't mess them up.
       if self.type != 'm3tau' or len(filter(None, self.board)) <= 9:
-        random.shuffle(self.board)
+        self.rand.shuffle(self.board)
 
   def get_wrong_property(self, board):
     no_nones = filter(None, board)
@@ -290,7 +302,7 @@ class Game(object):
       return None
     if self.wrong_property_preference is not None and self.wrong_property_preference in [count[0] for count in counts]:
       return self.wrong_property_preference
-    return random.choice(counts)[0]
+    return self.rand.choice(counts)[0]
 
   def get_random_target(self, board):
       no_nones = filter(None, board)
@@ -298,7 +310,7 @@ class Game(object):
         return []
       else:
         all_card_subsets = [card_subset for card_subset in itertools.combinations(no_nones, self.size)]
-        return self.space.sum_cards(all_card_subsets[random.randint(0, len(all_card_subsets) - 1)])
+        return self.space.sum_cards(all_card_subsets[self.rand.randint(0, len(all_card_subsets) - 1)])
 
   def is_over(self):
     if self.type == 'z3tau':

@@ -1,6 +1,6 @@
 from game import Game
 from lobby_game import LobbyGame
-from preset_decks import PRESET_DECKS, PRESET_TARGETS
+from preset_decks import PRESET_DECKS, PRESET_TARGETS, PRESET_SEEDS, PRESET_WRONG_PROPERTIES
 
 class InvalidGameId(Exception):
   pass
@@ -15,23 +15,23 @@ class Lobby(object):
 
     self.game_list_sockets = []
 
-  def new_game(self, type, name, parent, quick, use_preset_decks, training):
+  def new_game(self, game_type, name, parent, quick, use_preset_decks, training):
     if len(self.games) == 0:
       next_id = 0
     else:
       next_id = max(self.game_id_to_game.keys()) + 1
 
     if use_preset_decks:
-      game = Game(type, quick=quick, deck=PRESET_DECKS[type], targets=PRESET_TARGETS[type])
+      game = Game(game_type, quick=quick, deck=PRESET_DECKS[game_type], targets=PRESET_TARGETS[game_type], seed=PRESET_SEEDS[game_type], wrong_properties=PRESET_WRONG_PROPERTIES[game_type])
     else:  
-      game = Game(type, quick=quick)
+      game = Game(game_type, quick=quick)
     lobby_game = LobbyGame(next_id, game, self, training)
     self.games.append(lobby_game)
     self.game_id_to_game[next_id] = lobby_game
 
     if parent is not None and self.is_valid_game(parent):
       parent_game = self.game_id_to_game[parent]
-      parent_game.add_chat(name, (type, next_id), "new_game")
+      parent_game.add_chat(name, (game_type, next_id), "new_game")
 
     self.send_game_list_update_to_all()
     
