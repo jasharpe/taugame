@@ -1,4 +1,5 @@
 {% import json %}
+{% from constants import GAME_TYPE_INFO %}
 
 <!DOCTYPE html>
 <html>
@@ -7,11 +8,12 @@
     <script type="text/javascript" src="{{ static_url("jquery.js") }}"></script>
     <script type="text/javascript">
       var game_type = "{{ game_type }}";
-      var taus = {{ json.dumps(taus) }};
+      var game_type_info = {% raw json.dumps(dict(GAME_TYPE_INFO)) %};
+      var game_type_to_taus = {% raw json.dumps(game_type_to_taus) %};
     </script>
     <script type="text/javascript" src="{{ static_url("testframe.js") }}"></script>
   </head>
   <body>
-    <iframe id="testframe" width=1024 height=768 src="http://localhost"></iframe>
+    <div></div>
   </body>
 </html>

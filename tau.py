@@ -412,16 +412,19 @@ class LogoutHandler(tornado.web.RequestHandler):
     self.redirect("/choose_name")
 
 class TestFrameHandler(tornado.web.RequestHandler):
-  def get(self, game_type):
+  def get(self, specified_game_type):
     if not args.debug:
       raise tornado.web.HTTPError(404)
 
-    space = fingeo.get_space(game_type)
+    game_type_to_taus = {}
+    for (game_type, taus) in PRESET_TAUS.items():
+      space = fingeo.get_space(game_type)
+      game_type_to_taus[game_type] = map(lambda tau: map(lambda card: space.to_client_card(card), tau), PRESET_TAUS[game_type])
 
     self.render(
         "testframe.html",
-        game_type=game_type,
-        taus=map(lambda tau: map(lambda card: space.to_client_card(card), tau), PRESET_TAUS[game_type]),
+        game_type=specified_game_type,
+        game_type_to_taus=game_type_to_taus,
     )
 
 def create_application(debug):
@@ -447,7 +450,7 @@ def create_application(debug):
     (r"/logout", LogoutHandler),
   ]
   if debug:
-    handlers.append((r"/testframe/(3tau|6tau|g3tau|i3tau|m3tau|e3tau|4tau|3ptau|z3tau|4otau|n3tau|bqtau)", TestFrameHandler))
+    handlers.append((r"/testframe/(all|3tau|6tau|g3tau|i3tau|m3tau|e3tau|4tau|3ptau|z3tau|4otau|n3tau|bqtau)", TestFrameHandler))
   return tornado.web.Application(handlers, **full_settings)
 
 # returns control to the main thread every timeout, where timeout is a timedelta.
