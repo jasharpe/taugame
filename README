@@ -31,3 +31,26 @@ For options, type:
 - (If adding new cards) Make the following updates:
     static/tau.js: getImgClass(), get_card_number()
     static/styles.css: new class similar to .regularTau, .projectiveTau, etc.
+
+How to set up Fedora 16 server:
+$ ssh root@...
+$ passwd # to set password to something sane
+$ yum install git
+$ yum install python
+$ git clone https://github.com/jasharpe/websockettau.git
+# install tornado
+$ wget https://github.com/downloads/facebook/tornado/tornado-2.4.1.tar.gz
+$ tar xvzf tornado-2.4.1.tar.gz
+$ cd tornado-2.4.1
+$ python setup.py build
+$ sudo python setup.py install
+# install sqlalchemy
+$ yum install python-sqlalchemy
+# create secrets.py
+$ cd ~/websockettau && cat > secrets.py
+cookie_secret = "SOME STRING HERE"
+# Set up certificates by creating localhost.crt certificate, and put in websockettau directory.
+# Open ports, add to /etc/sysconfig/iptables:
+# -A RH-Firewall-1-INPUT -m state --state NEW -m tcp -p tcp --dport 80 -j ACCEPT
+# -A RH-Firewall-1-INPUT -m state --state NEW -m tcp -p tcp --dport 443 -j ACCEPT
+$ ./restart.sh

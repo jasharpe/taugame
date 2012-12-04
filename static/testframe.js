@@ -1,6 +1,6 @@
 $(document).ready(function() {
   if (game_type !== "all") {
-    run_frame(game_type);
+    run_frame_function(game_type)();
   } else {
     var timeout = 0;
     for (var type in game_type_to_taus) {

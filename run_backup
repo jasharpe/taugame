@@ -1,0 +1,1 @@
+cd /root/websockettau && python backup_to_s3.py

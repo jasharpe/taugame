@@ -412,6 +412,7 @@ class LogoutHandler(tornado.web.RequestHandler):
     self.redirect("/choose_name")
 
 class TestFrameHandler(tornado.web.RequestHandler):
+  @require_name
   def get(self, specified_game_type):
     if not args.debug:
       raise tornado.web.HTTPError(404)
