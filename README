@@ -54,3 +54,13 @@ cookie_secret = "SOME STRING HERE"
 # -A RH-Firewall-1-INPUT -m state --state NEW -m tcp -p tcp --dport 80 -j ACCEPT
 # -A RH-Firewall-1-INPUT -m state --state NEW -m tcp -p tcp --dport 443 -j ACCEPT
 $ ./restart.sh
+
+# setup automatic backups to S3
+$ yum install s3cmd
+$ s3cmd --configure
+# follow the prompts...
+# test that backups will work properly
+$ ./run_backup
+# verify that the backup appears in S3
+# set up automatic backups. s3_crontab is a template. Modify it to suit you.
+$ crontab s3_crontab
