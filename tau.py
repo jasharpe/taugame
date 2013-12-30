@@ -476,11 +476,12 @@ def parse_args():
   return parser.parse_args()
 
 class OptionalHTTPServer(tornado.httpserver.HTTPServer):
-  def __init__(self, *args, **kwargs):
+  def __init__(self, port, *args, **kwargs):
+    self.port = port
     tornado.httpserver.HTTPServer.__init__(self, *args, **kwargs)
 
   def _handle_connection(self, connection, address):
-    if connection.getsockname()[1] == 80:
+    if connection.getsockname()[1] == self.port:
       old_ssl_options = self.ssl_options
       self.ssl_options = None
       super(tornado.httpserver.HTTPServer, self)._handle_connection(connection, address)
@@ -492,7 +493,7 @@ def main():
   global args
   args = parse_args()
   application = create_application(args.debug)
-  http_server = OptionalHTTPServer(application,
+  http_server = OptionalHTTPServer(args.port, application,
       ssl_options={
           "certfile" : "localhost.crt",
           "keyfile" : "localhost.key",

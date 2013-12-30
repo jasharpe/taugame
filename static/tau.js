@@ -331,7 +331,7 @@ $(document).ready(function() {
     }
 
     playing_area.append($('<div style="clear:both;"/>'));
-    var table = $('<table style="display:block; float:left;">');
+    var table = $('<table id="playing_area_table" style="display:block; float:left;">');
     var max_row = 3;
     var max_col = board.length / max_row;
     var hints_printed = 0;
@@ -423,7 +423,7 @@ $(document).ready(function() {
         if (row_index === 0 || row_index === 2) {
           row.append(col);
         } else {
-          var card_div = $('<div style="position:absolute;" class="realCard unselectedCard">');
+          var card_div = $('<div class="realCard unselectedCard">');
           card_div.addClass("nearTau");
           var offset = wrong_property * 80;
           card_div.css("background-position", "-" + offset + "px 0");
@@ -462,6 +462,20 @@ $(document).ready(function() {
     playing_area.append($('<div style="clear:both;"/>'));
 
     prev_board = this_board;
+
+    // Update zoom.
+    document.getElementsByTagName('body')[0].style.zoom = 1;
+    var num_cols = 0;
+    $('#playing_area_table tr').each(function() {
+      cand_cols = 0;
+      $(this).find("td").each(function() {
+        cand_cols++;
+      });
+      num_cols = Math.max(num_cols, cand_cols);
+    });
+    var game_width = num_cols * 90 + 4;
+    var zoom = Math.min(1, screen.availWidth / game_width).toFixed(2);
+    document.getElementsByTagName('body')[0].style.zoom = zoom;
   }
 
   function update_buttons(ended, paused, is_pausable) {
