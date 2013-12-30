@@ -12,7 +12,7 @@ $(document).ready(function() {
 
 function run_frame_function(type) {
   return function() {
-    var iframe = $('<iframe id="testframe_"' + type + ' width=1024 height=768 src="http://localhost"></iframe>');
+    var iframe = $('<iframe id="testframe_"' + type + ' width=1024 height=768 src="' + window.location.origin + '"></iframe>');
     $("body").append(iframe);
     iframe.load(function() {
       new Test().run_test(iframe, type, game_type_to_taus[type]);
