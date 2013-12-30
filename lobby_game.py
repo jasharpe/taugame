@@ -174,7 +174,7 @@ class LobbyGame(object):
   def cleanup(self, game_expiry):
     if self.sockets:
       return False
-    if self.game.started and not self.game.ended and not self.hidden:
+    if not self.game.ended and not self.hidden:
       if time.time() - self.last_activity > game_expiry:
         self.hidden = True
         return True
