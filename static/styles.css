@@ -231,6 +231,10 @@ table {
   background:url('/static/cards.png?v=2') no-repeat scroll 0 0 white;
 }
 
+.classicTau {
+  background:url('/static/classiccards.png?v=1') no-repeat scroll 0 0 white;
+}
+
 .smallRegularTau {
   background:url('/static/smallcards.png?v=5') no-repeat scroll 0 0 white;
 }

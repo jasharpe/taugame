@@ -290,11 +290,21 @@ class NewGameHandler(tornado.web.RequestHandler):
       training = self.get_argument("training") == "true"
     except:
       training = False
+
+    try:
+      classic_cards = self.get_argument("classic_cards") == "true"
+    except:
+      classic_cards = False
+
+    try:
+      colour_blind = self.get_argument("colour_blind") == "true"
+    except:
+      colour_blind = False
     
     name = url_unescape(self.get_secure_cookie("name"))
 
     try:
-      game = lobby.new_game(type, name, parent, args.quick, args.use_preset_decks, training)
+      game = lobby.new_game(type, name, parent, args.quick, args.use_preset_decks, training, classic_cards, colour_blind)
     except InvalidGameType:
       self.redirect('/')
       return
@@ -320,7 +330,9 @@ class GameHandler(tornado.web.RequestHandler):
         debug=int(self.get_argument('debug', default=0)),
         game=game.game,
         game_type_info=GAME_TYPE_INFO,
-        training=game.training)
+        training=game.training,
+        classic_cards=game.classic_cards,
+        colour_blind=game.colour_blind)
 
 class TimeHandler(tornado.web.RequestHandler):
   def post(self):

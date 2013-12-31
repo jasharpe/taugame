@@ -6,11 +6,13 @@ TAU_PROPERTIES = ["colour", "number", "shading", "shape"]
 
 class LobbyGame(object):
 
-  def __init__(self, id, game, lobby, training):
+  def __init__(self, id, game, lobby, training, classic_cards, colour_blind):
     self.id = id
     self.game = game
     self.lobby = lobby
     self.training = training
+    self.classic_cards = classic_cards
+    self.colour_blind = colour_blind
 
     self.sockets = []
     self.messages = []

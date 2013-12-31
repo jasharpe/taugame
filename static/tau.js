@@ -272,6 +272,8 @@ $(document).ready(function() {
       return "projectiveTau";
     } else if (game_type == "bqtau") {
       return "booleanTau";
+    } else if (classic_cards) {
+      return "classicTau";
     } else {
       return "regularTau";
     }
@@ -577,7 +579,9 @@ $(document).ready(function() {
       var form = $('<form style="display:inline-block;" name="new_game" action="/new_game/' + new_game_type + '?parent=' + game_id + '" method="post"><input type="submit" tabindex="' + tab_index + '" value="New ' + game_type_string + ' game" /></form>');
       form.submit(function(e) {
         var params = [
-          { 'name' : 'training', 'value' : $("#training").is(':checked') }
+          { 'name' : 'training', 'value' : $("#training").is(':checked') },
+          { 'name' : 'classic_cards', 'value' : $("#classic_cards").is(':checked') },
+          { 'name' : 'colour_blind', 'value' : $("#colour_blind").is(':checked') }
         ];
 
         var that = $(this);
@@ -593,7 +597,7 @@ $(document).ready(function() {
       div.append(form);
       tab_index++;
     }
-    div.append($('<div><input id="training" type="checkbox"/><label for="training">Training</label></div>'));
+    div.append($('<div><input id="training" type="checkbox"/><label for="training">Training</label><input id="classic_cards" type="checkbox"/><label for="classic_cards">Classic cards</label><input id="colour_blind" type="checkbox"/><label for="colour_blind">Colour blind cards</label></div>'));
   }
 
   function update(board, all_taus, all_stale_taus, paused, target, wrong_property, scores, time, avg_number, number, ended, hint, player_rank_info, found_puzzle_taus, new_games, training_options, is_pausable) {

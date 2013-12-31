@@ -15,7 +15,7 @@ class Lobby(object):
 
     self.game_list_sockets = []
 
-  def new_game(self, game_type, name, parent, quick, use_preset_decks, training):
+  def new_game(self, game_type, name, parent, quick, use_preset_decks, training, classic_cards, colour_blind):
     if len(self.games) == 0:
       next_id = 0
     else:
@@ -25,7 +25,7 @@ class Lobby(object):
       game = Game(game_type, quick=quick, deck=PRESET_DECKS[game_type], targets=PRESET_TARGETS[game_type], seed=PRESET_SEEDS[game_type], wrong_properties=PRESET_WRONG_PROPERTIES[game_type])
     else:  
       game = Game(game_type, quick=quick)
-    lobby_game = LobbyGame(next_id, game, self, training)
+    lobby_game = LobbyGame(next_id, game, self, training, classic_cards, colour_blind)
     self.games.append(lobby_game)
     self.game_id_to_game[next_id] = lobby_game
 
