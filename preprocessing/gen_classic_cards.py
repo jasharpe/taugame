@@ -21,24 +21,6 @@ VERTICAL_OFFSETS = {
 
 SHAPES_DIR = "rawshapes"
 
-SHAPES = {
-  'empty' : {
-    'diamond' : 'emptydiamond.png',
-    'oval' : 'emptyoval.png',
-    'peanut' : 'emptypeanut.png',
-  },
-  'shaded' : {
-    'diamond' : 'shadeddiamond.png',
-    'oval' : 'shadedoval.png',
-    'peanut' : 'shadedpeanut.png',
-  },
-  'solid' : {
-    'diamond' : 'soliddiamond.png',
-    'oval' : 'solidoval.png',
-    'peanut' : 'solidpeanut.png',
-  },
-}
-
 def make_file(shape, shading):
   return "{}{}.png".format(shading, shape)
 
@@ -56,8 +38,6 @@ def recolour(img, colour):
 def main(dest_file):
   canvas = Image.new("RGBA", (81 * WIDTH, HEIGHT), (255, 255, 255, 0))
   card_number = 0
-  # TODO: reverse shading and shape in this order for consistency with other
-  # card sets.
   start = time.time()
   img_cache = {}
   coloured_img_cache = {}
@@ -76,8 +56,6 @@ def main(dest_file):
               img = img.rotate(90)
               img_cache[shape_key] = img
             img = recolour(img, colour)
-            #print shading, shape, number, colour
-            #print img.format, img.size, img.mode
             (orig_width, orig_height) = img.size
             scale_factor = SHAPE_HEIGHT / orig_height
             img = img.resize((int(round(scale_factor * orig_width)),
@@ -97,14 +75,6 @@ def main(dest_file):
             box = (left, upper + vertical_offset, right, lower + vertical_offset)
             canvas.paste(img, box)
 
-          #data = np.array(im)
-          #red, green, blue, alpha = data.T
-          #white_areas = (red == 255) & (blue == 255) & (green == 255)
-          #data[..., :-1][white_areas] = (0, 0, 0, 0)
-          #black_areas = (red == 0) & (blue == 0) & (green == 0)
-          #data[..., :-1][black_areas] = color
-          #im = Image.fromarray(data)
-          #img.show()
           card_number += 1
   print "Time: " + str(time.time() - start)
   canvas.show()
