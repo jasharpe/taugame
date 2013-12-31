@@ -235,8 +235,20 @@ table {
   background:url('/static/classiccards.png?v=1') no-repeat scroll 0 0 white;
 }
 
+.colourBlindClassicTau {
+  background:url('/static/colourblindclassiccards.png?v=1') no-repeat scroll 0 0 white;
+}
+
 .smallRegularTau {
   background:url('/static/smallcards.png?v=5') no-repeat scroll 0 0 white;
+}
+
+.smallClassicTau {
+  background:url('/static/smallclassiccards.png?v=1') no-repeat scroll 0 0 white;
+}
+
+.smallColourBlindClassicTau {
+  background:url('/static/smallcolourblindclassiccards.png?v=1') no-repeat scroll 0 0 white;
 }
 
 .projectiveTau {

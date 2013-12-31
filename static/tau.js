@@ -272,10 +272,22 @@ $(document).ready(function() {
       return "projectiveTau";
     } else if (game_type == "bqtau") {
       return "booleanTau";
+    } else if (classic_cards && colour_blind) {
+      return "colourBlindClassicTau";
     } else if (classic_cards) {
       return "classicTau";
     } else {
       return "regularTau";
+    }
+  }
+
+  function getSmallImgClass() {
+    if (classic_cards && colour_blind) {
+      return "smallColourBlindClassicTau";
+    } else if (classic_cards) {
+      return "smallClassicTau";
+    } else {
+      return "smallRegularTau";
     }
   }
 
@@ -446,7 +458,7 @@ $(document).ready(function() {
           card = found_puzzle_taus[i][j];
           var card_number = get_card_number(card);
           var offset = card_number * 40;
-          var card_div = $('<div class="smallCard smallRegularTau">');
+          var card_div = $('<div class="smallCard ' + getSmallImgClass() + '">');
           card_div.css("background-position", "-" + offset + "px 0");
           tau_div.append(card_div);
           if (last_found_puzzle_taus !== null && i >= last_found_puzzle_taus.length) {
