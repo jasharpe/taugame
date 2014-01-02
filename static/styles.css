@@ -232,11 +232,11 @@ table {
 }
 
 .classicTau {
-  background:url('/static/classiccards.png?v=1') no-repeat scroll 0 0 white;
+  background:url('/static/classiccards.png?v=3') no-repeat scroll 0 0 white;
 }
 
 .colourBlindClassicTau {
-  background:url('/static/colourblindclassiccards.png?v=2') no-repeat scroll 0 0 white;
+  background:url('/static/colourblindclassiccards.png?v=3') no-repeat scroll 0 0 white;
 }
 
 .smallRegularTau {
@@ -244,11 +244,11 @@ table {
 }
 
 .smallClassicTau {
-  background:url('/static/smallclassiccards.png?v=1') no-repeat scroll 0 0 white;
+  background:url('/static/smallclassiccards.png?v=3') no-repeat scroll 0 0 white;
 }
 
 .smallColourBlindClassicTau {
-  background:url('/static/smallcolourblindclassiccards.png?v=2') no-repeat scroll 0 0 white;
+  background:url('/static/smallcolourblindclassiccards.png?v=3') no-repeat scroll 0 0 white;
 }
 
 .projectiveTau {

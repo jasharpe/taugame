@@ -9,15 +9,15 @@ import time
 WIDTH = 80
 HEIGHT = 120
 
-SHAPE_HEIGHT = 30
+SHAPE_HEIGHT = 24
 
 COLOURS = [(219, 35, 2), (2, 170, 26), (80, 1, 128)]
 COLOUR_BLIND_COLOURS = [(2, 35, 219), (150, 150, 26), (40, 40, 40)]
 
 VERTICAL_OFFSETS = {
   1: [0],
-  2: [18, -18],
-  3: [37, 0, -37],
+  2: [16, -16],
+  3: [32, 0, -32],
 }
 
 SHAPES_DIR = "rawshapes"
@@ -52,7 +52,7 @@ def add_lines(img, scale, colour, shape):
   for i, pixel in enumerate(img.getdata()):
     col = i % width
     diff = (abs(pixel[0] - colour[0]) + abs(pixel[1] - colour[1]) + abs(pixel[2] - colour[2]))
-    is_black = diff < (100 if scale == 1 else 270)
+    is_black = diff < (100 if scale == 1 else 330)
     if not col in cols_one and is_black:
       cols_one.add(col)
     elif col in cols_one and not col in cols_two and not is_black:
