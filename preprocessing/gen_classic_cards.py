@@ -23,6 +23,8 @@ VERTICAL_OFFSETS = {
 SHAPES_DIR = "rawshapes"
 
 def make_file(shape, shading):
+  if shading == "shaded":
+    shading = "empty"
   return "{}{}.png".format(shading, shape)
 
 def recolour(img, colour):
@@ -36,6 +38,34 @@ def recolour(img, colour):
   img.putdata(new_data)
   return img
 
+def add_lines(img, scale, colour, shape):
+  new_data = []
+  cols_one = set()
+  cols_two = set()
+  cols_three = set()
+  width, height = img.size
+  if scale == 1:
+    threshold = 4 if shape == "diamond" else 3
+  else:
+    threshold = 4 if shape == "diamond" else 2
+  good_cols = set([0])
+  for i, pixel in enumerate(img.getdata()):
+    col = i % width
+    diff = (abs(pixel[0] - colour[0]) + abs(pixel[1] - colour[1]) + abs(pixel[2] - colour[2]))
+    is_black = diff < (100 if scale == 1 else 270)
+    if not col in cols_one and is_black:
+      cols_one.add(col)
+    elif col in cols_one and not col in cols_two and not is_black:
+      cols_two.add(col)
+    elif col in cols_one and col in cols_two and not col in cols_three and is_black:
+      cols_three.add(col)
+    if col in cols_two and not col in cols_three and (col % (3 if scale == 1 else 2)) in good_cols and not col < threshold and not col > width - threshold:
+      new_data.append(colour)
+    else:
+      new_data.append(pixel)
+  img.putdata(new_data)
+  return img
+
 def gen_cards(colours, scale, dest_file):
   canvas = Image.new("RGBA", (int(round(81 * WIDTH * scale)), int(round(HEIGHT * scale))), (255, 255, 255, 0))
   card_number = 0
@@ -46,14 +76,15 @@ def gen_cards(colours, scale, dest_file):
     for shading in ["empty", "shaded", "solid"]:
       for number in [1, 2, 3]:
         for colour in colours:
-          shape_key = make_file(shape, shading)
+          shape_key = (shape, shading)
+          shape_file = make_file(shape, shading)
           if (shape_key, colour) in coloured_img_cache:
             img = coloured_img_cache[(shape_key, colour)]
           else:
             if shape_key in img_cache:
               img = img_cache[shape_key]
             else:
-              img = Image.open(os.path.join(SHAPES_DIR, shape_key))
+              img = Image.open(os.path.join(SHAPES_DIR, shape_file))
               img = img.rotate(90)
               img_cache[shape_key] = img
             img = recolour(img, colour)
@@ -62,6 +93,8 @@ def gen_cards(colours, scale, dest_file):
             img = img.resize((int(round(scale_factor * orig_width)),
               int(round(scale_factor * orig_height))),
               Image.ANTIALIAS)
+            if shading == "shaded":
+              img = add_lines(img, scale, colour, shape)
             coloured_img_cache[(shape_key, colour)] = img
 
           card_offset = card_number * int(round(WIDTH * scale))
