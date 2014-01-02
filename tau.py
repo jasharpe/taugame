@@ -291,20 +291,10 @@ class NewGameHandler(tornado.web.RequestHandler):
     except:
       training = False
 
-    try:
-      classic_cards = self.get_argument("classic_cards") == "true"
-    except:
-      classic_cards = False
-
-    try:
-      colour_blind = self.get_argument("colour_blind") == "true"
-    except:
-      colour_blind = False
-    
     name = url_unescape(self.get_secure_cookie("name"))
 
     try:
-      game = lobby.new_game(type, name, parent, args.quick, args.use_preset_decks, training, classic_cards, colour_blind)
+      game = lobby.new_game(type, name, parent, args.quick, args.use_preset_decks, training)
     except InvalidGameType:
       self.redirect('/')
       return
@@ -330,9 +320,7 @@ class GameHandler(tornado.web.RequestHandler):
         debug=int(self.get_argument('debug', default=0)),
         game=game.game,
         game_type_info=GAME_TYPE_INFO,
-        training=game.training,
-        classic_cards=game.classic_cards,
-        colour_blind=game.colour_blind)
+        training=game.training)
 
 class TimeHandler(tornado.web.RequestHandler):
   def post(self):
@@ -359,6 +347,10 @@ class RecapHandler(tornado.web.RequestHandler):
         game_type_info=dict(GAME_TYPE_INFO),
         percentile=percentile,
         rank=rank)
+
+class SettingsHandler(tornado.web.RequestHandler):
+  def get(self):
+    self.render("settings.html")
 
 class AboutHandler(tornado.web.RequestHandler):
   def get(self):
@@ -458,6 +450,7 @@ def create_application(debug):
     (r"/websocket/(\d*)", TauWebSocketHandler),
     (r"/gamelistwebsocket/(0|1)", GameListWebSocketHandler),
     (r"/time", TimeHandler),
+    (r"/settings", SettingsHandler),
     (r"/about", AboutHandler),
     (r"/google", GoogleHandler),
     (r"/logout", LogoutHandler),

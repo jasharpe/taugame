@@ -1,0 +1,37 @@
+{% extends chrome.html %}
+
+{% block title %}Settings{% end %}
+
+{% block scripts %}
+<script>
+$(function() {
+  $("#classic_cards").attr("checked", $.cookie("classic_cards") === "true");
+  $("#classic_cards").change(function() {
+    $.cookie("classic_cards",
+      $(this).is(":checked"),
+      {expires: 99999, path:'/'}
+    );
+  });
+  $("#colour_blind").attr("checked", $.cookie("colour_blind") === "true");
+  $("#colour_blind").change(function() {
+    $.cookie("colour_blind",
+      $(this).is(":checked"),
+      {expires: 99999, path:'/'}
+    );
+  });
+});
+</script>
+{% end %}
+
+{% block body %}
+<h2>Settings (stored as cookies)</h2>
+
+<div class="padded">
+  <div><input id="classic_cards" type="checkbox"/><label for="classic_cards">Classic cards</label></div>
+  <div><input id="colour_blind" type="checkbox"/><label for="colour_blind">Colour blind cards</label></div>
+</div>
+
+<div>
+  <a href="/">Back to games</a>
+</div>
+{% end %}

@@ -6,6 +6,11 @@ body.ended {
   background-color:lightgreen;
 }
 
+.padded {
+  padding-top:10px;
+  padding-bottom:10px;
+}
+
 #about p, #welcome p {
   line-height:15px;
   margin-top:9px;
