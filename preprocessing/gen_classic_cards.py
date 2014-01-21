@@ -45,21 +45,36 @@ def add_lines(img, scale, colour, shape):
   cols_three = set()
   width, height = img.size
   if scale == 1:
-    threshold = 4 if shape == "diamond" else 3
+    left_threshold = {"diamond" : 4, "oval" : 3, "peanut" : 3}
+    right_threshold = left_threshold
+  elif scale == 2:
+    left_threshold = {"diamond" : 7, "oval" : 4, "peanut" : 4}
+    right_threshold = {"diamond" : 8, "oval" : 5, "peanut" : 5}
   else:
+    left_threshold = {"diamond" : 4, "oval" : 2, "peanut" : 2}
+    right_threshold = left_threshold
     threshold = 4 if shape == "diamond" else 2
   good_cols = set([0])
+  pattern_period = 2
+  diff_threshold = 330
+  if scale == 1:
+    diff_threshold = 100
+    pattern_period = 3
+  if scale == 2:
+    diff_threshold = 100
+    good_cols = set([0, 1])
+    pattern_period = 6
   for i, pixel in enumerate(img.getdata()):
     col = i % width
     diff = (abs(pixel[0] - colour[0]) + abs(pixel[1] - colour[1]) + abs(pixel[2] - colour[2]))
-    is_black = diff < (100 if scale == 1 else 330)
+    is_black = diff < diff_threshold
     if not col in cols_one and is_black:
       cols_one.add(col)
     elif col in cols_one and not col in cols_two and not is_black:
       cols_two.add(col)
     elif col in cols_one and col in cols_two and not col in cols_three and is_black:
       cols_three.add(col)
-    if col in cols_two and not col in cols_three and (col % (3 if scale == 1 else 2)) in good_cols and not col < threshold and not col > width - threshold:
+    if col in cols_two and not col in cols_three and (col % pattern_period) in good_cols and not col < left_threshold[shape] and not col > width - right_threshold[shape]:
       new_data.append(colour)
     else:
       new_data.append(pixel)
@@ -115,11 +130,19 @@ def gen_cards(colours, scale, dest_file):
   canvas.show()
   canvas.save(dest_file)
 
-def main(reg_dest_file, small_dest_file, colour_blind_dest_file, small_colour_blind_dest_file):
+def main(dest_dir):
+  reg_dest_file = os.path.join(dest_dir, "classiccards.png")
+  reg_dest_file_2x = os.path.join(dest_dir, "classiccards@2x.png")
+  small_dest_file = os.path.join(dest_dir, "smallclassiccards.png")
+  colour_blind_dest_file = os.path.join(dest_dir, "colourblindclassiccards.png")
+  colour_blind_dest_file_2x = os.path.join(dest_dir, "colourblindclassiccards@2x.png")
+  small_colour_blind_dest_file = os.path.join(dest_dir, "smallcolourblindclassiccards.png")
   gen_cards(COLOURS, 1, reg_dest_file)
+  gen_cards(COLOURS, 2, reg_dest_file_2x)
   gen_cards(COLOURS, 0.5, small_dest_file)
   gen_cards(COLOUR_BLIND_COLOURS, 1, colour_blind_dest_file)
+  gen_cards(COLOUR_BLIND_COLOURS, 2, colour_blind_dest_file_2x)
   gen_cards(COLOUR_BLIND_COLOURS, 0.5, small_colour_blind_dest_file)
 
 if __name__ == "__main__":
-  main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+  main(sys.argv[1])

@@ -4,6 +4,10 @@
 import pygame
 import pygame.font
 import pygame.image
+import sys
+
+dest = sys.argv[1]
+retina = sys.argv[2] == "RETINA"
 
 CARD_WIDTH = 80
 CARD_HEIGHT = 120
@@ -81,4 +85,4 @@ for i in range(CARD_COUNT):
       y = symbol_coords[j][1]
       putsymbol(symbol_fonts[j], symbols[j][card[j]-1], (x,y), colours[card[1]])
 
-pygame.image.save(s, '../static/projcards.png')
+pygame.image.save(s, dest)

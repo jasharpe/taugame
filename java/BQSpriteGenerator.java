@@ -16,18 +16,22 @@ public class BQSpriteGenerator {
   private static final boolean LARGE = true;
 
   public static void main(String[] args) {
-    if (args.length != 1) {
+    if (args.length != 2) {
       throw new IllegalArgumentException(
-          "Requires exactly one argument, a file name of result.");
+          "Requires exactly two arguments, a file name of result, and whether to make a 2x (retina) image.");
     }
 
     File imageFile = new File(args[0]);
+    boolean retina = args[1].equals("1");
 
     int width = 80;
     int height = 120;
     if (!LARGE) {
       width = 40;
       height = 60;
+    } else if (retina) {
+      width = 160;
+      height = 240;
     }
     int totalWidth = width * 64;
     int totalHeight = height;
@@ -43,7 +47,7 @@ public class BQSpriteGenerator {
         for (int shape = 0; shape < 4; shape++) {
           int xBase = (colour + 4 * number + 16 * shape) * width;
           int yBase = 0;
-          drawCard(graphics, xBase, yBase, width, height, colour, number, shape);
+          drawCard(graphics, retina, xBase, yBase, width, height, colour, number, shape);
         }
       }
     }
@@ -55,7 +59,7 @@ public class BQSpriteGenerator {
     }
   }
 
-  private static void drawCard(Graphics2D graphics, int xBase,
+  private static void drawCard(Graphics2D graphics, boolean retina, int xBase,
       int yBase, int width, int height, int colour, int number,
       int shape) {
     // get shape positions
@@ -99,6 +103,9 @@ public class BQSpriteGenerator {
     if (!LARGE) {
       number1 = 5;
       number2 = 10;
+    } else if (retina) {
+      number1 = 20;
+      number2 = 40;
     }
     for (int i = 0; i < number + 1; i++) {
       if (shape == 0) {

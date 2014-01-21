@@ -13,21 +13,26 @@ import java.util.List;
 import javax.imageio.ImageIO;
 
 public class SpriteGenerator {
-  private static final boolean LARGE = false;
-
   public static void main(String[] args) {
-    if (args.length != 1) {
+    if (args.length != 3) {
       throw new IllegalArgumentException(
-          "Requires exactly one argument, a file name of result.");
+          "Requires exactly three arguments, a file name of result; LARGE for large cards, or SMALL for small cards; and RETINA for 2x (retina), or NOTRETINA for non-retina.");
     }
 
     File imageFile = new File(args[0]);
+    boolean large = args[1].equals("LARGE");
+    boolean retina = args[2].equals("RETINA");
 
     int width = 80;
     int height = 120;
-    if (!LARGE) {
+    if (!large) {
       width = 40;
       height = 60;
+    }
+    
+    if (retina) {
+      width *= 2;
+      height *= 2;
     }
     int totalWidth = width * 81;
     int totalHeight = height;
@@ -44,7 +49,7 @@ public class SpriteGenerator {
           for (int shape = 0; shape < 3; shape++) {
             int xBase = (colour + 3 * number + 9 * fill + 27 * shape) * width;
             int yBase = 0;
-            drawCard(graphics, xBase, yBase, width, height, colour, number, fill, shape);
+            drawCard(graphics, large, retina, xBase, yBase, width, height, colour, number, fill, shape);
           }
         }
       }
@@ -57,9 +62,12 @@ public class SpriteGenerator {
     }
   }
 
-  private static void drawCard(Graphics2D graphics, int xBase,
+  private static void drawCard(Graphics2D graphics, boolean large, boolean retina, int xBase,
       int yBase, int width, int height, int colour, int number,
       int fill, int shape) {
+    boolean offset = (large && number != 2 & shape != 0);
+    boolean circle_offset = (large && number != 2 & shape == 0) || (!large && number == 1);
+
     // get shape positions
     int[] xs;
     int[] ys;
@@ -73,9 +81,13 @@ public class SpriteGenerator {
       ys = new int[] {
         yBase + height - height / 3,
               yBase + height / 3 };
-      if (!LARGE) {
+      if (!large) {
         ys[1] += 1;
         ys[0] -= 1;
+        if (retina) {
+          ys[1] += 1;
+          ys[0] -= 1;
+        }
       }
     } else {
       xs = new int[] {
@@ -86,18 +98,26 @@ public class SpriteGenerator {
         yBase + height / 2 + width / 6,
               yBase + height / 2 - width / 6,
               yBase + height / 2 + width / 6 };
-      if (!LARGE) {
+      if (!large) {
         ys[1] -= 1;
+        if (retina) {
+          ys[1] -= 1;
+        }
       }
     }
 
     List<Shape> shapes = new ArrayList<Shape>();
     int number1 = 10;
     int number2 = 20;
-    if (!LARGE) {
+    if (!large) {
       number1 = 5;
       number2 = 10;
+    }   
+    if (retina) {
+      number1 *= 2;
+      number2 *= 2;
     }
+
     for (int i = 0; i < number + 1; i++) {
       if (shape == 0) {
         shapes.add(new Ellipse2D.Double(xs[i] - number1, ys[i] - number1, number2, number2));  
@@ -119,9 +139,24 @@ public class SpriteGenerator {
 
     TexturePaint texture = null;
     if (fill == 1) {
-      BufferedImage textureImage = new BufferedImage(1, 2, BufferedImage.TYPE_INT_ARGB);
-      textureImage.setRGB(0, 1, color.getRGB());
-      texture = new TexturePaint(textureImage, new Rectangle(0, 1, 1, 2));
+      if (retina) {
+        BufferedImage textureImage = new BufferedImage(1, 4, BufferedImage.TYPE_INT_ARGB);
+        if (circle_offset) {
+          textureImage.setRGB(0, 0, color.getRGB());
+          textureImage.setRGB(0, 3, color.getRGB());
+        } else if (offset) {
+          textureImage.setRGB(0, 1, color.getRGB());
+          textureImage.setRGB(0, 2, color.getRGB());
+        } else {
+          textureImage.setRGB(0, 2, color.getRGB());
+          textureImage.setRGB(0, 3, color.getRGB());
+        }
+        texture = new TexturePaint(textureImage, new Rectangle(0, 1, 1, 4));
+      } else {
+        BufferedImage textureImage = new BufferedImage(1, 2, BufferedImage.TYPE_INT_ARGB);
+        textureImage.setRGB(0, 1, color.getRGB());
+        texture = new TexturePaint(textureImage, new Rectangle(0, 1, 1, 2));
+      }
       graphics.setPaint(texture);
     } else {
       graphics.setPaint(color);

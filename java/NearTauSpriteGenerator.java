@@ -17,23 +17,24 @@ import java.util.List;
 import javax.imageio.ImageIO;
 
 public class NearTauSpriteGenerator {
-  private static final boolean LARGE = true;
-
   public static void main(String[] args) {
-    if (args.length != 1) {
+    if (args.length != 2) {
       throw new IllegalArgumentException(
-          "Requires exactly one argument, a file name of result.");
+          "Requires exactly two arguments, a file name of result, and RETINA|NOTRETINA.");
     }
 
     File imageFile = new File(args[0]);
+    boolean retina = args[1].equals("RETINA");
 
     int width = 80;
     int height = 120;
-    if (!LARGE) {
-      width = 40;
-      height = 60;
+
+    if (retina) {
+      width *= 2;
+      height *= 2;
     }
-    int totalWidth = width * 81;
+
+    int totalWidth = width * 4;
     int totalHeight = height;
 
     BufferedImage bufferedImage = new BufferedImage(totalWidth, totalHeight, BufferedImage.TYPE_INT_ARGB);
@@ -43,7 +44,7 @@ public class NearTauSpriteGenerator {
 
   // draw 4 cards, one with all three shapes, one with all three colours, one with all three shadings, and one with three numbers
   for (int xBase = 0; xBase < 4; xBase++) {
-    drawCard(graphics, xBase, 0, width, height);
+    drawCard(graphics, retina, xBase, 0, width, height);
   }
 
   try {
@@ -53,7 +54,7 @@ public class NearTauSpriteGenerator {
   }
 }
 
-private static void drawCard(Graphics2D graphics, int xBase,
+private static void drawCard(Graphics2D graphics, boolean retina, int xBase,
     int yBase, int width, int height) {
   // get shape positions
   int[] xs;
@@ -68,17 +69,16 @@ private static void drawCard(Graphics2D graphics, int xBase,
     yBase + height / 2 - width / 6,
     yBase + height / 2 + width / 6
   };
-  if (!LARGE) {
-    ys[1] -= 1;
-  }
 
     List<Shape> shapes = new ArrayList<Shape>();
     int number1 = 10;
     int number2 = 20;
-    if (!LARGE) {
-      number1 = 5;
-      number2 = 10;
+    
+    if (retina) {
+      number1 *= 2;
+      number2 *= 2;
     }
+
   // each card has 3 symbols
   if (xBase == 0) {
     // this is colour; do them all in squares
@@ -94,11 +94,21 @@ private static void drawCard(Graphics2D graphics, int xBase,
     int[] numbers = {2,1,3};
     for (int i = 0; i < 3; i++) {
       FontRenderContext frc = graphics.getFontRenderContext();
-      Font f = new Font("Times", Font.BOLD, 26);
+      int size = 26;
+      if (retina) {
+        size *= 2;
+      }
+      Font f = new Font("Times", Font.BOLD, size);
       String s = new String("" + numbers[i]);
       TextLayout tl = new TextLayout(s, f, frc);
       graphics.setPaint(Color.BLACK);
-      tl.draw(graphics, xs[i] - 6, ys[i] + 9);
+      int x_offset = 6;
+      int y_offset = 9;
+      if (retina) {
+        x_offset *= 2;
+        y_offset *= 2;
+      }
+      tl.draw(graphics, xs[i] - x_offset, ys[i] + y_offset);
     }
   }
   if (xBase == 2) {
@@ -106,9 +116,16 @@ private static void drawCard(Graphics2D graphics, int xBase,
     graphics.draw(new Ellipse2D.Double(xs[0] - number1, ys[0] - number1, number2, number2));
 
     TexturePaint texture = null;
-    BufferedImage textureImage = new BufferedImage(1, 2, BufferedImage.TYPE_INT_ARGB);
-    textureImage.setRGB(0, 1, Color.BLACK.getRGB());
-    texture = new TexturePaint(textureImage, new Rectangle(0, 1, 1, 2));
+    if (retina) {
+      BufferedImage textureImage = new BufferedImage(1, 4, BufferedImage.TYPE_INT_ARGB);
+      textureImage.setRGB(0, 0, Color.BLACK.getRGB());
+      textureImage.setRGB(0, 3, Color.BLACK.getRGB());
+      texture = new TexturePaint(textureImage, new Rectangle(0, 1, 1, 4));      
+    } else {
+      BufferedImage textureImage = new BufferedImage(1, 2, BufferedImage.TYPE_INT_ARGB);
+      textureImage.setRGB(0, 1, Color.BLACK.getRGB());
+      texture = new TexturePaint(textureImage, new Rectangle(0, 1, 1, 2));
+    }
     graphics.setPaint(texture);
     graphics.fill(new Ellipse2D.Double(xs[1] - number1, ys[1] - number1, number2, number2));
     graphics.setPaint(Color.BLACK);
