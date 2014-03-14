@@ -36,7 +36,7 @@
 
   <p>
   {% set first = True %}  
-  {% for (game_type, game_label) in [('3tau', '3 Tau'), ('6tau', '6 Tau'), ('g3tau', 'Generalized 3 Tau'), ('i3tau', 'Insane 3 Tau'), ('e3tau', 'Easy 3 Tau'), ('4tau', '4 Tau'), ('3ptau', '3 Projective Tau'), ('z3tau', 'Puzzle 3 Tau'), ('4otau', '4 Outer Tau'), ('n3tau', 'Near 3 Tau'), ('bqtau', 'Boolean Quadruple Tau')] %}
+  {% for (game_type, game_label) in [('3tau', '3 Tau'), ('6tau', '6 Tau'), ('g3tau', 'Generalized 3 Tau'), ('i3tau', 'Insane 3 Tau'), ('e3tau', 'Easy 3 Tau'), ('4tau', '4 Tau'), ('3ptau', '3 Projective Tau'), ('z3tau', 'Puzzle 3 Tau'), ('4otau', '4 Outer Tau'), ('n3tau', 'Near 3 Tau'), ('bqtau', 'Boolean Quadruple Tau'), ('sbqtau', 'Small Boolean Quadruple Tau')] %}
     {% if not first %}|{% end %}
     <a href="#rules{{ game_type }}">{{ game_label }}</a>
     {% set first = False %}
@@ -516,5 +516,9 @@
   <p>In other words, the allowed cases are AAAA, AABB, ABCD, and the forbidden cases are AAAB and AABC.
 
   <p>(More details coming soon.)
+
+  <h3 id="rulessbqtau">Small Boolean Quadruple Tau</h3>
+
+  <p>Like Boolean Quadruple Tau, but with only 9 cards instead of 12.
 </div>
 {% end %}

@@ -65,6 +65,8 @@ $(function() {
           game_type = "Near 3 Tau";
         } else if (game_data.type == "bqtau") {
           game_type = "Boolean Quadruple Tau";
+        } else if (game_data.type == "sbqtau") {
+          game_type = "Small Boolean Quadruple Tau";
         }
         
         section.find(".games_list").append($("<li><a href=\"/game/" + game_data.id + "\">Game " + game_data.id + "</a> (" + game_type + ") " + (game_data.training ? "(Training) " : "") + "- " + players_string + "</li>"));

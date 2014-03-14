@@ -164,7 +164,7 @@ $(document).ready(function() {
   function get_card_number(card) {
     if (game_type === "3ptau") {
       return card[0] + 4 * card[1] + 16 * card[2] - 1;
-    } else if (game_type === "bqtau") {
+    } else if (game_type === "bqtau" || game_type === "sbqtau") {
       return card[0] + 4 * card[1] + 16 * card[2];
     } else {
       return card[0] + 3 * card[1] + 9 * card[2] + 27 * card[3];
@@ -272,7 +272,7 @@ $(document).ready(function() {
     var classic_cards = $.cookie("classic_cards") !== "false";
     if (game_type === "3ptau") {
       return "projectiveTau";
-    } else if (game_type == "bqtau") {
+    } else if (game_type === "bqtau" || game_type === "sbqtau") {
       return "booleanTau";
     } else if (classic_cards && colour_blind) {
       return "colourBlindClassicTau";

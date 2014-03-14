@@ -9,6 +9,22 @@ I3TAU_CALCULATION_LOGGING_THRESHOLD = 0.25
 class InvalidGameType(Exception):
   pass
 
+type_to_deck_size_map = {
+  '3tau': 81,
+  'g3tau': 81,
+  '6tau': 81,
+  'i3tau': 81,
+  'm3tau': 81,
+  'e3tau': 81,
+  '4tau': 81,
+  '3ptau': 63,
+  'z3tau': 81,
+  '4otau': 81,
+  'n3tau': 81,
+  'bqtau': 64,
+  'sbqtau': 64,
+}
+
 type_to_size_map = {
   '3tau': 3,
   'g3tau': 3,
@@ -22,6 +38,7 @@ type_to_size_map = {
   '4otau': 4,
   'n3tau': 3,
   'bqtau': 4,
+  'sbqtau': 4,
 }
 
 type_to_min_board_size = {
@@ -37,6 +54,7 @@ type_to_min_board_size = {
   '4otau': 9,
   'n3tau': 12,
   'bqtau': 12,
+  'sbqtau': 9,
 }
 
 game_types = type_to_size_map.keys()
@@ -67,7 +85,7 @@ class Game(object):
       raise InvalidGameType()
     if self.type == '3ptau':
       self.space = fingeo.ProjectiveSpace()
-    elif self.type == 'bqtau':
+    elif self.type in ['bqtau', 'sbqtau']:
       self.space = fingeo.BooleanSpace()
     else:
       self.space = fingeo.AffineSpace()
@@ -164,10 +182,10 @@ class Game(object):
       if not self.deck:
         break
       num_cards_on_board = len(filter(None, self.board))
-      if num_cards_on_board > self.min_number - 3 and num_cards_on_board < self.min_number:
+      if num_cards_on_board > self.min_number - self.size and num_cards_on_board < self.min_number:
         to_add = self.min_number - num_cards_on_board
       else:
-        to_add = 3
+        to_add = self.size
       add_indices = []
       for i in range(0, len(self.board)):
         if to_add > 0 and self.board[i] is None:
@@ -283,7 +301,7 @@ class Game(object):
 
     # For Insane 3 Tau and Easy 3 Tau, the initial positions of cards must be
     # randomized, because the first 3 dealt cards always form a Tau.
-    if self.type in ['i3tau', 'e3tau', 'm3tau'] and len(filter(None, self.board)) + len(self.deck) == 3**4:
+    if self.type in ['i3tau', 'e3tau', 'm3tau'] and len(filter(None, self.board)) + len(self.deck) == type_to_deck_size_map[self.type]:
       # For Master 3 Tau, the positions of the last 3 cards dealt are chosen
       # to be hard, so don't mess them up.
       if self.type != 'm3tau' or len(filter(None, self.board)) <= 9:
@@ -423,7 +441,7 @@ class Game(object):
         if self.space.sum_cards(this_pair) == self.space.sum_cards(that_pair):
           return True
       return False
-    elif len(cards) == 4 and self.type in ['bqtau']:
+    elif len(cards) == 4 and self.type in ['bqtau', 'sbqtau']:
       return self.is_tau_basic(cards)
     elif len(cards) == 6:
       return self.is_tau_basic(cards) and self.no_subset_is_tau(cards, 3)
@@ -562,7 +580,6 @@ class Game(object):
 
     # Fall back to i3tau behaviour.
     return self.find_i3tau_new_cards()
-
 
   def find_e3tau_new_card(self):
     # Find the earliest card that maximizes the number of taus present.

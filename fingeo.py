@@ -8,7 +8,7 @@ import itertools
 def get_space(game_type):
   if game_type == '3ptau':
     return ProjectiveSpace()
-  elif game_type == 'bqtau':
+  elif game_type in ['bqtau', 'sbqtau']:
     return BooleanSpace()
   else:
     return AffineSpace()

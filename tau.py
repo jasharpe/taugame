@@ -444,7 +444,7 @@ def create_application(debug):
     (r"/leaderboard/(?P<leaderboard_object>(?:(?:players|games)/)?)(?P<leaderboard_type>alltime|thisweek|today)/(?P<slash_separated_players>(?:[^/]+/){2,})(?P<conjunction>and|or)/?", LeaderboardHandler),
     (r"/graph/([^/]*)", GraphHandler),
     (r"/choose_name", ChooseNameHandler),
-    (r"/new_game/(3tau|6tau|g3tau|i3tau|m3tau|e3tau|4tau|3ptau|z3tau|4otau|n3tau|bqtau)", NewGameHandler),
+    (r"/new_game/(3tau|6tau|g3tau|i3tau|m3tau|e3tau|4tau|3ptau|z3tau|4otau|n3tau|bqtau|sbqtau)", NewGameHandler),
     (r"/game/(\d+)", GameHandler),
     (r"/recap/(\d+)", RecapHandler),
     (r"/websocket/(\d*)", TauWebSocketHandler),
@@ -456,7 +456,7 @@ def create_application(debug):
     (r"/logout", LogoutHandler),
   ]
   if debug:
-    handlers.append((r"/testframe/(all|3tau|6tau|g3tau|i3tau|m3tau|e3tau|4tau|3ptau|z3tau|4otau|n3tau|bqtau)", TestFrameHandler))
+    handlers.append((r"/testframe/(all|3tau|6tau|g3tau|i3tau|m3tau|e3tau|4tau|3ptau|z3tau|4otau|n3tau|bqtau|sbqtau)", TestFrameHandler))
   return tornado.web.Application(handlers, **full_settings)
 
 # returns control to the main thread every timeout, where timeout is a timedelta.
