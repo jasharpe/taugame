@@ -182,10 +182,10 @@ class Game(object):
       if not self.deck:
         break
       num_cards_on_board = len(filter(None, self.board))
-      if num_cards_on_board > self.min_number - self.size and num_cards_on_board < self.min_number:
+      if num_cards_on_board > self.min_number - 3 and num_cards_on_board < self.min_number:
         to_add = self.min_number - num_cards_on_board
       else:
-        to_add = self.size
+        to_add = 3
       add_indices = []
       for i in range(0, len(self.board)):
         if to_add > 0 and self.board[i] is None:
