@@ -379,12 +379,13 @@ class RecapHandler(tornado.web.RequestHandler):
     self.render(
         "recap.html",
         players=map(lambda x: x.name, score.players),
-        num_taus=zip(map(lambda x: "%.2f" % (x), tau_times), map(str, num_taus), players),
+        num_taus=zip(tau_times, map(str, num_taus), players),
         avg_taus=sum(num_taus)/float(len(num_taus)),
         score=score,
         time_offset=time_offset,
         game_type_info=dict(GAME_TYPE_INFO),
         percentile=percentile,
+        time=score.elapsed_time,
         rank=rank)
 
 class SettingsHandler(tornado.web.RequestHandler):

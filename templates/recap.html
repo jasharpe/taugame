@@ -13,13 +13,14 @@
 
 <div>{{ (score.date - timedelta(minutes=time_offset)).strftime("%b %d %Y %I:%M%p") }}</div>
 <div>{{ game_type_info[score.game_type] }}</div>
+<div>Time: {{ fmt_time(time) }}</div>
 <div>Rank: #{{ rank }}</div>
 <div>Players: {{ ','.join(players) }}</div>
 <div>
   <table class="leaderboard">
     <thead><th>Num taus</th><th>Time taken</th><th>Player</th></thead>
     {% for (tau_time, num_tau, player) in num_taus %}
-    <tr><td>{{ num_tau }}</td><td>{{ tau_time }}</td><td>{{ player }}</td></tr>
+    <tr><td>{{ num_tau }}</td><td>{{ fmt_time(tau_time) }}</td><td>{{ player }}</td></tr>
     {% end %}
   </table>
   <p>Average number of taus: {{ "{0:.2f}".format(avg_taus) }}

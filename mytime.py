@@ -5,5 +5,7 @@ def fmt_time(time):
   minutes, seconds = divmod(remainder, 60)
   if hours:
     return '%dh %dm %01.02fs' % (hours, minutes, time - 3600 * hours - 60 * minutes)
-  else:
+  elif minutes:
     return '%dm %01.02fs' % (minutes, time - 3600 * hours - 60 * minutes)
+  else:
+    return '%01.02fs' % (time - 3600 * hours - 60 * minutes)
