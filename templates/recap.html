@@ -14,4 +14,8 @@
 <div>{{ (score.date - timedelta(minutes=time_offset)).strftime("%b %d %Y %I:%M%p") }}</div>
 <div>{{ game_type_info[score.game_type] }}</div>
 <div>Rank: #{{ rank }}</div>
+<div>
+  <p>Number of taus on the board: {{ ', '.join(num_taus) }}
+  <p>Average number of taus: {{ "{0:.2f}".format(avg_taus) }}
+</div>
 {% end %}

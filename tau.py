@@ -327,6 +327,13 @@ class TimeHandler(tornado.web.RequestHandler):
     new_time_offset = url_escape(self.get_argument("time_offset"))
     self.set_cookie("time_offset", new_time_offset)
 
+def get_wrong_property(space, cards):
+  s = space.sum_cards(cards)
+  for (i, val) in enumerate(s):
+    if val != 0:
+      return i
+  return -1
+
 class RecapHandler(tornado.web.RequestHandler):
   def get(self, score_id):
     score = get_score(score_id)
@@ -338,10 +345,35 @@ class RecapHandler(tornado.web.RequestHandler):
     except:
       time_offset = 0
 
+    try:
+      deck = list(reversed(map(tuple, score.game.deck)))
+    except:
+      deck = []
+    need_deck = not deck
+    taus = []
+    num_taus = []
+    targets = []
+    wrong_properties = []
+    for state in score.game.states:
+      space = fingeo.get_space(score.game_type)
+      target = space.sum_cards(state.cards)
+      targets.append(target)
+      wrong_property = get_wrong_property(space, state.cards)
+      wrong_properties.append(wrong_property)
+      taus.append(state.cards)
+      game = Game(score.game_type, deck=state.board, targets=[target], wrong_properties=[wrong_property])
+      num_taus.append(game.count_taus())
+      if need_deck:
+        for card in state.board:
+          if card and not tuple(card) in deck:
+            deck.append(tuple(card))
+
     (percentile, rank) = get_rank(score.elapsed_time, "alltime", score.num_players, score.game_type, "all", "exact", None)
 
     self.render(
         "recap.html",
+        num_taus=map(str, num_taus),
+        avg_taus=sum(num_taus)/float(len(num_taus)),
         score=score,
         time_offset=time_offset,
         game_type_info=dict(GAME_TYPE_INFO),
