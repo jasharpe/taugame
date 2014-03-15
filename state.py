@@ -1,6 +1,6 @@
 from db import Base, get_session
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, Text, Table, Boolean, distinct, func, or_, and_
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import relationship, backref, joinedload
 from sqlalchemy.sql.expression import desc, asc
 import datetime
 import json
@@ -17,7 +17,7 @@ def rdefaultdict(): return defaultdict(rdefaultdict)
 def get_score(score_id):
   session = get_session()
   try:
-    return session.query(Score).filter_by(id=score_id).first()
+    return session.query(Score).filter_by(id=score_id).options(joinedload('game.states.player')).first()
   except:
     return None
 

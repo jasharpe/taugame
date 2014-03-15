@@ -352,9 +352,15 @@ class RecapHandler(tornado.web.RequestHandler):
     need_deck = not deck
     taus = []
     num_taus = []
+    tau_times = []
     targets = []
     wrong_properties = []
+    players = []
+    total_elapsed_time = 0
     for state in score.game.states:
+      players.append(state.player.name)
+      tau_times.append(state.elapsed_time - total_elapsed_time)
+      total_elapsed_time = state.elapsed_time
       space = fingeo.get_space(score.game_type)
       target = space.sum_cards(state.cards)
       targets.append(target)
@@ -373,7 +379,7 @@ class RecapHandler(tornado.web.RequestHandler):
     self.render(
         "recap.html",
         players=map(lambda x: x.name, score.players),
-        num_taus=map(str, num_taus),
+        num_taus=zip(map(lambda x: "%.2f" % (x), tau_times), map(str, num_taus), players),
         avg_taus=sum(num_taus)/float(len(num_taus)),
         score=score,
         time_offset=time_offset,
