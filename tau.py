@@ -361,7 +361,7 @@ class RecapHandler(tornado.web.RequestHandler):
       wrong_property = get_wrong_property(space, state.cards)
       wrong_properties.append(wrong_property)
       taus.append(state.cards)
-      game = Game(score.game_type, deck=filter(None, state.board), targets=[target], wrong_properties=[wrong_property])
+      game = Game(score.game_type, deck=reversed(filter(None, state.board)), targets=[target], wrong_properties=[wrong_property])
       num_taus.append(game.count_taus())
       if need_deck:
         for card in state.board:
