@@ -318,6 +318,10 @@ $(document).ready(function() {
     var playing_area = $("#playing_area");
     playing_area.html('');
     old_selected = selection_model['selected'];
+    old_selected_card_numbers = [];
+    for (var i in old_selected) {
+      old_selected_card_numbers.push(get_card_number(card_index_to_card_map[old_selected[i]]));
+    }
     selection_model['selected'] = [];
 
     if (paused) {
@@ -484,6 +488,22 @@ $(document).ready(function() {
     playing_area.append($('<div style="clear:both;"/>'));
 
     prev_board = this_board;
+
+    // Update selection with old selection.
+    var selection_still_good = true;
+    for (var i in old_selected) {
+      if (!(old_selected[i] in card_index_to_card_map)) {
+        selection_still_good = false;
+        break;
+      }
+      selection_still_good = selection_still_good && old_selected_card_numbers[i] == get_card_number(card_index_to_card_map[old_selected[i]]);
+    }
+
+    if (selection_still_good) {
+      for (var i in old_selected) {
+        select_card(old_selected[i]);
+      }
+    }
 
     // Update zoom.
     document.getElementsByTagName('body')[0].style.zoom = 1;
