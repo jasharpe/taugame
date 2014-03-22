@@ -29,7 +29,8 @@
   </div>
   <div id="playing_area">
     {% if not game.started %}
-      <a id="start" tabindex="5" href="javascript:void(0);">Start</a>
+      <span id="connecting">Connecting...</span>
+      <a id="start" tabindex="5" style="display:none;" href="javascript:void(0);">Start</a>
     {% end %}
   </div>
   <div id="buttons"></div>

@@ -104,6 +104,8 @@ $(document).ready(function() {
   console.log("Using " + ws_type);
   var ws = new WebSocket(ws_type + "://" + window.location.host + "/websocket/" + game_id);
   ws.onopen = function() {
+    $("#connecting").hide();
+    $("#start").show();
     ws.send(JSON.stringify({
         'type' : 'update'
     }));

@@ -176,7 +176,7 @@ table {
   position:relative;
 }
 
-#start, #paused {
+#start, #paused, #connecting {
   position:absolute;
   top:45%;
   left:160px;
