@@ -44,16 +44,28 @@ $ yum install python
 $ yum install gcc-c++
 $ git clone https://github.com/jasharpe/websockettau.git
 # install tornado
-$ wget https://github.com/downloads/facebook/tornado/tornado-2.4.1.tar.gz
-$ tar xvzf tornado-2.4.1.tar.gz
-$ cd tornado-2.4.1
+$ wget https://pypi.python.org/packages/source/t/tornado/tornado-4.0.2.tar.gz
+$ tar xvzf tornado-4.0.2.tar.gz
+$ cd tornado-4.0.2
 $ python setup.py build
 $ sudo python setup.py install
+# install backports
+$ cd ~ && wget https://pypi.python.org/packages/source/b/backports.ssl_match_hostname/backports.ssl_match_hostname-3.4.0.2.tar.gz
+$ tar -zxvf backports.ssl_match_hostname-3.4.0.2.tar.gz
+$ cd backports.ssl_match_hostname-3.4.0.2
+$ python setup.py install
+# install pip
+$ sudo yum install python-pip
+# install certifi
+$ pip-python install certifi
 # install sqlalchemy
 $ yum install python-sqlalchemy
 # create secrets.py
+# Get google client id and secret from https://console.developers.google.com/project/apps~tau-game/apiui/credential
 $ cd ~/websockettau && cat > secrets.py
 cookie_secret = "SOME STRING HERE"
+client_id = "GOOGLE CLIENT ID"
+client_secret = "GOOGLE CLIENT SECRET"
 # Set up certificates by creating localhost.crt certificate, and put in websockettau directory.
 # Open ports, add to /etc/sysconfig/iptables:
 # -A RH-Firewall-1-INPUT -m state --state NEW -m tcp -p tcp --dport 80 -j ACCEPT
