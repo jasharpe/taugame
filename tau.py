@@ -4,7 +4,7 @@ import tornado.web
 import tornado.auth
 import tornado.websocket
 import tornado.httpserver
-from tornado.escape import url_escape, url_unescape, xhtml_escape, xhtml_unescape
+from tornado.escape import url_escape, url_unescape, xhtml_escape, xhtml_unescape, json_decode
 import json
 import os
 import re
@@ -14,10 +14,11 @@ import argparse
 import datetime, time
 import ssl
 from state import save_game, get_all_high_scores, get_all_high_games, get_ranks, get_rank, get_graph_data, check_name, set_name, get_name, get_score
-from secrets import cookie_secret
+from secrets import cookie_secret, client_id, client_secret
 from constants import GAME_TYPE_INFO
 from preset_decks import PRESET_TAUS
 import fingeo
+from tornado import  gen, httpclient
 
 # The time in seconds that games should be allowed to live without activity
 # before they are eligible to be hidden if they contain no players.
@@ -30,6 +31,10 @@ SETTINGS = {
     "template_path" : os.path.join(os.path.dirname(__file__), "templates"),
     "static_path" : os.path.join(os.path.dirname(__file__), "static"),
     "cookie_secret" : cookie_secret,
+    "google_oauth" : {
+      "key" : client_id,
+      "secret" : client_secret,
+    },
 }
 
 lobby = Lobby(GAME_EXPIRY)
@@ -421,7 +426,50 @@ class AboutHandler(tornado.web.RequestHandler):
         projcards=projcards,
     )
 
-class GoogleHandler(tornado.web.RequestHandler, tornado.auth.GoogleMixin):
+class GoogleHandler(tornado.web.RequestHandler,
+                               tornado.auth.GoogleOAuth2Mixin):
+  @tornado.gen.coroutine
+  def get(self):
+    redirect_uri = '%s://%s/google' % (self.request.protocol, self.request.host)
+    if self.get_argument('code', False):
+      token = yield self.get_authenticated_user(
+          redirect_uri=redirect_uri,
+          code=self.get_argument('code'))
+      client = httpclient.AsyncHTTPClient()
+      response = yield client.fetch(
+          "https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=%s" % (token["access_token"]), 
+          use_gzip=True
+      )
+      if response.code != 200:
+        self.finish()
+        return
+      user = json_decode(response.body)
+      
+      self.set_secure_cookie("google_user", url_escape(json.dumps(user)))
+      name = get_name(user['email'])
+      if name is None:
+        if not self.get_secure_cookie("name"):
+          self.redirect("/choose_name")
+          return
+        try:
+          set_name(user['email'], self.get_secure_cookie("name"))
+          self.redirect("/")
+        except:
+          self.clear_cookie('name')
+          self.redirect("/choose_name")
+        return
+      
+      self.set_secure_cookie('name', url_escape(name))
+      self.redirect("/")
+    else:
+      yield self.authorize_redirect(
+        redirect_uri=redirect_uri,
+        client_id=self.settings['google_oauth']['key'],
+        scope=['email'],
+        response_type='code',
+        extra_params={'approval_prompt': 'auto'})
+
+class GoogleHandlerOld(tornado.web.RequestHandler, tornado.auth.GoogleMixin):
   @tornado.web.asynchronous
   def get(self):
     if self.get_argument("openid.mode", None):
