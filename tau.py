@@ -4,6 +4,7 @@ import tornado.web
 import tornado.auth
 import tornado.websocket
 import tornado.httpserver
+from tornado.log import enable_pretty_logging
 from tornado.escape import url_escape, url_unescape, xhtml_escape, xhtml_unescape, json_decode
 import json
 import os
@@ -585,6 +586,7 @@ class OptionalHTTPServer(tornado.httpserver.HTTPServer):
 def main():
   global args
   args = parse_args()
+  enable_pretty_logging()
   application = create_application(args.debug)
   http_server = OptionalHTTPServer(args.port, application,
       ssl_options={
