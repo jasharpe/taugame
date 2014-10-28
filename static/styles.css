@@ -279,7 +279,7 @@ only screen and (min-device-pixel-ratio: 1.5) {
 }
 
 .classicTau {
-  background:url('/static/classiccards@2x.png?v=4') no-repeat scroll 0 0 white;
+  background:url('/static/classiccards@2x.jpg?v=4') no-repeat scroll 0 0 white;
   background-size:6480px 120px;
 }
 
