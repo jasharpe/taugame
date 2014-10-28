@@ -233,7 +233,7 @@ table {
 }
 
 .regularTau {
-  background:url('/static/cards.png?v=2') no-repeat scroll 0 0 white;
+  background:url('/static/cards.jpg?v=2') no-repeat scroll 0 0 white;
 }
 
 .classicTau {
@@ -241,31 +241,31 @@ table {
 }
 
 .colourBlindClassicTau {
-  background:url('/static/colourblindclassiccards.png?v=3') no-repeat scroll 0 0 white;
+  background:url('/static/colourblindclassiccards.jpg?v=3') no-repeat scroll 0 0 white;
 }
 
 .smallRegularTau {
-  background:url('/static/smallcards.png?v=5') no-repeat scroll 0 0 white;
+  background:url('/static/smallcards.jpg?v=5') no-repeat scroll 0 0 white;
 }
 
 .smallClassicTau {
-  background:url('/static/smallclassiccards.png?v=3') no-repeat scroll 0 0 white;
+  background:url('/static/smallclassiccards.jpg?v=3') no-repeat scroll 0 0 white;
 }
 
 .smallColourBlindClassicTau {
-  background:url('/static/smallcolourblindclassiccards.png?v=3') no-repeat scroll 0 0 white;
+  background:url('/static/smallcolourblindclassiccards.jpg?v=3') no-repeat scroll 0 0 white;
 }
 
 .projectiveTau {
-  background:url('/static/projcards.png?v=9') no-repeat scroll 0 0 white;
+  background:url('/static/projcards.jpg?v=9') no-repeat scroll 0 0 white;
 }
 
 .nearTau {
-  background:url('/static/neartau.png?v=6') no-repeat scroll 0 0 white;
+  background:url('/static/neartau.jpg?v=6') no-repeat scroll 0 0 white;
 }
 
 .booleanTau {
-  background:url('/static/bqcards.png?v=2') no-repeat scroll 0 0 white;
+  background:url('/static/bqcards.jpg?v=2') no-repeat scroll 0 0 white;
 }
 
 @media only screen and (-Webkit-min-device-pixel-ratio: 1.5),
@@ -274,7 +274,7 @@ only screen and (-o-min-device-pixel-ratio: 3/2),
 only screen and (min-device-pixel-ratio: 1.5) {
 
 .regularTau {
-  background:url('/static/cards@2x.png?v=2') no-repeat scroll 0 0 white;
+  background:url('/static/cards@2x.jpg?v=2') no-repeat scroll 0 0 white;
   background-size:6480px 120px;
 }
 
@@ -284,32 +284,32 @@ only screen and (min-device-pixel-ratio: 1.5) {
 }
 
 .colourBlindClassicTau {
-  background:url('/static/colourblindclassiccards@2x.png?v=3') no-repeat scroll 0 0 white;
+  background:url('/static/colourblindclassiccards@2x.jpg?v=3') no-repeat scroll 0 0 white;
   background-size:6480px 120px;
 }
 
 .smallRegularTau {
-  background:url('/static/smallcards@2x.png?v=5') no-repeat scroll 0 0 white;
+  background:url('/static/smallcards@2x.jpg?v=5') no-repeat scroll 0 0 white;
   background-size:3240px 60px;
 }
 
 .smallClassicTau {
-  background:url('/static/smallclassiccards@2x.png?v=3') no-repeat scroll 0 0 white;
+  background:url('/static/smallclassiccards@2x.jpg?v=3') no-repeat scroll 0 0 white;
   background-size:3240px 60px;
 }
 
 .smallColourBlindClassicTau {
-  background:url('/static/smallcolourblindclassiccards@2x.png?v=3') no-repeat scroll 0 0 white;
+  background:url('/static/smallcolourblindclassiccards@2x.jpg?v=3') no-repeat scroll 0 0 white;
   background-size:3240px 60px;
 }
 
 .nearTau {
-  background:url('/static/neartau@2x.png?v=6') no-repeat scroll 0 0 white;
+  background:url('/static/neartau@2x.jpg?v=6') no-repeat scroll 0 0 white;
   background-size:320px 120px;
 }
 
 .booleanTau {
-  background:url('/static/bqcards@2x.png?v=2') no-repeat scroll 0 0 white;
+  background:url('/static/bqcards@2x.jpg?v=2') no-repeat scroll 0 0 white;
   background-size:5120px 120px;
 }
 }
