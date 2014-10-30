@@ -1,15 +1,25 @@
 $(function(){
-	$.extend($.fn.disableTextSelect = function() {
-		return this.each(function(){
-			if($.browser.mozilla){//Firefox
-				$(this).css('MozUserSelect','none');
-			}else if($.browser.msie){//IE
-				$(this).bind('selectstart',function(){return false;});
-			}else{//Opera, etc.
-				$(this).mousedown(function(){return false;});
-			}
-		});
-	});
+  // Hack to make iOS 6 work.
+  if (navigator.userAgent.match(/iPhone OS 6_1_6/i) != null) {
+    var css = document.createElement('link');
+    css.type = "text/css";
+    css.rel = "stylesheet";
+    css.href = "/static/ios6.css";
+    var h = document.getElementsByTagName('head')[0];
+    h.appendChild(css);
+  }
+
+  $.extend($.fn.disableTextSelect = function() {
+    return this.each(function() {
+      if ($.browser.mozilla) {  // Firefox
+        $(this).css('MozUserSelect','none');
+      } else if ($.browser.msie){  // IE
+        $(this).bind('selectstart', function() { return false; });
+      } else {  // Opera, etc.
+        $(this).mousedown(function(){return false;});
+      }
+    });
+  });
 });
 
 function ready() {
