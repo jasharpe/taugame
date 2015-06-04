@@ -26,6 +26,10 @@
   background:url('/static/projcards.jpg?v=9') no-repeat scroll 0 0 white;
 }
 
+.projectiveTauNew {
+  background:url('/static/projcardsnew.jpg?v=1') no-repeat scroll 0 0 white;
+}
+
 .nearTau {
   background:url('/static/neartau.jpg?v=6') no-repeat scroll 0 0 white;
 }
@@ -67,6 +71,11 @@ only screen and (min-device-pixel-ratio: 1.5) {
 .smallColourBlindClassicTau {
   background:url('/static/smallcolourblindclassiccards@2x.jpg?v=3') no-repeat scroll 0 0 white;
   background-size:3240px 60px;
+}
+
+.projectiveTauNew {
+  background:url('/static/projcardsnew@2x.jpg?v=1') no-repeat scroll 0 0 white;
+  background-size:5040px 120px;
 }
 
 .nearTau {

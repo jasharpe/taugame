@@ -14,5 +14,6 @@ os.system("""
 openssl genrsa -des3 -passout pass:x -out localhost.pass.key 2048 && \
 openssl rsa -passin pass:x -in localhost.pass.key -out localhost.key \
 && rm localhost.pass.key && \
-openssl req -new -key localhost.key -out localhost.csr
+openssl req -new -key localhost.key -out localhost.csr && \
+openssl x509 -req -days 10000 -in localhost.csr -signkey localhost.key -out localhost.crt
 """)

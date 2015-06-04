@@ -282,8 +282,13 @@ $(document).ready(function() {
   function getImgClass() {
     var colour_blind = $.cookie("colour_blind") === "true";
     var classic_cards = $.cookie("classic_cards") !== "false";
+    var new_projective_cards = $.cookie("new_projective_cards") === "true";
     if (game_type === "3ptau") {
-      return "projectiveTau";
+      if (new_projective_cards) {
+        return "projectiveTauNew";
+      } else {
+        return "projectiveTau";
+      }
     } else if (game_type === "bqtau" || game_type === "sbqtau") {
       return "booleanTau";
     } else if (classic_cards && colour_blind) {
