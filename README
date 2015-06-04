@@ -8,23 +8,25 @@ http://www.tornadoweb.org/
 SQLAlchemy
 http://www.sqlalchemy.org/
 
+**** Install requirements with MacPorts
+
+  sudo port install python27 py27-tornado py27-sqlalchemy
 
 *** Running
-You must first create a secrets.py module containing a single string
-'cookie_secret':
 
-  import base64
-  import uuid
- 
-  print base64.b64encode(uuid.uuid4().bytes + uuid.uuid4().bytes)
+Before running the first time, to set up necessary files run:
 
-Type:
-  sudo python2.7 tau.py
-Root access is required to bind to port 80.
+  python2.7 setup.py
 
-For options, type:
+To run locally for development:
+
+  sudo python2.7 tau.py --debug --port=8000 --ssl_port=8001
+
+Root access is required to bind to port 80 which is the default, so using ports 8000 and 8001 avoids this. The --debug flag allows the use of ^C to kill the server (very handy for restarting it during development).
+
+For other options, type:
+
   python2.7 tau.py --help
-
 
 *** Adding a new game type (as of July 15, 2012)
 - Implement the rules in game.py.
