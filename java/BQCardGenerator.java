@@ -1,7 +1,6 @@
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
-import java.awt.Triangle;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.TexturePaint;
@@ -21,8 +20,8 @@ public class BQCardGenerator {
     }
 
     //colour, number, shape
-    int width = 822;
-    int height = 1122;
+    int width = 825;
+    int height = 1125;
     int i = 0;
     for (int colour = 0; colour < 4; colour++) {
       for (int number = 0; number < 4; number++) {
@@ -37,8 +36,8 @@ public class BQCardGenerator {
 
           graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-          int bonusLeft = 59;
-          int bonusTop = 80;
+          int bonusLeft = 60;
+          int bonusTop = 81;
           drawCard(graphics, -bonusLeft, -bonusTop, width + 2*bonusLeft, height+2*bonusTop, colour, number, shape);
 
           try {
