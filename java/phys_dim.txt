@@ -1,0 +1,26 @@
+oval dim
+        card width = 5.7cm
+        oval len = 3.7cm = 
+        diam len = 3.8cm = 2/3rds = 66.6%
+
+
+with screen sizing
+        card width = 822px
+        horiz span of 4 sq = 480px = 58.4%
+
+        target = 822px * 2/3 = 548px = 1.142 * 480px
+
+        orig no1 = 103px
+        orig no2 = 206px
+
+        new no1 = 118px
+        new no2 = 236px
+
+        width = 822
+        height = 1122
+
+        adj width = 939px
+        adj height = 1281px
+
+        bonus left = 59px
+        bonus top = 80px
