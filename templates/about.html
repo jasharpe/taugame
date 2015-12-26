@@ -20,7 +20,7 @@
 
   <h3>Keyboard Shortcuts</h3>
 
-  <p>You should learn to play Tau with the keyboard. It allows you to select Taus far faster than is possible with the mouse.
+  <p>If using a laptop or desktop computer, you should learn to play Tau with the keyboard. It allows you to select Taus far faster than is possible with the mouse.
   
   <p>The keyboard simply corresponds to what's on the screen. For example, the letters Q, A, and Z, the left side of the keyboard, correspond to the left column of the Tau board. So Q selects the top left card, A the middle left card, and Z the bottom left card. Similarly, W, S, and X correspond to the second column, E, D, and C to the third, etc. If extra columns are added, this scheme continues as you'd expect. T, G, and B correspond to the fifth column, Y, H, and N to the sixth column, etc.
 
@@ -31,12 +31,16 @@
     <li><i>L</i>: pause/unpause the game (available only in single player games)
     <li><i>K</i>: get hint (available only in training games)
   </ul>
+  
+  <h3>Mobile</h3>
+
+  <p>taugame.com is designed to work well on mobile devices, such as phones and tablets. If this isn't the case, please <a href="mailto:jsharpe@taugame.com">contact me</a> and let me know the device that doesn't work well, as well as what's not working for you, and I'll try to fix it.
 
   <h2>Rules</h2>
 
   <p>
   {% set first = True %}  
-  {% for (game_type, game_label) in [('3tau', '3 Tau'), ('6tau', '6 Tau'), ('g3tau', 'Generalized 3 Tau'), ('i3tau', 'Insane 3 Tau'), ('e3tau', 'Easy 3 Tau'), ('4tau', '4 Tau'), ('3ptau', '3 Projective Tau'), ('z3tau', 'Puzzle 3 Tau'), ('4otau', '4 Outer Tau'), ('n3tau', 'Near 3 Tau'), ('bqtau', 'Boolean Quadruple Tau'), ('sbqtau', 'Small Boolean Quadruple Tau')] %}
+  {% for (game_type, game_label) in [('3tau', '3 Tau'), ('6tau', '6 Tau'), ('g3tau', 'Generalized 3 Tau'), ('i3tau', 'Insane 3 Tau'), ('e3tau', 'Easy 3 Tau'), ('4tau', '4 Tau'), ('3ptau', '3 Projective Tau'), ('z3tau', 'Puzzle 3 Tau'), ('4otau', '4 Outer Tau'), ('n3tau', 'Near 3 Tau'), ('sbqtau', 'Quad Tau'), ('bqtau', 'Large Quad Tau')] %}
     {% if not first %}|{% end %}
     <a href="#rules{{ game_type }}">{{ game_label }}</a>
     {% set first = False %}
@@ -345,11 +349,11 @@
 
   <h3 id="rulesi3tau">Insane 3 Tau</h3>
 
-  <p>Finding taus in Insane 3 Tau is the same as in 3 Tau, except here the deck is stacked against you: the dealer tries to deal cards such that there is only one tau present.
+  <p>Finding Taus in Insane 3 Tau is the same as in 3 Tau, except here the deck is stacked against you: the dealer tries to deal cards such that there is only one tau present.
 
   <h3 id="rulese3tau">Easy 3 Tau</h3>
 
-  <p>Similar to Insane 3 Tau, except the dealer tries to make boards with a lot of taus.
+  <p>Similar to Insane 3 Tau, except the dealer tries to make boards with a lot of Taus.
 
   <h3 id="rules4tau">4 Tau</h3>
 
@@ -475,7 +479,7 @@
 
   <h3 id="rulesz3tau">Puzzle 3 Tau</h3>
 
-  <p>Finding taus in Puzzle 3 Tau is the same as in 3 Tau. The variation in this game is that you are given a board of 12 cards containing a total of 6 taus, and finding taus does not remove them from the board. Find all 6 of the taus in the 12 cards to win.
+  <p>Finding Taus in Puzzle 3 Tau is the same as in 3 Tau. The variation in this game is that you are given a board of 12 cards containing a total of 6 Taus, and finding Taus does not remove them from the board. Find all 6 of the Taus in the 12 cards to win.
 
   <h3 id="rules4otau">4 Outer Tau</h3>
 
@@ -505,20 +509,77 @@
 
   <h3 id="rulesn3tau">Near 3 Tau</h3>
 
-  <p>Coming soon.
+  <p>In this variant of 3 Tau, a set of 3 cards is a Tau if it would be a 3 Tau by the ordinary rules, except that it's wrong in a designated property. All other properties must be correct.
 
-  <h3 id="rulesbqtau">Boolean Quadruple Tau</h3>
+  <p>The property that must be incorrect is shown by a special card to the right of the playing area.
+
+  <p>The shape property must be wrong:
+
+  {% raw nearcards['shape'] %}
+
+  <p>The colour property must be wrong:
+
+  {% raw nearcards['colour'] %}
+
+  <p>The number property must be wrong:
+
+  {% raw nearcards['number'] %}
+
+  <p>The shading property must be wrong:
+
+  {% raw nearcards['shading'] %}
+
+  <p>For example, if the shading property must be wrong, then this is a Tau, because only the shading property is wrong:
+
+  {% raw cards[('triangle', 'shaded', 'one', 'green')] %}
+  {% raw cards[('triangle', 'solid', 'two', 'green')] %}
+  {% raw cards[('triangle', 'solid', 'three', 'green')] %}
+
+  <p>But this is not, because the colour property is also wrong:
+
+  {% raw cards[('triangle', 'shaded', 'one', 'blue')] %}
+  {% raw cards[('triangle', 'solid', 'two', 'green')] %}
+  {% raw cards[('triangle', 'solid', 'three', 'green')] %}
+
+  <h3 id="rulessbqtau">Quad Tau</h3>
 
   <p>There are three properties (colour, number, shape) with four values each.
-  Find four cards such that in each property, they are either all the same, have two values appearing twice each, or are all different.
-  Another way of saying it: if two differ and the other two don't, it's not a Boolean Quadruple Tau.
+
+  <p>The board has 9 cards from which players attempt to find Taus. If no Taus exist, an extra 3 cards are added. A Tau is four cards such that in each property, they are either all the same, have two values appearing twice each, or are all different.
 
   <p>In other words, the allowed cases are AAAA, AABB, ABCD, and the forbidden cases are AAAB and AABC.
 
-  <p>(More details coming soon.)
+  <p>A handy rule of thumb: if any two cards differ and the other two don't, it's not a Boolean Quadruple Tau.
 
-  <h3 id="rulessbqtau">Small Boolean Quadruple Tau</h3>
+  <p>For example, the following is a Tau:
 
-  <p>Like Boolean Quadruple Tau, but with only 9 cards instead of 12.
+  {% raw quadcards[('square', 'three', 'blue')] %}
+  {% raw quadcards[('square', 'two', 'blue')] %}
+  {% raw quadcards[('diamond', 'four', 'blue')] %}
+  {% raw quadcards[('diamond', 'one', 'blue')] %}
+
+  <p>All cards are the same colour, there are two shape values (square and diamond) appearing twice each, and the numbers are all different.
+
+  <p>Here's another example:
+
+  {% raw quadcards[('square', 'three', 'yellow')] %}
+  {% raw quadcards[('diamond', 'three', 'yellow')] %}
+  {% raw quadcards[('circle', 'three', 'red')] %}
+  {% raw quadcards[('triangle', 'three', 'red')] %}
+
+  <p>All the shapes are different, all the numbers are the same, and the colours have two values, with two cards each.
+
+  <p>This is <i>not</i> a Tau:
+
+  {% raw quadcards[('square', 'three', 'green')] %}
+  {% raw quadcards[('square', 'three', 'green')] %}
+  {% raw quadcards[('square', 'one', 'green')] %}
+  {% raw quadcards[('triangle', 'four', 'green')] %}
+
+  <p>The shape property is wrong, because there are three of one value, and one of another. The number property is wrong, because there are two of one value, but one of each of two others. Only the colour property is correct.
+
+  <h3 id="rulesbqtau">Large Quad Tau</h3>
+
+  <p>Like Quad Tau, but with only 12 cards by default instead of 9.
 </div>
 {% end %}

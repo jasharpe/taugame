@@ -411,20 +411,42 @@ class AboutHandler(tornado.web.RequestHandler):
           for colour in xrange(3):
             offset = 80 * (shape * 27 + shading * 9 + number * 3 + colour)
             cards[(shapes[shape], shadings[shading], numbers[number], colours[colour])] = "<div class=\"realCard unselectedCard regularTau\" style=\"background-position: -%dpx 0px; display:inline-block;\"></div>" % offset
+
+    projcards = {}
     chess_shapes = ["", "pawn", "knight", "rook"]
     astro_shapes = ["", "sun", "star", "meteors"]
     suit_shapes = ["", "club", "heart", "diamond"]
-    projcards = {}
     for chess_shape in xrange(4):
       for astro_shape in xrange(4):
         for suit_shape in xrange(4):
           if not any([chess_shape, astro_shape, suit_shape]): continue
           offset = 80 * (chess_shape + astro_shape * 4 + suit_shape * 16 - 1)
           projcards[(chess_shapes[chess_shape], astro_shapes[astro_shape], suit_shapes[suit_shape])] = '<div class="realCard unselectedCard projectiveTau"  style="background-position: -%dpx 0px; display:inline-block;"></div>' % offset
+
+    quadcards = {}
+    shapes = ["circle", "square", "triangle", "diamond"]
+    numbers = ["one", "two", "three", "four"]
+    colours = ["red", "yellow", "blue", "green"]
+    for shape in xrange(4):
+      for number in xrange(4):
+        for colour in xrange(4):
+          offset = 80 * (colour + number * 4 + shape * 16)
+          quadcards[(shapes[shape], numbers[number], colours[colour])] = '<div class="realCard unselectedCard booleanTau" style="background-position: -%dpx 0px; display:inline-block;"></div>' % offset 
+
+    nearcards = {
+      'colour': '<div class="realCard unselectedCard nearTau" style="background-position: -0px 0px; display:inline-block;"></div>',
+      'number': '<div class="realCard unselectedCard nearTau" style="background-position: -80px 0px; display:inline-block;"></div>',
+      'shading': '<div class="realCard unselectedCard nearTau" style="background-position: -160px 0px; display:inline-block;"></div>',
+      'shape': '<div class="realCard unselectedCard nearTau" style="background-position: -240px 0px; display:inline-block;"></div>',
+    }
+
+
     self.render(
         "about.html",
         cards=cards,
         projcards=projcards,
+        quadcards=quadcards,
+        nearcards=nearcards,
     )
 
 class GoogleHandler(tornado.web.RequestHandler,

@@ -10,6 +10,6 @@ GAME_TYPE_INFO = [
   ("z3tau", "Puzzle 3 Tau"),
   ("4otau", "4 Outer Tau"),
   ("n3tau", "Near 3 Tau"),
-  ("bqtau", "Boolean Quadruple Tau"),
-  ("sbqtau", "Small Boolean Quadruple Tau"),
+  ("sbqtau", "Quad Tau"),
+  ("bqtau", "Large Quad Tau"),
 ]
