@@ -98,14 +98,14 @@ $(document).ready(function() {
 
 <div class="leaderboard_menu">
 {% set first = True %}  
-{% for (game_type, game_type_string) in game_type_info %}
+{% for (game_type, game_type_string, _, _) in game_type_info %}
 {% if not first %}|{% end %}
 <a href="#{{ game_type }}">{{ game_type_string }}</a>
 {% set first = False %}
 {% end %}
 </div>
 
-{% for (game_type, game_type_string) in game_type_info %}
+{% for (game_type, game_type_string, _, _) in game_type_info %}
 {% if game_type in all_high_scores %}
 <div class="leaderboard_container">
   <h2 style="display:inline-block;" id="{{ game_type }}">{{ game_type_string }}</h2> <a class="leaderboard_back_to_top_link" href="#">back to top</a>
