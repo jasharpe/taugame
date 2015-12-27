@@ -9,11 +9,11 @@
   var game_size = {{ game.size }};
   var game_type = "{{ game.type }}";
   var user_name = "{{ user_name }}";
-  var game_type_info = {
-    {% for (game_type1, game_type_string) in game_type_info %}
-    "{{ game_type1 }}" : "{{ game_type_string }}",
+  var game_type_info = [
+    {% for (new_game_type, game_type_string, variant, obscure_variant) in game_type_info %}
+    ["{{ new_game_type }}", "{{ game_type_string }}", "{{ variant }}", "{{ obscure_variant }}"],
     {% end %}
-  };
+  ];
   var training = {{ "true" if training else "false" }};
 </script>
 <script type="text/javascript" src="{{ static_url("jquery-ui.min.js") }}"></script>

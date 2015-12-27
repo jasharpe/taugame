@@ -5,7 +5,7 @@
 {% block scripts %}
 <script>
 $(function() {
-  $("#classic_cards").attr("checked", $.cookie("classic_cards") !== "false");
+  $("#classic_cards").attr("checked", $.cookie("classic_cards") === "true");
   $("#classic_cards").change(function() {
     $.cookie("classic_cards",
       $(this).is(":checked"),
@@ -26,7 +26,7 @@ $(function() {
       {expires: 99999, path:'/'}
     );
   });
-  $("#new_projective_cards").attr("checked", $.cookie("new_projective_cards") === "true");
+  $("#new_projective_cards").attr("checked", $.cookie("new_projective_cards") !== "false");
   $("#new_projective_cards").change(function() {
     $.cookie("new_projective_cards",
       $(this).is(":checked"),
@@ -41,7 +41,9 @@ $(function() {
 <h2>Settings (stored as cookies)</h2>
 
 <div class="padded">
+  {% if whitelisted_for_classic_cards %}
   <div><input id="classic_cards" type="checkbox"/><label for="classic_cards">Classic cards</label></div>
+  {% end %}
   <div><input id="colour_blind" type="checkbox"/><label for="colour_blind">Colour blind cards</label></div>
   <div><input id="new_card_animation" type="checkbox"/><label for="new_card_animation">New card animation</label></div>
   <div><input id="new_projective_cards" type="checkbox"/><label for="new_projective_cards">New Projective Tau cards</label></div>

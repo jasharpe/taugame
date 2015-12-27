@@ -281,8 +281,8 @@ $(document).ready(function() {
 
   function getImgClass() {
     var colour_blind = $.cookie("colour_blind") === "true";
-    var classic_cards = $.cookie("classic_cards") !== "false";
-    var new_projective_cards = $.cookie("new_projective_cards") === "true";
+    var classic_cards = $.cookie("classic_cards") === "true";
+    var new_projective_cards = $.cookie("new_projective_cards") !== "false";
     if (game_type === "3ptau") {
       if (new_projective_cards) {
         return "projectiveTauNew";
@@ -627,29 +627,54 @@ $(document).ready(function() {
   function update_new_game() {
     var div = $("#new_game");
     div.html('');
-    var new_game_type;
     var tab_index = 10;
-    for (new_game_type in game_type_info) {
-      var game_type_string = game_type_info[new_game_type];
-      var form = $('<form style="display:inline-block;" name="new_game" action="/new_game/' + new_game_type + '?parent=' + game_id + '" method="post"><input type="submit" tabindex="' + tab_index + '" value="New ' + game_type_string + ' game" /></form>');
-      form.submit(function(e) {
-        var params = [
-          { 'name' : 'training', 'value' : $("#training").is(':checked') },
-        ];
 
-        var that = $(this);
-        $.each(params, function(i, param) {
-            var input = $('<input/>').attr('type', 'hidden')
-                .attr('name', param.name)
-                .attr('value', param.value);
-            that.append(input);
+    function add(elt, display, predicate) {
+      for (var game_index = 0; game_index < game_type_info.length; game_index++) {
+        var new_game_info = game_type_info[game_index];
+        if (!predicate(new_game_info)) {
+          continue;
+        }
+        var new_game_type = new_game_info[0];
+        var game_type_string = new_game_info[1];
+        var form = $('<form style="display:' + display + ';" name="new_game" action="/new_game/' + new_game_type + '?parent=' + game_id + '" method="post"><input type="submit" tabindex="' + tab_index + '" value="New ' + game_type_string + ' game" /></form>');
+        form.submit(function(e) {
+          var params = [
+            { 'name' : 'training', 'value' : $("#training").is(':checked') },
+          ];
+
+          var that = $(this);
+          $.each(params, function(i, param) {
+              var input = $('<input/>').attr('type', 'hidden')
+                  .attr('name', param.name)
+                  .attr('value', param.value);
+              that.append(input);
+          });
+          
+          return true;
         });
-        
-        return true;
-      });
-      div.append(form);
-      tab_index++;
+        elt.append(form);
+        tab_index++;
+      }
     }
+    add(div, 'inline-block', function(new_game_info) {
+        return new_game_info[2] === "False" && new_game_info[3] === "False"
+    });
+    
+    var variants = $('<details/>');
+    variants.append($('<summary>Variants</summary>'));
+    add(variants, 'block', function(new_game_info) {
+        return new_game_info[2] === "True";
+    });
+    div.append(variants);
+
+    var obscure_variants = $('<details/>');
+    obscure_variants.append($('<summary>Obscure Variants</summary>'));
+    add(obscure_variants, 'block', function(new_game_info) {
+        return new_game_info[3] === "True";
+    });
+    div.append(obscure_variants);
+
     div.append($('<div><input id="training" type="checkbox"/><label for="training">Training</label></div>'));
   }
 

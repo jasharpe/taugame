@@ -10,11 +10,33 @@
 {% end %}
 
 {% block body %}
-{% for (game_type, game_type_string) in game_type_info %}
+{% for (game_type, game_type_string, variant, obscure_variant) in game_type_info %}
+{% if not variant and not obscure_variant %}
 <form style="display:inline-block;" name="new_game" action="/new_game/{{ game_type }}" class="new_game_form" method="post">
   <input type="submit" id="new_{{game_type}}" value="New {{ game_type_string }} game" />
 </form>
 {% end %}
+{% end %}
+<details>
+  <summary>Variants</summary>
+  {% for (game_type, game_type_string, variant, obscure_variant) in game_type_info %}
+  {% if variant %}
+  <form style="display:block;" name="new_game" action="/new_game/{{ game_type }}" class="new_game_form" method="post">
+    <input type="submit" id="new_{{game_type}}" value="New {{ game_type_string }} game" />
+  </form>
+  {% end %}
+  {% end %}
+</details>
+<details>
+  <summary>Obscure Variants</summary>
+  {% for (game_type, game_type_string, variant, obscure_variant) in game_type_info %}
+  {% if obscure_variant %}
+  <form style="display:block;" name="new_game" action="/new_game/{{ game_type }}" class="new_game_form" method="post">
+    <input type="submit" id="new_{{game_type}}" value="New {{ game_type_string }} game" />
+  </form>
+  {% end %}
+  {% end %}
+</details>
 <div>
   <input id="training" type="checkbox"/><label for="training">Training</label>
 </div>

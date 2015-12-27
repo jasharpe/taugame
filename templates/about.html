@@ -12,11 +12,11 @@
 
   <p>taugame.com was created by <a href="http://jsharpe.ca">Jeremy Sharpe</a>. Its code is available on <a href="https://github.com/jasharpe/websockettau">github</a>. It is implemented using websockets, with a Python server using Tornado, and a javascript client. You can contact me with any questions or comments at <a href="mailto:jsharpe@taugame.com">jsharpe@taugame.com</a>.
 
-  <p>Thanks to Marsha Falco and SET{{ u"\u00ae" }} Enterprises for inventing and publishing <a href="http://www.setgame.com/">SET{{ u"\u00ae" }}</a>, the game upon which 3 Tau is based, and the game which is the inspiration for all the variants implemented on this site.
+  <p>Thanks to Marsha Falco and SET{{ u"\u00ae" }} Enterprises for inventing and publishing <a href="http://www.setgame.com/">SET{{ u"\u00ae" }}</a>, the game which inspired many of the games implemented on this site.
 
   <h2 id="controls">Controls</h2>
 
-  <p>Click on cards to select and deselect them. When you click on 3 (or 6) cards that form a Tau, they will be removed from the board and you will be credited with the Tau. If they don't disappear, then probably what you clicked on was not a Tau, or the server is being slow.
+  <p>Click on cards to select and deselect them. When you click on the cards that form a Tau, they will be removed from the board and you will be credited with the Tau. If they don't disappear, then probably what you clicked on was not a Tau, or the server is being slow.
 
   <h3>Keyboard Shortcuts</h3>
 
@@ -40,7 +40,7 @@
 
   <p>
   {% set first = True %}  
-  {% for (game_type, game_label) in [('3tau', '3 Tau'), ('6tau', '6 Tau'), ('g3tau', 'Generalized 3 Tau'), ('i3tau', 'Insane 3 Tau'), ('e3tau', 'Easy 3 Tau'), ('4tau', '4 Tau'), ('3ptau', '3 Projective Tau'), ('z3tau', 'Puzzle 3 Tau'), ('4otau', '4 Outer Tau'), ('n3tau', 'Near 3 Tau'), ('sbqtau', 'Quad Tau'), ('bqtau', 'Large Quad Tau')] %}
+  {% for (game_type, game_label) in [('3tau', '3 Tau'), ('6tau', '6 Tau'), ('g3tau', 'Generalized 3 Tau'), ('i3tau', 'Insane 3 Tau'), ('e3tau', 'Easy 3 Tau'), ('4tau', '4 Tau'), ('3ptau', 'Projective Tau'), ('z3tau', 'Puzzle 3 Tau'), ('4otau', '4 Outer Tau'), ('n3tau', 'Near 3 Tau'), ('sbqtau', 'Quad Tau'), ('bqtau', 'Large Quad Tau')] %}
     {% if not first %}|{% end %}
     <a href="#rules{{ game_type }}">{{ game_label }}</a>
     {% set first = False %}
@@ -49,7 +49,7 @@
   
   <h3 id="rules3tau">3 Tau</h3>
 
-  <p>Each of the 81 cards in the Tau deck has 4 properties with 3 possible values each:
+  <p>Each of the 81 cards in the 3 Tau deck has 4 properties with 3 possible values each:
   
   <ul>
     <li><i>Colour</i>: one of red, green, and blue</li>
@@ -58,7 +58,7 @@
     <li><i>Shape</i>: one of circle, square, and triangle</li>
   </ul>
 
-  <p>A few examples of Tau cards, showing all available properties, are:
+  <p>A few examples of 3 Tau cards, showing all available properties, are:
 
   {% raw cards[('triangle', 'shaded', 'two', 'green')] %}
   {% raw cards[('circle', 'empty', 'three', 'red')] %}
@@ -400,11 +400,11 @@
 
   <p>A more effective long-term strategy for 4 Tau is to play it similarly to the 3-card strategy for 6 Tau. This will enable you to "see" 4 Taus, rather than relying on blind brute force.
 
-  <h3 id="rules3ptau">3 Projective Tau</h3>
+  <h3 id="rules3ptau">Projective Tau</h3>
 
-  <p><i>Thanks to Benjamin Lent Davis and Diane Maclagan (who wrote <a href="http://homepages.warwick.ac.uk/staff/D.Maclagan/papers/set.pdf">this paper</a>) for describing 3 Projective Tau, and (according to that paper) H. Tracy Hall for devising a good format for the cards.</i>
+  <p><i>Thanks to Benjamin Lent Davis and Diane Maclagan (who wrote <a href="http://homepages.warwick.ac.uk/staff/D.Maclagan/papers/set.pdf">this paper</a>) for describing Projective Tau, and (according to that paper) H. Tracy Hall for devising a good format for the cards.</i>
 
-  <p>Unlike many of the other Tau variants, 3 Projective Tau actually uses a different deck, and while its mathematical definition is similar to 3 Tau (although with some significant differences), it feels quite different to play. At first, for someone already good at 3 Tau, it seems much more difficult. Over time, however, you will develop an intuitive sense for 3 Projective Taus, just as in 3 Tau. In fact, 3 Projective Tau is arguably easier than 3 Tau, as there are, on average, more 3 Projective Taus per 12 card board than 3 Taus per 12 card board.
+  <p>Unlike many of the other Tau variants, Projective Tau actually uses a different deck, and while its mathematical definition is similar to 3 Tau (although with some significant differences), it feels quite different to play. At first, for someone already good at 3 Tau, it seems much more difficult. Over time, however, you will develop an intuitive sense for Projective Taus, just as in 3 Tau. In fact, Projective Tau is arguably easier than 3 Tau, as there are, on average, more Projective Taus per 12 card board than 3 Taus per 12 card board.
 
   <p>Each of the 63 cards in the Projective Tau deck has 3 properties with 4 possible values each:
   
@@ -421,9 +421,9 @@
   {% raw projcards[('knight', 'star', '')] %}
   {% raw projcards[('rook', 'meteors', 'heart')] %}
 
-  <p>A 3 Projective Tau is a group of 3 cards such that <b>for each of the 3 properties, the 3 cards are either <i>all blank</i>, or <i>two the same and one blank</i>, or <i>all different and non-blank</i> in that property</b>. Notice that in Projective Tau, the blank property behaves differently from the other 3 properties. This is a bit different than 3 Tau, in which all 3 values of each property behaved identically.
+  <p>A Projective Tau is a group of 3 cards such that <b>for each of the 3 properties, the 3 cards are either <i>all blank</i>, or <i>two the same and one blank</i>, or <i>all different and non-blank</i> in that property</b>. Notice that in Projective Tau, the blank property behaves differently from the other 3 properties. This is a bit different than 3 Tau, in which all 3 values of each property behaved identically.
 
-  <p>For example, the following is a 3 Projective Tau:
+  <p>For example, the following is a Projective Tau:
 
   {% raw projcards[('', 'sun', 'club')] %}
   {% raw projcards[('', 'sun', 'diamond')] %}
@@ -431,7 +431,7 @@
 
   <p>All three cards have blank chess property; two the same astronomical property (sun), and the other blank; and all different suit property.
 
-  <p>The following is also a 3 Projective Tau:
+  <p>The following is also a Projective Tau:
 
   {% raw projcards[('pawn', 'meteors', '')] %}
   {% raw projcards[('', 'sun', 'diamond')] %}
@@ -439,7 +439,7 @@
 
   <p>Two cards have the same chess property, and the other blank; all have different astronomical property; and two have the same suit property, and the other blank.
 
-  <p>This is <i>not</i> a 3 Projective Tau:
+  <p>This is <i>not</i> a Projective Tau:
 
   {% raw projcards[('pawn', 'meteors', '')] %}
   {% raw projcards[('knight', 'sun', 'diamond')] %}
@@ -447,7 +447,7 @@
 
   <p>Two cards have pawn chess property, but the third does not have a blank chess property, it has knight.
 
-  <p>This is also <i>not</i> a 3 Projective Tau:
+  <p>This is also <i>not</i> a Projective Tau:
 
   {% raw projcards[('pawn', 'meteors', '')] %}
   {% raw projcards[('', 'sun', '')] %}
@@ -455,7 +455,7 @@
 
   <p>Two cards have blank suit property, but the third is not also blank.
 
-  <p>This is also <i>not</i> a 3 Projective Tau:
+  <p>This is also <i>not</i> a Projective Tau:
 
   {% raw projcards[('pawn', 'meteors', 'heart')] %}
   {% raw projcards[('rook', 'sun', 'heart')] %}
@@ -463,19 +463,19 @@
 
   <p>The cards are all different in the astronomical property, but they are not also all non-blank in that property, so they don't fit the third rule.
 
-  <p>A useful restatement of the 3 Projective Tau property is that <b>if two cards are the same, and the third one is not blank, or if two non-blank cards are different, and the third one is not the third non-blank card, it's not a 3 Projective Tau</b>.
+  <p>A useful restatement of the Projective Tau property is that <b>if two cards are the same, and the third one is not blank, or if two non-blank cards are different, and the third one is not the third non-blank card, it's not a Projective Tau</b>.
 
   <h4>Mathematical Explanation</h4>
 
   <p>This game is based off the one described on page 17 of <a href="http://homepages.warwick.ac.uk/staff/D.Maclagan/papers/set.pdf">this paper</a>. For mathematical details look there.
 
-  <p>The summary is that 3 Tau and 3 Projective Tau are very deeply similar games, with only a couple of details changed, that end up making them feel quite different. In 3 Tau, the objective is to find 3 4-vectors over the integers mod 3 that sum to 0. In 3 Projective Tau, the objective is to find 3 6-vectors over the integers mod 2 that sum to 0. This fact is slightly hidden due to the cards. 3 Tau cards are easy to visualize as 4-vectors, but how can the 3 property Projective Tau cards be 6-vectors?
+  <p>The summary is that 3 Tau and Projective Tau are very deeply similar games, with only a couple of details changed, that end up making them feel quite different. In 3 Tau, the objective is to find 3 4-vectors over the integers mod 3 that sum to 0. In Projective Tau, the objective is to find 3 6-vectors over the integers mod 2 that sum to 0. This fact is slightly hidden due to the cards. 3 Tau cards are easy to visualize as 4-vectors, but how can the 3 property Projective Tau cards be 6-vectors?
 
   <p>The answer is that we represent the 6-vector using 3 properties as follows. Suppose you have a 6-vector (a, b, c, d, e, f) over the integers mod 2. (a, b) has 4 possible values (0, 0), (0, 1), (1, 0), and (1, 1). We represent these respectively by the chess property values of blank, pawn, knight, and rook. Similarly, the 4 possible values of (c, d) are represented by the astronomical property values of blank, sun, star, and meteors; and the 4 possible values of (e, f) are represented by the suit property values of blank, club, diamond, and heart.
 
-  <p>You can check that the 3 Projective Tau property above is equivalent to the sum of 6-vectors statement.
+  <p>You can check that the Projective Tau property above is equivalent to the sum of 6-vectors statement.
 
-  <p>Why not a card with 6 binary dots (where the dot appears for a 1, and is absent for a 0)? It is simply more difficult to read and evaluate 3 Projective Taus with this type of card, and it is equivalent to the above construction.
+  <p>Why not a card with 6 binary dots (where the dot appears for a 1, and is absent for a 0)? It is simply more difficult to read and evaluate Projective Taus with this type of card, and it is equivalent to the above construction.
 
   <h3 id="rulesz3tau">Puzzle 3 Tau</h3>
 

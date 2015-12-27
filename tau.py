@@ -20,6 +20,7 @@ from constants import GAME_TYPE_INFO
 from preset_decks import PRESET_TAUS
 import fingeo
 from tornado import  gen, httpclient
+import hashlib
 
 # The time in seconds that games should be allowed to live without activity
 # before they are eligible to be hidden if they contain no players.
@@ -309,7 +310,7 @@ class NewGameHandler(tornado.web.RequestHandler):
     return
 
 class GameHandler(tornado.web.RequestHandler):
-  game_type_to_type_string_map = dict(GAME_TYPE_INFO)
+  game_type_to_type_string_map = dict([(x[0], x[1]) for x in GAME_TYPE_INFO])
 
   @require_name
   def get(self, game_id):
@@ -389,14 +390,24 @@ class RecapHandler(tornado.web.RequestHandler):
         avg_taus=sum(num_taus)/float(len(num_taus)),
         score=score,
         time_offset=time_offset,
-        game_type_info=dict(GAME_TYPE_INFO),
+        game_type_info=dict([(x[0], x[1]) for x in GAME_TYPE_INFO]),
         percentile=percentile,
         time=score.elapsed_time,
         rank=rank)
 
 class SettingsHandler(tornado.web.RequestHandler):
   def get(self):
-    self.render("settings.html")
+    whitelisted_for_classic_cards = False
+    user = get_user(self)
+    if user is not None:
+      hashed_email = hashlib.sha224(user['email']).hexdigest()
+      whitelisted_for_classic_cards = hashed_email in [
+          "e420c99c918c37a0b3ce076b13fe6e3b218a6fd3421fe502567d7023", "57612f463a44ca2825dde6ab2681eb73ad881476a00072017dfea30d", "7ad0d3b872b6dfd3ef12b998768859ce8d800d5e81aab40621086e43", "aeedd370552be476825c9c88135806dfbf65f6d4ef260aaa3ed7df71", "354b9491675a0ca8c1ab47171e4566f1e9f445afce5496e1ad31f86e", "e78c83b4a686ee735e7d94a81c4c28c473a6d288b46323e00a4200f9", "b5c70176cdc2d236d6eb5451732aeaf6c6cf09b28fe4d1cad74fc7bb", "4574cd96c4d91948a632066b0928909f6fe264455f9f75b2192e7569", "58310a80f35bcad3af8825d16ad2192906cacc517da8c928cc111710", "bf059f7a651c7e8fab5e7bf8563155d6b2e868fa2284f82e29c39e0a", "386a58ea198dddfd4cd4159f318fd764ea319e6ac905ea2707a471ab", "678182092257aa78351036310386ee3f5be1e8c44911abbc3cd434f9", "f9b11b014e9ba299ddd804d076b6f7fc32ce36b18ff39e1a3b2aded0", "e9258f343e98e052ca3233b2d48d497fd27dd02ac8d652315a78e6f4", "833245f724674f8bab5f4ac1322bd80a3501d8acccd5d46e93e7b9c6", "e3e9f9ac74552d96d0320ddc6aea8f4af4442db5e018e11992f8fb59", "5b60e30ee0ec4fb5e8b2ac881cd5cc73893f2359723d6dec31ad4a13", "9cfbbaa5f9d32a76012b60f1f78a3d25e3cd83ba2284b544ec8a870c"
+      ]
+
+    self.render(
+        "settings.html",
+        whitelisted_for_classic_cards=whitelisted_for_classic_cards)
 
 class AboutHandler(tornado.web.RequestHandler):
   def get(self):
