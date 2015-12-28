@@ -3,6 +3,7 @@ import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Shape;
+import java.awt.BasicStroke;
 import java.awt.TexturePaint;
 import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
@@ -164,6 +165,9 @@ public class SpriteGenerator {
 
     for (Shape aShape : shapes) {
       if (fill == 0) {
+        if (retina) {
+          graphics.setStroke(new BasicStroke(2));
+        }
         graphics.draw(aShape);
       } else if (fill == 1) {
         graphics.fill(aShape);

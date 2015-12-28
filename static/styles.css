@@ -278,7 +278,7 @@ only screen and (-o-min-device-pixel-ratio: 3/2),
 only screen and (min-device-pixel-ratio: 1.5) {
 
 .regularTau {
-  background:url('/static/cards@2x.png?v=2') no-repeat scroll 0 0 white;
+  background:url('/static/cards@2x.png?v=4') no-repeat scroll 0 0 white;
   background-size:6480px 120px;
 }
 
@@ -293,7 +293,7 @@ only screen and (min-device-pixel-ratio: 1.5) {
 }
 
 .smallRegularTau {
-  background:url('/static/smallcards@2x.png?v=5') no-repeat scroll 0 0 white;
+  background:url('/static/smallcards@2x.png?v=7') no-repeat scroll 0 0 white;
   background-size:3240px 60px;
 }
 

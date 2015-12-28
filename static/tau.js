@@ -302,7 +302,7 @@ $(document).ready(function() {
 
   function getSmallImgClass() {
     var colour_blind = $.cookie("colour_blind") === "true";
-    var classic_cards = $.cookie("classic_cards") !== "false";
+    var classic_cards = $.cookie("classic_cards") === "true";
     if (classic_cards && colour_blind) {
       return "smallColourBlindClassicTau";
     } else if (classic_cards) {
