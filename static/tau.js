@@ -720,6 +720,11 @@ $(document).ready(function() {
     }
   };
 
+  game_type_info_map = {}
+  for (var i = 0; i < game_type_info.length; i++) {
+    game_type_info_map[game_type_info[i][0]] = game_type_info[i][1];
+  }
+
   function update_messages(text_area, name, message, message_type) {
     var is_at_bottom = text_area[0].scrollHeight - text_area.scrollTop() <= text_area.outerHeight();
     if (message_type === "chat") {
@@ -727,7 +732,7 @@ $(document).ready(function() {
     } else if (message_type === "status") {
       text_area.append($("<div class=\"message\"><span class=\"status\">" + message + "</span></div>"));
     } else if (message_type === "new_game") {
-      text_area.append($('<div class="message"><span class="status">' + name + ' has started <a href="/game/' + message[1] + '">game ' + message[1] + '</a> (' + game_type_info[message[0]] + ')</span></div>'));
+      text_area.append($('<div class="message"><span class="status">' + name + ' has started <a href="/game/' + message[1] + '">game ' + message[1] + '</a> (' + game_type_info_map[message[0]] + ')</span></div>'));
     }
     if (is_at_bottom) {
       text_area.scrollTop(text_area[0].scrollHeight - text_area.outerHeight() + 5);
