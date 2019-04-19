@@ -18,9 +18,19 @@ Before running the first time, to set up necessary files run:
 
   python2.7 setup.py
 
-To run locally for development:
+Then edit secrets.py to add the missing fields.
+
+Then, to run locally for development:
 
   sudo python2.7 tau.py --debug --port=8000 --ssl_port=8001
+
+To build and run with Docker (experimental):
+
+  docker build -t websockettau . && docker run -p 8000:8000 -p 8001:8001 websockettau
+
+To avoid having to rebuild the docker container on every change, you can run from your work directory:
+
+  docker run -p 8000:8000 -p 8001:8001 -v $PWD:/live -w /live websockettau
 
 Root access is required to bind to port 80 which is the default, so using ports 8000 and 8001 avoids this. The --debug flag allows the use of ^C to kill the server (very handy for restarting it during development).
 
