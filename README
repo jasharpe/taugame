@@ -26,11 +26,11 @@ Then, to run locally for development:
 
 To build and run with Docker (experimental):
 
-  docker build -t websockettau . && docker run -p 8000:8000 -p 8001:8001 websockettau
+  docker build -t websockettau . && docker run --rm -p 8000:8000 -p 8001:8001 websockettau
 
 To avoid having to rebuild the docker container on every change, you can run from your work directory:
 
-  docker run -p 8000:8000 -p 8001:8001 -v $PWD:/live -w /live websockettau
+  docker run --rm -p 8000:8000 -p 8001:8001 -v $PWD:/live -w /live websockettau
 
 Root access is required to bind to port 80 which is the default, so using ports 8000 and 8001 avoids this. The --debug flag allows the use of ^C to kill the server (very handy for restarting it during development).
 
