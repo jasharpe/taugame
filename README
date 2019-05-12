@@ -32,6 +32,11 @@ To avoid having to rebuild the docker container on every change, you can run fro
 
   docker run --rm -p 8000:8000 -p 8001:8001 -v $PWD:/live -w /live websockettau
 
+Connect to actual mysql for testing by running the proxy:
+
+  curl -o cloud_sql_proxy https://dl.google.com/cloudsql/cloud_sql_proxy.darwin.amd64
+  ./cloud_sql_proxy -instances=tau-game:us-central1:tau-game-db=tcp:0.0.0.0:3306
+
 Root access is required to bind to port 80 which is the default, so using ports 8000 and 8001 avoids this. The --debug flag allows the use of ^C to kill the server (very handy for restarting it during development).
 
 For other options, type:
@@ -97,3 +102,18 @@ $ ./run_backup
 # verify that the backup appears in S3
 # set up automatic backups. s3_crontab is a template. Modify it to suit you.
 $ crontab s3_crontab
+
+### How to set up GCP instance
+
+1. Create GCP project.
+
+2. Upload Docker image to GCR (called `gcr.io/$PROJECT/websockettau`). Probably requires enabling the GCR API:
+
+```
+docker build -t gcr.io/tau-game/websockettau .
+docker push gcr.io/tau-game/websockettau
+```
+
+3. Enable Stackdriver Logging API.
+
+4. Create a GCP instance that runs the container uploaded (or do via the UI), and populates the environment variables needed by db.py.

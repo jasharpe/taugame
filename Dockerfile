@@ -1,6 +1,6 @@
 FROM python:2
 
-RUN pip install tornado==4.0.2 backports.ssl_match_hostname sqlalchemy
+RUN pip install tornado==4.0.2 backports.ssl_match_hostname sqlalchemy pymysql
 
 ADD *.py /websockettau/
 ADD templates/* /websockettau/templates/

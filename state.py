@@ -1,5 +1,5 @@
 from db import Base, get_session
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, Text, Table, Boolean, distinct, func, or_, and_
+from sqlalchemy import Column, Integer, BigInteger, String, DateTime, ForeignKey, Float, Text, Table, Boolean, distinct, func, or_, and_
 from sqlalchemy.orm import relationship, backref, joinedload
 from sqlalchemy.sql.expression import desc, asc
 import datetime
@@ -206,9 +206,9 @@ class DBGame(Base):
   __tablename__ = 'games'
 
   id = Column(Integer, primary_key=True)
-  game_type = Column(String)
-  deck_json = Column(String)
-  seed = Column(Integer)
+  game_type = Column(String(256))
+  deck_json = Column(Text)
+  seed = Column(BigInteger)
 
   def __init__(self, game_type, deck, seed):
     self.game_type = game_type
@@ -234,7 +234,7 @@ class DBPlayer(Base):
   __tablename__ = 'players'
 
   id = Column(Integer, primary_key=True)
-  name = Column(String)
+  name = Column(String(256))
 
   scores = relationship('Score', secondary=score_players, backref='players')
   teams = relationship('Team', secondary=team_players, backref='players')
@@ -263,9 +263,9 @@ class Score(Base):
   game = relationship("DBGame", uselist=False, backref=backref('score'))
   team_id = Column(Integer, ForeignKey('teams.id'))
   team = relationship("Team", backref=backref('scores'))
-  game_type = Column(String)
+  game_type = Column(String(256))
   date = Column(DateTime)
-  player_scores_json = Column(String)
+  player_scores_json = Column(Text)
   invalid = Column(Boolean)
 
   def __init__(self, elapsed_time, date, game, players, team, player_scores):
@@ -320,8 +320,8 @@ class Name(Base):
   __tablename__ = 'names'
 
   id = Column(Integer, primary_key=True)
-  email = Column(String, unique=True)
-  name = Column(String, unique=True)
+  email = Column(String(256), unique=True)
+  name = Column(String(256), unique=True)
 
   def __init__(self, email, name):
     self.email = email
@@ -337,8 +337,8 @@ class State(Base):
 
   id = Column(Integer, primary_key=True)
   elapsed_time = Column(Float)
-  board_json = Column(String)
-  cards_json = Column(String)
+  board_json = Column(Text)
+  cards_json = Column(Text)
 
   # foreign keys
   game_id = Column(Integer, ForeignKey('games.id'))
