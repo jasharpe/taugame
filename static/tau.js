@@ -283,14 +283,25 @@ $(document).ready(function() {
     var colour_blind = $.cookie("colour_blind") === "true";
     var classic_cards = $.cookie("classic_cards") === "true";
     var new_projective_cards = $.cookie("new_projective_cards") !== "false";
+    var hanchul_222_projective_cards = $.cookie("hanchul_proj_222") === "true";
+    var hanchul_33_projective_cards = $.cookie("hanchul_proj_33") === "true";
+    var hanchul_quad_cards = $.cookie("hanchul_quad") === "true"
     if (game_type === "3ptau") {
       if (new_projective_cards) {
         return "projectiveTauNew";
+      } else if (hanchul_222_projective_cards) {
+        return "projectiveTauHanchul222";
+      } else if (hanchul_33_projective_cards) {
+        return "projectiveTauHanchul33";
       } else {
         return "projectiveTau";
       }
     } else if (game_type === "bqtau" || game_type === "sbqtau") {
-      return "booleanTau";
+      if (hanchul_quad_cards) {
+        return "booleanTauHanchul";
+      } else {
+        return "booleanTau";
+      }
     } else if (classic_cards && colour_blind) {
       return "colourBlindClassicTau";
     } else if (classic_cards) {

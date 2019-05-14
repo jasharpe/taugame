@@ -264,12 +264,24 @@ table {
   background:url('/static/projcardsnew.png?v=2') no-repeat scroll 0 0 white;
 }
 
+.projectiveTauHanchul222 {
+  background:url('/static/projcards-hanchul222.png?v=2') no-repeat scroll 0 0 white;
+}
+
+.projectiveTauHanchul33 {
+  background:url('/static/projcards-hanchul33.png?v=2') no-repeat scroll 0 0 white;
+}
+
 .nearTau {
   background:url('/static/neartau.png?v=6') no-repeat scroll 0 0 white;
 }
 
 .booleanTau {
   background:url('/static/bqcards.png?v=2') no-repeat scroll 0 0 white;
+}
+
+.booleanTauHanchul {
+  background:url('/static/bqcards-hanchul.png?v=2') no-repeat scroll 0 0 white;
 }
 
 @media only screen and (-Webkit-min-device-pixel-ratio: 1.5),
@@ -312,6 +324,16 @@ only screen and (min-device-pixel-ratio: 1.5) {
   background-size:5040px 120px;
 }
 
+.projectiveTauHanchul222 {
+  background:url('/static/projcards-hanchul222@2x.png?v=2') no-repeat scroll 0 0 white;
+  background-size:5040px 120px;
+}
+
+.projectiveTauHanchul33 {
+  background:url('/static/projcards-hanchul33@2x.png?v=2') no-repeat scroll 0 0 white;
+  background-size:5040px 120px;
+}
+
 .nearTau {
   background:url('/static/neartau@2x.png?v=6') no-repeat scroll 0 0 white;
   background-size:320px 120px;
@@ -319,6 +341,11 @@ only screen and (min-device-pixel-ratio: 1.5) {
 
 .booleanTau {
   background:url('/static/bqcards@2x.png?v=2') no-repeat scroll 0 0 white;
+  background-size:5120px 120px;
+}
+
+.booleanTauHanchul {
+  background:url('/static/bqcards-hanchul@2x.png?v=2') no-repeat scroll 0 0 white;
   background-size:5120px 120px;
 }
 }
