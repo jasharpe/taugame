@@ -353,6 +353,14 @@ $(document).ready(function() {
     }
   }
 
+  function getForceLowResClass() {
+    var force_low_res = $.cookie("force_low_res") === "true";
+    if (force_low_res) {
+      return "forceLowRes";
+    }
+    return "";
+  }
+
   var prev_board = [];
   var card_to_board_map = {}
   var game_paused = false;
@@ -435,6 +443,7 @@ $(document).ready(function() {
         } else {
           var div = $('<div class="realCard unselectedCard" data-card-index="' + card_index + '" data-card="' + card + '">');
           div.addClass(getImgClass());
+          div.addClass(getForceLowResClass());
           card_number_to_div_map[get_card_number(card)] = div;
           card_index_to_div_map[card_index] = div;
           card_index_to_card_map[card_index] = card;
@@ -488,6 +497,7 @@ $(document).ready(function() {
         } else {
           var card_div = $('<div class="realCard unselectedCard">');
           card_div.addClass(getImgClass());
+          card_div.addClass(getForceLowResClass());
           var card_number = get_card_number(target);
           var offset = card_number * 80;
 
@@ -526,7 +536,7 @@ $(document).ready(function() {
           card = found_puzzle_taus[i][j];
           var card_number = get_card_number(card);
           var offset = card_number * 40;
-          var card_div = $('<div class="smallCard ' + getSmallImgClass() + '">');
+          var card_div = $('<div class="smallCard ' + getSmallImgClass() + ' ' + getForceLowResClass() + '">');
           card_div.css("background-position", "-" + offset + "px 0");
           tau_div.append(card_div);
           if (last_found_puzzle_taus !== null && i >= last_found_puzzle_taus.length) {

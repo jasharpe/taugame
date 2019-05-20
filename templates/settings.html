@@ -33,6 +33,13 @@ $(function() {
       {expires: 99999, path:'/'}
     );
   });
+  $("#force_low_res").attr("checked", $.cookie("force_low_res") === "true");
+  $("#force_low_res").change(function() {
+    $.cookie("force_low_res",
+      $(this).is(":checked"),
+      {expires: 99999, path:'/'}
+    );
+  });
   $("#new_projective_cards").attr("checked", $.cookie("new_projective_cards") !== "false");
   $("#new_projective_cards").change(function() {
     if ($(this).is(":checked")) {
@@ -74,6 +81,7 @@ $(function() {
   <div><input id="colour_blind" type="checkbox"/><label for="colour_blind">Colour blind cards</label></div>
   <div><input id="new_card_animation" type="checkbox"/><label for="new_card_animation">New card animation</label></div>
   <div><input id="dvorak" type="checkbox"/><label for="dvorak">Dvorak <a href="/about#keyboard_shortcuts">keyboard shortcuts</a></label></div>
+  <div><input id="force_low_res" type="checkbox"/><label for="force_low_res">Force use of low resolution images (required for some versions of Mobile Safari for card images to work)</label></div>
   <div><input id="new_projective_cards" type="checkbox"/><label for="new_projective_cards">New Projective Tau cards</label></div>
   <div><input id="hanchul_proj_222" type="checkbox"/><label for="hanchul_proj_222">Hanchul 222 Projective Tau cards</label></div>
   <div><input id="hanchul_quad" type="checkbox"/><label for="hanchul_quad">Hanchul Quad Tau cards</label></div>
