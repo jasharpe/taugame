@@ -32,6 +32,10 @@ To avoid having to rebuild the docker container on every change, you can run fro
 
   docker run --rm -p 8000:8000 -p 8001:8001 -v $PWD:/live -w /live websockettau
 
+To run against a test version of a mysql db:
+
+  docker run --rm -p 8000:8000 -p 8001:8001 -v $PWD:/live -w /live -e db=mysql -e mysql_password=$MYSQL_PASSWORD -e mysql_addr=$LOCAL_IP_FROM_IFCONFIG:3306 -e db_name=tau_game_2 websockettau python ./tau.py --debug --port=8000
+
 Connect to actual mysql for testing by running the proxy:
 
   curl -o cloud_sql_proxy https://dl.google.com/cloudsql/cloud_sql_proxy.darwin.amd64
