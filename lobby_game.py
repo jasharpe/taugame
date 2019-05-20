@@ -54,8 +54,8 @@ class LobbyGame(object):
       if result.status == result.SUCCESS:
         if self.game.ended:
           self.lobby.send_game_list_update_to_all()
-          (db_game, score) = save_game(self.game, self.training)
-          self.game.player_ranks = get_ranks(score.elapsed_time, db_game.game_type, self.game.scores.keys(), score.num_players)
+          (db_game, score, elapsed_time) = save_game(self.game, self.training)
+          self.game.player_ranks = get_ranks(elapsed_time, db_game.game_type, self.game.scores.keys(), score.num_players)
         self.send_update_to_all()
       elif result.status == result.OLD_FOUND_PUZZLE:
         socket.send_old_found_puzzle_tau_index(result.index)

@@ -1,0 +1,11 @@
+SET FOREIGN_KEY_CHECKS = 0;
+# SELECT concat('DROP TABLE IF EXISTS `', table_name, '`;') FROM information_schema.tables WHERE table_schema = 'tau_game_2';
+DROP TABLE IF EXISTS `games`;
+DROP TABLE IF EXISTS `names`;
+DROP TABLE IF EXISTS `players`;
+DROP TABLE IF EXISTS `score_players`;
+DROP TABLE IF EXISTS `scores`;
+DROP TABLE IF EXISTS `states`;
+DROP TABLE IF EXISTS `team_players`;
+DROP TABLE IF EXISTS `teams`;
+SET FOREIGN_KEY_CHECKS = 1;

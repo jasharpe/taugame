@@ -60,7 +60,7 @@ def and_query(players, query):
   return query.group_by(Score.id).having(func.count(distinct(DBPlayer.name)) == len(players))
 
 def num_better_than_query(elapsed_time, query):
-  return query.filter(Score.elapsed_time < elapsed_time).count()
+  return query.filter(Score.elapsed_time < elapsed_time - 0.0001).count()
 
 def get_all_high_scores(num_scores, leaderboard_type, players, conjunction, unique_players=False):
   session = get_session()
@@ -200,7 +200,7 @@ def save_game(game, training):
   session.add(db_game)
   session.commit()
 
-  return (db_game, score)
+  return (db_game, score, last_elapsed_time)
 
 class DBGame(Base):
   __tablename__ = 'games'
