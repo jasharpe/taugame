@@ -33,7 +33,8 @@ function drawChart(raw_data, element) {
   var options = {
     //title: '3 Tau scores over time'
     legend: {position: 'none'},
-    pointSize: 4
+    pointSize: 4,
+    trendlines: { 0: {} }    // Draw a trendline for data series 0.
   };
   var chart = new google.visualization.ScatterChart(element);
   chart.draw(data, options);
