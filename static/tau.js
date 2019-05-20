@@ -39,7 +39,7 @@ $(document).ready(function() {
 
   var properties = ['Colour', 'Number', 'Shading', 'Shape'];
 
-  var key_map = {
+  var qwerty_key_map = {
     'q' : 0,
     'a' : 1,
     'z' : 2,
@@ -63,20 +63,51 @@ $(document).ready(function() {
     'm' : 20
   };
 
+  var dvorak_key_map = {
+    "'" : 0,
+    'a' : 1,
+    ';' : 2,
+    ',' : 3,
+    'o' : 4,
+    'q' : 5,
+    '.' : 6,
+    'e' : 7,
+    'j' : 8,
+    'p' : 9,
+    'u' : 10,
+    'k' : 11,
+    'y' : 12,
+    'i' : 13,
+    'x' : 14,
+    'f' : 15,
+    'd' : 16,
+    'b' : 17,
+    'g' : 18,
+    'h' : 19,
+    'm' : 20
+  };
+
+
   $(document).keypress(function(e) {
+    var dvorak = $.cookie("dvorak") === "true";
+    var key_map = dvorak ? dvorak_key_map : qwerty_key_map;
+    var chat_focus_key = dvorak ? "l" : "p";
+    var pause_key = dvorak ? "n" : "l";
+    var hint_key = dvorak ? "t" : "k";
+
     var key = String.fromCharCode(e.charCode).toLowerCase();
     if (!in_chat_box && key_map.hasOwnProperty(key)) {
       select_card(parseInt(key_map[key]));
     }
-    if (!in_chat_box && key === "p") {
+    if (!in_chat_box && key === chat_focus_key) {
       $("#chat_box").focus();
       return false;
     }
-    if (!in_chat_box && key === "l") {
+    if (!in_chat_box && key === pause_key) {
       pause(game_paused ? "unpause" : "pause");
       return false;
     }
-    if (!in_chat_box && key === "k") {
+    if (!in_chat_box && key === hint_key) {
       var hint_button = $("#hint");
       if (hint_button && hint_button.is(":visible")) {
         hint_button.click();
