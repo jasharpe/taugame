@@ -265,11 +265,7 @@ table {
 }
 
 .projectiveTauHanchul222 {
-  background:url('/static/projcards-hanchul222.png?v=2') no-repeat scroll 0 0 white;
-}
-
-.projectiveTauHanchul33 {
-  background:url('/static/projcards-hanchul33.png?v=2') no-repeat scroll 0 0 white;
+  background:url('/static/projcards-hanchul222.png?v=3') no-repeat scroll 0 0 white;
 }
 
 .nearTau {
@@ -325,12 +321,7 @@ only screen and (min-device-pixel-ratio: 1.5) {
 }
 
 .projectiveTauHanchul222 {
-  background:url('/static/projcards-hanchul222@2x.png?v=2') no-repeat scroll 0 0 white;
-  background-size:5040px 120px;
-}
-
-.projectiveTauHanchul33 {
-  background:url('/static/projcards-hanchul33@2x.png?v=2') no-repeat scroll 0 0 white;
+  background:url('/static/projcards-hanchul222@2x.png?v=3') no-repeat scroll 0 0 white;
   background-size:5040px 120px;
 }
 

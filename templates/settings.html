@@ -37,7 +37,6 @@ $(function() {
   $("#new_projective_cards").change(function() {
     if ($(this).is(":checked")) {
       $("#hanchul_proj_222").prop("checked", false).change();
-      $("#hanchul_proj_33").prop("checked", false).change();
     }
     $.cookie("new_projective_cards",
       $(this).is(":checked"),
@@ -48,20 +47,8 @@ $(function() {
   $("#hanchul_proj_222").change(function() {
     if ($(this).is(":checked")) {
       $("#new_projective_cards").prop("checked", false).change();
-      $("#hanchul_proj_33").prop("checked", false).change();
     }
     $.cookie("hanchul_proj_222",
-      $(this).is(":checked"),
-      {expires: 99999, path:'/'}
-    );
-  });
-  $("#hanchul_proj_33").attr("checked", $.cookie("hanchul_proj_33") === "true");
-  $("#hanchul_proj_33").change(function() {
-    if ($(this).is(":checked")) {
-      $("#new_projective_cards").prop("checked", false).change();
-      $("#hanchul_proj_222").prop("checked", false).change();
-    }
-    $.cookie("hanchul_proj_33",
       $(this).is(":checked"),
       {expires: 99999, path:'/'}
     );
@@ -89,7 +76,6 @@ $(function() {
   <div><input id="dvorak" type="checkbox"/><label for="dvorak">Dvorak <a href="/about#keyboard_shortcuts">keyboard shortcuts</a></label></div>
   <div><input id="new_projective_cards" type="checkbox"/><label for="new_projective_cards">New Projective Tau cards</label></div>
   <div><input id="hanchul_proj_222" type="checkbox"/><label for="hanchul_proj_222">Hanchul 222 Projective Tau cards</label></div>
-  <div><input id="hanchul_proj_33" type="checkbox"/><label for="hanchul_proj_33">Hanchul 33 Projective Tau cards</label></div>
   <div><input id="hanchul_quad" type="checkbox"/><label for="hanchul_quad">Hanchul Quad Tau cards</label></div>
 </div>
 
