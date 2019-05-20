@@ -222,7 +222,7 @@ $(document).ready(function() {
     }
   }
 
-  function select_card(card_index) {
+  function select_card(card_index, do_not_submit) {
     if (game_ended) {
       return;
     }
@@ -247,7 +247,9 @@ $(document).ready(function() {
         for (var submit_index in model) {
           cards.push(card_index_to_card_map[model[submit_index]]);
         }
-        submit_tau(cards);
+        if (do_not_submit !== true) {
+          submit_tau(cards);
+        }
       }
     } else {
       model.splice(index, 1);
@@ -527,7 +529,10 @@ $(document).ready(function() {
 
     if (selection_still_good) {
       for (var i in old_selected) {
-        select_card(old_selected[i]);
+        // In puzzle 3 tau, we may reselect an existing tau here. Force it to
+        // not be submitted if this is the case, since it'll cause a red flash
+        // not connected to an intended user submit.
+        select_card(old_selected[i], true /* do_not_submit */);
       }
     }
 
