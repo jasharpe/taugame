@@ -21,4 +21,5 @@ def get_session():
   if session is None:
     Base.metadata.create_all(engine)
     session = Session()
+  session.rollback()
   return session
