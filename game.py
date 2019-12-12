@@ -14,6 +14,7 @@ type_to_deck_size_map = {
   'g3tau': 81,
   '6tau': 81,
   'i3tau': 81,
+  'i93tau': 81,
   'm3tau': 81,
   'e3tau': 81,
   '4tau': 81,
@@ -30,6 +31,7 @@ type_to_size_map = {
   'g3tau': 3,
   '6tau': 6,
   'i3tau': 3,
+  'i93tau': 3,
   'm3tau': 3,
   'e3tau': 3,
   '4tau': 4,
@@ -46,6 +48,7 @@ type_to_min_board_size = {
   'g3tau': 12,
   '6tau': 12,
   'i3tau': 12,
+  'i93tau': 9,
   'm3tau': 12,
   'e3tau': 12,
   '4tau': 12,
@@ -197,7 +200,7 @@ class Game(object):
         add_indices.append(len(self.board) - 1)
         to_add -= 1
 
-      if self.type == 'i3tau':
+      if self.type in ['i3tau', 'i93tau']:
         # Try to do an Insane 3 Tau deal (i.e. only one tau is present after
         # dealing.) If it fails, fall back to normal behaviour.
         init_time = time.time()
@@ -301,7 +304,7 @@ class Game(object):
 
     # For Insane 3 Tau and Easy 3 Tau, the initial positions of cards must be
     # randomized, because the first 3 dealt cards always form a Tau.
-    if self.type in ['i3tau', 'e3tau', 'm3tau'] and len(filter(None, self.board)) + len(self.deck) == type_to_deck_size_map[self.type]:
+    if self.type in ['i3tau', 'e3tau', 'm3tau', 'i93tau'] and len(filter(None, self.board)) + len(self.deck) == type_to_deck_size_map[self.type]:
       # For Master 3 Tau, the positions of the last 3 cards dealt are chosen
       # to be hard, so don't mess them up.
       if self.type != 'm3tau' or len(filter(None, self.board)) <= 9:
@@ -426,7 +429,7 @@ class Game(object):
       return sum(correct_properties) == 1
 
   def is_tau(self, cards, wrong_property=None):
-    if len(cards) == 3 and self.type in ["3tau", "6tau", "i3tau", "m3tau", "e3tau", "3ptau", "z3tau"]:
+    if len(cards) == 3 and self.type in ["3tau", "6tau", "i3tau", "i93tau", "m3tau", "e3tau", "3ptau", "z3tau"]:
       return self.is_tau_basic(cards)
     if len(cards) == 3 and self.type in ["n3tau"]:
       return self.is_n3tau(cards, wrong_property)

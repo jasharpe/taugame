@@ -49,6 +49,8 @@ $(function() {
           game_type = "Generalized 3 Tau";
         } else if (game_data.type == "i3tau") {
           game_type = "Insane 3 Tau";
+        } else if (game_data.type == "i93tau") {
+          game_type = "Insane 9 3 Tau";
         } else if (game_data.type == "m3tau") {
           game_type = "Master 3 Tau";
         } else if (game_data.type == "e3tau") {

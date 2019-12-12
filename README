@@ -51,6 +51,7 @@ For other options, type:
 - Implement the rules in game.py.
 - Add a name mapping to static/game_list.js.
 - Add a name mapping and URL mapping to tau.py.
+- Add a name mapping to constants.py.
 - Add a rules description and name mapping to templates/about.html.
 - (Sometimes applicable) Add changes to playing area in static/tau.js.
 - (If adding new cards) Make the following updates:
