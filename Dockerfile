@@ -8,4 +8,4 @@ ADD static/* /websockettau/static/
 ADD localhost.* /websockettau/
 
 WORKDIR /websockettau/
-CMD [ "python", "./tau.py", "--debug", "--port=8000", "--ssl_port=8001" ]
+ENTRYPOINT [ "python", "./tau.py", "--debug", "--port=8000", "--ssl_port=8001" ]

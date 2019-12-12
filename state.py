@@ -1,5 +1,5 @@
 from db import Base, get_session
-from sqlalchemy import Column, Integer, BigInteger, String, DateTime, ForeignKey, Float, Text, Table, Boolean, distinct, func, or_, and_
+from sqlalchemy import Column, Integer, BigInteger, String, DateTime, ForeignKey, Float, Text, Table, Boolean, distinct, func, or_, and_, text
 from sqlalchemy.orm import relationship, backref, joinedload
 from sqlalchemy.sql.expression import desc, asc
 import datetime
@@ -51,7 +51,7 @@ def get_numbers(leaderboard_type, players):
   return list(numbers_query)
 
 def leaderboard_query(num_players, game_type, query):
-  return query.filter_by(num_players=num_players,game_type=game_type)
+  return query.filter_by(num_players=num_players, game_type=game_type)
 
 def simple_query(leaderboard_type, num_players, game_type, query):
   return leaderboard_query(num_players, game_type, base_score_query(leaderboard_type, query))
@@ -90,7 +90,7 @@ def get_all_high_games(num_results, leaderboard_type, players, conjunction):
       query = filter_for_players(players, query).group_by(Score.id)
     if conjunction == "and":
       query = and_query(players, query)
-    results = list(query.from_self(Score, func.count().label("num_games"), func.sum(Score.elapsed_time)).group_by(Score.team_id).order_by('num_games desc').limit(num_results))
+    results = list(query.from_self(Score, func.count().label("num_games"), func.sum(Score.elapsed_time)).group_by(Score.team_id).order_by(text('num_games desc')).limit(num_results))
     if results:
       ret[game_type][number] = results
   return ret
