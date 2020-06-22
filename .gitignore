@@ -1,5 +1,7 @@
 localhost.crt
 localhost.key
+*.pem
+*.key
 
 # Python byte code.
 *.pyc

@@ -503,39 +503,19 @@ class GoogleHandler(tornado.web.RequestHandler,
         response_type='code',
         extra_params={'approval_prompt': 'auto'})
 
-class GoogleHandlerOld(tornado.web.RequestHandler, tornado.auth.GoogleMixin):
-  @tornado.web.asynchronous
-  def get(self):
-    if self.get_argument("openid.mode", None):
-      self.get_authenticated_user(self.async_callback(self._on_auth))
-      return
-    self.authenticate_redirect()
-    
-  def _on_auth(self, user):
-    if not user:
-      raise tornado.web.HTTPError(500, "Google auth failed")
-    self.set_secure_cookie("google_user", url_escape(json.dumps(user)))
-    name = get_name(user['email'])
-    if name is None:
-      if not self.get_secure_cookie("name"):
-        self.redirect("/choose_name")
-        return
-      try:
-        set_name(user['email'], self.get_secure_cookie("name"))
-        self.redirect("/")
-      except:
-        self.clear_cookie('name')
-        self.redirect("/choose_name")
-      return
-    
-    self.set_secure_cookie('name', url_escape(name))
-    self.redirect("/")
-
 class LogoutHandler(tornado.web.RequestHandler):
   def get(self):
     self.clear_cookie("google_user")
     self.clear_cookie("name")
     self.redirect("/choose_name")
+
+class ChallengeHandler(tornado.web.RequestHandler):
+  def get(self):
+    self.render("challenge.html")
+
+class Challenge2Handler(tornado.web.RequestHandler):
+  def get(self):
+    self.render("challenge2.html")
 
 class TestFrameHandler(tornado.web.RequestHandler):
   @require_name
@@ -576,6 +556,8 @@ def create_application(debug):
     (r"/about", AboutHandler),
     (r"/google", GoogleHandler),
     (r"/logout", LogoutHandler),
+    (r"/.well-known/acme-challenge/AY5C9H-48vdtxlDerGvbwtLUF9wplNZZkeQv32fh0Iw", ChallengeHandler),
+    (r"/.well-known/acme-challenge/sO-KwwIQTJOvJFZXxEe4v_PE85T_H5UEkE90BE-7RwY", Challenge2Handler),
   ]
   if debug:
     handlers.append((r"/testframe/(all|3tau|6tau|g3tau|i3tau|i93tau|m3tau|e3tau|4tau|3ptau|z3tau|4otau|n3tau|bqtau|sbqtau)", TestFrameHandler))
@@ -616,18 +598,33 @@ class OptionalHTTPServer(tornado.httpserver.HTTPServer):
     else:
       super(tornado.httpserver.HTTPServer, self)._handle_connection(connection, address)
 
+class HttpMainHandler(tornado.web.RequestHandler):
+  def prepare(self):
+    if self.request.protocol == 'http':
+      self.redirect('https://' + self.request.host, permanent=False)
+
+  def get(self):
+    self.write("Hello, world")
+
 def main():
   global args
   args = parse_args()
   enable_pretty_logging()
   application = create_application(args.debug)
-  http_server = OptionalHTTPServer(args.port, application,
-      ssl_options={
-          "certfile" : "localhost.crt",
-          "keyfile" : "localhost.key",
-      })
-  http_server.listen(args.port)
-  http_server.listen(args.ssl_port)
+
+  ssl_ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+  data_dir="."
+  ssl_ctx.load_cert_chain(os.path.join(data_dir, "chained.pem"),
+                          os.path.join(data_dir, "domain.key"))
+
+  server = tornado.httpserver.HTTPServer(application, ssl_options=ssl_ctx)
+  server.listen(args.ssl_port)
+
+  http_application = tornado.web.Application([
+    (r'/.*', HttpMainHandler)
+  ])
+  http_application.listen(args.port)
+
   ioloop = tornado.ioloop.IOLoop.instance()
   if args.debug:
     set_ping(ioloop, datetime.timedelta(seconds=1))
