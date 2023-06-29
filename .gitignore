@@ -1,3 +1,4 @@
+localhost.csr
 localhost.crt
 localhost.key
 *.pem
@@ -10,8 +11,7 @@ localhost.key
 *.swp
 
 # Database file.
-hello
-hello_predelete
+sqlite_db
 
 # Secret file.
 secrets.py

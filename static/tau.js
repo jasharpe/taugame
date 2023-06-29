@@ -314,15 +314,15 @@ $(document).ready(function() {
 
   function getImgClass() {
     var colour_blind = $.cookie("colour_blind") === "true";
-    var classic_cards = $.cookie("classic_cards") !== "false";
-    var new_projective_cards = $.cookie("new_projective_cards") !== "false";
+    var classic_cards = $.cookie("classic_cards") === "true";
+    var new_projective_cards = true;
     var hanchul_222_projective_cards = $.cookie("hanchul_proj_222") === "true";
     var hanchul_quad_cards = $.cookie("hanchul_quad") === "true"
     if (game_type === "3ptau") {
-      if (new_projective_cards) {
-        return "projectiveTauNew";
-      } else if (hanchul_222_projective_cards) {
+      if (hanchul_222_projective_cards) {
         return "projectiveTauHanchul222";
+      } else if (new_projective_cards) {
+        return "projectiveTauNew";
       } else {
         return "projectiveTau";
       }

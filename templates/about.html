@@ -408,14 +408,8 @@
 
   <p>Unlike many of the other Tau variants, Projective Tau actually uses a different deck, and while its mathematical definition is similar to 3 Tau (although with some significant differences), it feels quite different to play. At first, for someone already good at 3 Tau, it seems much more difficult. Over time, however, you will develop an intuitive sense for Projective Taus, just as in 3 Tau. In fact, Projective Tau is arguably easier than 3 Tau, as there are, on average, more Projective Taus per 12 card board than 3 Taus per 12 card board.
 
-  <p>Each of the 63 cards in the Projective Tau deck has 3 properties with 4 possible values each:
+  <p>Each of the 63 cards in the Projective Tau deck has 3 shapes (circle, triangles, and bars) with 4 colours each (blank, blue, red, and brown).
   
-  <ul>
-    <li><i>Chess</i>: one of blank, pawn, knight, and rook</li>
-    <li><i>Astronomical</i>: one of blank, sun, star, and meteors</li>
-    <li><i>Suit</i>: one of blank, club, heart, and diamond</li>
-  </ul>
-
   <p>A few examples of Projective Tau cards, showing all available properties, are:
 
   {% raw projcards[('', 'sun', 'club')] %}
@@ -423,7 +417,7 @@
   {% raw projcards[('knight', 'star', '')] %}
   {% raw projcards[('rook', 'meteors', 'heart')] %}
 
-  <p>A Projective Tau is a group of 3 cards such that <b>for each of the 3 properties, the 3 cards are either <i>all blank</i>, or <i>two the same and one blank</i>, or <i>all different and non-blank</i> in that property</b>. Notice that in Projective Tau, the blank property behaves differently from the other 3 properties. This is a bit different than 3 Tau, in which all 3 values of each property behaved identically.
+  <p>A Projective Tau is a group of 3 cards such that <b>for each of the 3 properties, the 3 cards are either <i>all blank</i>, or <i>two the same colour and one blank</i>, or <i>all different colours and non-blank</i> in that property</b>. Notice that in Projective Tau, the blank property behaves differently from the other 3 properties. This is a bit different than 3 Tau, in which all 3 values of each property behaved identically.
 
   <p>For example, the following is a Projective Tau:
 
@@ -431,7 +425,7 @@
   {% raw projcards[('', 'sun', 'diamond')] %}
   {% raw projcards[('', '', 'heart')] %}
 
-  <p>All three cards have blank chess property; two the same astronomical property (sun), and the other blank; and all different suit property.
+  <p>All three cards have blank triangles; two the same circle colour (brown), and the other blank; and all different bars colours.
 
   <p>The following is also a Projective Tau:
 
@@ -439,7 +433,7 @@
   {% raw projcards[('', 'sun', 'diamond')] %}
   {% raw projcards[('pawn', 'star', 'diamond')] %}
 
-  <p>Two cards have the same chess property, and the other blank; all have different astronomical property; and two have the same suit property, and the other blank.
+  <p>Two cards have the same triangles colour, and the other blank; all have different circle colours; and two have the same bars colour, with the other blank.
 
   <p>This is <i>not</i> a Projective Tau:
 
@@ -447,7 +441,7 @@
   {% raw projcards[('knight', 'sun', 'diamond')] %}
   {% raw projcards[('pawn', 'star', 'diamond')] %}
 
-  <p>Two cards have pawn chess property, but the third does not have a blank chess property, it has knight.
+  <p>Two cards have the same triangles colour, but the third does not have blank triangles as would be required, instead having blue triangles.
 
   <p>This is also <i>not</i> a Projective Tau:
 
@@ -455,7 +449,7 @@
   {% raw projcards[('', 'sun', '')] %}
   {% raw projcards[('pawn', 'star', 'diamond')] %}
 
-  <p>Two cards have blank suit property, but the third is not also blank.
+  <p>Two cards have blank bars, but the third does not also have blank bars.
 
   <p>This is also <i>not</i> a Projective Tau:
 
@@ -463,7 +457,7 @@
   {% raw projcards[('rook', 'sun', 'heart')] %}
   {% raw projcards[('knight', '', '')] %}
 
-  <p>The cards are all different in the astronomical property, but they are not also all non-blank in that property, so they don't fit the third rule.
+  <p>The cards are all different in circle colours, but they are not also all non-blank in that property, so they don't fit the third rule.
 
   <p>A useful restatement of the Projective Tau property is that <b>if two cards are the same, and the third one is not blank, or if two non-blank cards are different, and the third one is not the third non-blank card, it's not a Projective Tau</b>.
 

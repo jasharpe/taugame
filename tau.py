@@ -397,7 +397,7 @@ class RecapHandler(tornado.web.RequestHandler):
 
 class SettingsHandler(tornado.web.RequestHandler):
   def get(self):
-    whitelisted_for_classic_cards = True
+    whitelisted_for_classic_cards = False
     user = get_user(self)
     if user is not None:
       hashed_email = hashlib.sha224(user['email']).hexdigest()
@@ -432,7 +432,7 @@ class AboutHandler(tornado.web.RequestHandler):
         for suit_shape in xrange(4):
           if not any([chess_shape, astro_shape, suit_shape]): continue
           offset = 80 * (chess_shape + astro_shape * 4 + suit_shape * 16 - 1)
-          projcards[(chess_shapes[chess_shape], astro_shapes[astro_shape], suit_shapes[suit_shape])] = '<div class="realCard unselectedCard projectiveTau"  style="background-position: -%dpx 0px; display:inline-block;"></div>' % offset
+          projcards[(chess_shapes[chess_shape], astro_shapes[astro_shape], suit_shapes[suit_shape])] = '<div class="realCard unselectedCard projectiveTauNew"  style="background-position: -%dpx 0px; display:inline-block;"></div>' % offset
 
     quadcards = {}
     shapes = ["circle", "square", "triangle", "diamond"]
@@ -617,7 +617,7 @@ def main():
   ssl_ctx.load_cert_chain(os.path.join(data_dir, "chained.pem"),
                           os.path.join(data_dir, "domain.key"))
 
-  server = tornado.httpserver.HTTPServer(application, ssl_options=ssl_ctx)
+  server = tornado.httpserver.HTTPServer(application)#, ssl_options=ssl_ctx)
   server.listen(args.ssl_port)
 
   http_application = tornado.web.Application([
