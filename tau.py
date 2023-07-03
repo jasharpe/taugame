@@ -617,7 +617,7 @@ def main():
   ssl_ctx.load_cert_chain(os.path.join(data_dir, "chained.pem"),
                           os.path.join(data_dir, "domain.key"))
 
-  server = tornado.httpserver.HTTPServer(application)#, ssl_options=ssl_ctx)
+  server = tornado.httpserver.HTTPServer(application, ssl_options=ssl_ctx)
   server.listen(args.ssl_port)
 
   http_application = tornado.web.Application([
