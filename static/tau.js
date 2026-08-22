@@ -314,7 +314,7 @@ $(document).ready(function() {
 
   function getImgClass() {
     var colour_blind = $.cookie("colour_blind") === "true";
-    var classic_cards = $.cookie("classic_cards") === "true";
+    var classic_cards = $.cookie("classic_cards") !== "false";
     var new_projective_cards = true;
     var hanchul_222_projective_cards = $.cookie("hanchul_proj_222") === "true";
     var hanchul_quad_cards = $.cookie("hanchul_quad") === "true"
