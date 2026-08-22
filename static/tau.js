@@ -750,34 +750,47 @@ $(document).ready(function() {
     div.html('');
     var tab_index = 10;
 
+    // Builds a form that starts a new game of the given type, carrying the
+    // state of the training checkbox along with it.
+    function new_game_form(new_game_type, label, display, form_tab_index) {
+      var form = $('<form style="display:' + display + ';" name="new_game" action="/new_game/' + new_game_type + '?parent=' + game_id + '" method="post"><input type="submit" tabindex="' + form_tab_index + '" value="' + label + '" /></form>');
+      form.submit(function(e) {
+        var params = [
+          { 'name' : 'training', 'value' : $("#training").is(':checked') },
+        ];
+
+        var that = $(this);
+        $.each(params, function(i, param) {
+            var input = $('<input/>').attr('type', 'hidden')
+                .attr('name', param.name)
+                .attr('value', param.value);
+            that.append(input);
+        });
+        
+        return true;
+      });
+      return form;
+    }
+
     function add(elt, display, predicate) {
       for (var game_index = 0; game_index < game_type_info.length; game_index++) {
         var new_game_info = game_type_info[game_index];
         if (!predicate(new_game_info)) {
           continue;
         }
-        var new_game_type = new_game_info[0];
-        var game_type_string = new_game_info[1];
-        var form = $('<form style="display:' + display + ';" name="new_game" action="/new_game/' + new_game_type + '?parent=' + game_id + '" method="post"><input type="submit" tabindex="' + tab_index + '" value="New ' + game_type_string + ' game" /></form>');
-        form.submit(function(e) {
-          var params = [
-            { 'name' : 'training', 'value' : $("#training").is(':checked') },
-          ];
-
-          var that = $(this);
-          $.each(params, function(i, param) {
-              var input = $('<input/>').attr('type', 'hidden')
-                  .attr('name', param.name)
-                  .attr('value', param.value);
-              that.append(input);
-          });
-          
-          return true;
-        });
-        elt.append(form);
+        elt.append(new_game_form(new_game_info[0],
+                                 'New ' + new_game_info[1] + ' game',
+                                 display, tab_index));
         tab_index++;
       }
     }
+
+    // Repeats the game type that just finished. Sits above the per-type
+    // buttons and takes the first tab stop in this section.
+    var play_again = new_game_form(game_type, 'Play again', 'block', 9);
+    play_again.css('margin-bottom', '6px');
+    div.append(play_again);
+
     add(div, 'inline-block', function(new_game_info) {
         return new_game_info[2] === "False" && new_game_info[3] === "False"
     });
