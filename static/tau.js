@@ -312,9 +312,17 @@ $(document).ready(function() {
     }
   };
 
+  // "Override card type" is a free-text setting. Only recognised values
+  // change anything; blank, absent or unrecognised falls back to the
+  // regular cards.
+  function getCardTypeOverride() {
+    var override = $.cookie("card_type_override");
+    return override ? override.trim().toLowerCase() : "";
+  }
+
   function getImgClass() {
     var colour_blind = $.cookie("colour_blind") === "true";
-    var classic_cards = $.cookie("classic_cards") !== "false";
+    var classic_cards = getCardTypeOverride() === "classic";
     var new_projective_cards = true;
     var hanchul_222_projective_cards = $.cookie("hanchul_proj_222") === "true";
     var hanchul_quad_cards = $.cookie("hanchul_quad") === "true"
@@ -343,7 +351,7 @@ $(document).ready(function() {
 
   function getSmallImgClass() {
     var colour_blind = $.cookie("colour_blind") === "true";
-    var classic_cards = $.cookie("classic_cards") !== "false";
+    var classic_cards = getCardTypeOverride() === "classic";
     if (classic_cards && colour_blind) {
       return "smallColourBlindClassicTau";
     } else if (classic_cards) {

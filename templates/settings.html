@@ -5,10 +5,10 @@
 {% block scripts %}
 <script>
 $(function() {
-  $("#classic_cards").attr("checked", $.cookie("classic_cards") !== "false");
-  $("#classic_cards").change(function() {
-    $.cookie("classic_cards",
-      $(this).is(":checked"),
+  $("#card_type_override").val($.cookie("card_type_override") || "");
+  $("#card_type_override").on("input change", function() {
+    $.cookie("card_type_override",
+      $(this).val(),
       {expires: 99999, path:'/'}
     );
   });
@@ -75,7 +75,7 @@ $(function() {
 <h2>Settings (stored as cookies)</h2>
 
 <div class="padded">
-  <div><input id="classic_cards" type="checkbox"/><label for="classic_cards">Classic cards</label></div>
+  <div><label for="card_type_override">Override card type</label> <input id="card_type_override" type="text"/></div>
   <div><input id="colour_blind" type="checkbox"/><label for="colour_blind">Colour blind cards</label></div>
   <div><input id="new_card_animation" type="checkbox"/><label for="new_card_animation">New card animation</label></div>
   <div><input id="dvorak" type="checkbox"/><label for="dvorak">Dvorak <a href="/about#keyboard_shortcuts">keyboard shortcuts</a></label></div>
