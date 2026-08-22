@@ -1,0 +1,4 @@
+# Verified with Python 3.13.
+tornado>=6.0,<7
+SQLAlchemy>=2.0,<3
+PyMySQL>=1.0,<2

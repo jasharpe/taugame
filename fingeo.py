@@ -63,7 +63,7 @@ class AffineSpace(Space):
     ret = []
     for i in range(self.COORDS):
       ret.append(x % self.p)
-      x /= self.p
+      x //= self.p
     ret.reverse()
     return tuple(ret)
 
@@ -98,7 +98,7 @@ class ProjectiveSpace(Space):
     self.p = 2
 
   def all_points(self):
-    return filter(any, all_vectors(2, 6))
+    return list(filter(any, all_vectors(2, 6)))
 
   def to_client_card(self, point):
     return binary_point_to_card(point)

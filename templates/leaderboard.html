@@ -122,7 +122,7 @@ $(document).ready(function() {
         {% for (score, count, total_time_played) in scores %}
           <tr>
             <td>
-              {% set processed_players = sorted(score.players, None, lambda x: x.name) %}
+              {% set processed_players = sorted(score.players, key=lambda x: x.name) %}
               {% for (i, player) in enumerate(processed_players) %}
               <a href="/leaderboard/{{ leaderboard_object }}{{ selected_leaderboard_type }}/{{ player.name }}">{{ player.name }}</a>{% if i != len(score.players) - 1 %}, {% end %}
               {% end %}
@@ -137,7 +137,7 @@ $(document).ready(function() {
           <tr>
             <td>{{ fmt_time(score.elapsed_time) }}</td>
             <td>
-              {% set processed_players = sorted(score.players, None, lambda x: x.name) %}
+              {% set processed_players = sorted(score.players, key=lambda x: x.name) %}
               {% for (i, player) in enumerate(processed_players) %}
               <a href="/leaderboard/{{ leaderboard_object }}{{ selected_leaderboard_type }}/{{ player.name }}">{{ player.name }}</a> ({{ score.player_scores()[player.name] }}){% if i != len(score.players) - 1 %}, {% end %}
               {% end %}

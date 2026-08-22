@@ -1,6 +1,7 @@
-FROM python:2
+FROM python:3
 
-RUN pip install tornado backports.ssl_match_hostname sqlalchemy pymysql
+COPY requirements.txt /websockettau/
+RUN pip install --no-cache-dir -r /websockettau/requirements.txt
 
 ADD *.py /websockettau/
 ADD templates/* /websockettau/templates/

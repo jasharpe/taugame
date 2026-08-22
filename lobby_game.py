@@ -49,13 +49,13 @@ class LobbyGame(object):
 
   def submit_tau(self, socket, cards):
     if self.game.started and not self.game.ended and not self.game.paused:
-      result = self.game.submit_client_tau(map(tuple, cards), socket.name)
+      result = self.game.submit_client_tau(list(map(tuple, cards)), socket.name)
 
       if result.status == result.SUCCESS:
         if self.game.ended:
           self.lobby.send_game_list_update_to_all()
           (db_game, score, elapsed_time) = save_game(self.game, self.training)
-          self.game.player_ranks = get_ranks(elapsed_time, db_game.game_type, self.game.scores.keys(), score.num_players)
+          self.game.player_ranks = get_ranks(elapsed_time, db_game.game_type, list(self.game.scores.keys()), score.num_players)
         self.send_update_to_all()
       elif result.status == result.OLD_FOUND_PUZZLE:
         socket.send_old_found_puzzle_tau_index(result.index)
@@ -128,8 +128,8 @@ class LobbyGame(object):
         if not number in numbers_map:
           numbers_map[number] = []
         numbers_map[number].append(time_to_find)
-      for (number, times) in numbers_map.items():
-        numbers_map[number] = "avg %.02f %s" % (sum(times) / float(len(times)), str(map(lambda x: "%.02f" % x, times)))
+      for (number, times) in list(numbers_map.items()):
+        numbers_map[number] = "avg %.02f %s" % (sum(times) / float(len(times)), str(["%.02f" % x for x in times]))
 
     player_rank_info = None
     if self.game.ended and socket.name in self.game.player_ranks['players']:

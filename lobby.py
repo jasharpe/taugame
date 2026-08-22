@@ -54,13 +54,13 @@ class Lobby(object):
       self.send_game_list_update_to_all()
 
   def get_games(self, see_more_ended):
-    sorted_games = filter(lambda game: not game.hidden, sorted(self.games, None, lambda game: game.id))
-    new_games = filter(lambda g: not g.game.started, sorted_games)
-    started_games = filter(lambda g: g.game.started and not g.game.ended, sorted_games)
+    sorted_games = [game for game in sorted(self.games, key=lambda game: game.id) if not game.hidden]
+    new_games = [g for g in sorted_games if not g.game.started]
+    started_games = [g for g in sorted_games if g.game.started and not g.game.ended]
     if see_more_ended:
-      ended_games = filter(lambda g: g.game.ended, sorted_games)
+      ended_games = [g for g in sorted_games if g.game.ended]
     else:
-      ended_games = filter(lambda g: g.game.ended, sorted_games)[-5:]
+      ended_games = [g for g in sorted_games if g.game.ended][-5:]
     return (new_games, started_games, ended_games)
 
   def send_game_list_update_to_all(self):

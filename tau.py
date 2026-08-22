@@ -4,14 +4,17 @@ import tornado.web
 import tornado.auth
 import tornado.websocket
 import tornado.httpserver
+import tornado.ioloop
 from tornado.log import enable_pretty_logging
 from tornado.escape import url_escape, url_unescape, xhtml_escape, xhtml_unescape, json_decode
+from tornado.httputil import split_host_and_port
 import json
 import os
 import re
 from game import Game, InvalidGameType
 from lobby import Lobby, InvalidGameId
 import argparse
+import asyncio
 import datetime, time
 import ssl
 from state import save_game, get_all_high_scores, get_all_high_games, get_ranks, get_rank, get_graph_data, check_name, set_name, get_name, get_score
@@ -221,7 +224,7 @@ class GraphHandler(tornado.web.RequestHandler):
 class LeaderboardHandler(tornado.web.RequestHandler):
   def get(self, leaderboard_type, leaderboard_object="", slash_separated_players=None, conjunction=None):
     if slash_separated_players:
-      players = filter(None, slash_separated_players.split("/"))
+      players = [player for player in slash_separated_players.split("/") if player]
     else:
       players = []
     if leaderboard_object in ["", "players/"]:
@@ -353,7 +356,7 @@ class RecapHandler(tornado.web.RequestHandler):
       time_offset = 0
 
     try:
-      deck = list(reversed(map(tuple, score.game.deck)))
+      deck = list(reversed([tuple(card) for card in score.game.deck]))
     except:
       deck = []
     need_deck = not deck
@@ -374,7 +377,7 @@ class RecapHandler(tornado.web.RequestHandler):
       wrong_property = get_wrong_property(space, state.cards)
       wrong_properties.append(wrong_property)
       taus.append(state.cards)
-      game = Game(score.game_type, deck=reversed(filter(None, state.board)), targets=[target], wrong_properties=[wrong_property])
+      game = Game(score.game_type, deck=reversed(list(filter(None, state.board))), targets=[target], wrong_properties=[wrong_property])
       num_taus.append(game.count_taus())
       if need_deck:
         for card in state.board:
@@ -385,8 +388,8 @@ class RecapHandler(tornado.web.RequestHandler):
 
     self.render(
         "recap.html",
-        players=map(lambda x: x.name, score.players),
-        num_taus=zip(tau_times, map(str, num_taus), players),
+        players=[x.name for x in score.players],
+        num_taus=list(zip(tau_times, [str(n) for n in num_taus], players)),
         avg_taus=sum(num_taus)/float(len(num_taus)),
         score=score,
         time_offset=time_offset,
@@ -400,7 +403,7 @@ class SettingsHandler(tornado.web.RequestHandler):
     whitelisted_for_classic_cards = False
     user = get_user(self)
     if user is not None:
-      hashed_email = hashlib.sha224(user['email']).hexdigest()
+      hashed_email = hashlib.sha224(user['email'].encode('utf-8')).hexdigest()
       whitelisted_for_classic_cards = hashed_email in [
           "e420c99c918c37a0b3ce076b13fe6e3b218a6fd3421fe502567d7023", "57612f463a44ca2825dde6ab2681eb73ad881476a00072017dfea30d", "7ad0d3b872b6dfd3ef12b998768859ce8d800d5e81aab40621086e43", "aeedd370552be476825c9c88135806dfbf65f6d4ef260aaa3ed7df71", "354b9491675a0ca8c1ab47171e4566f1e9f445afce5496e1ad31f86e", "e78c83b4a686ee735e7d94a81c4c28c473a6d288b46323e00a4200f9", "b5c70176cdc2d236d6eb5451732aeaf6c6cf09b28fe4d1cad74fc7bb", "4574cd96c4d91948a632066b0928909f6fe264455f9f75b2192e7569", "58310a80f35bcad3af8825d16ad2192906cacc517da8c928cc111710", "bf059f7a651c7e8fab5e7bf8563155d6b2e868fa2284f82e29c39e0a", "386a58ea198dddfd4cd4159f318fd764ea319e6ac905ea2707a471ab", "678182092257aa78351036310386ee3f5be1e8c44911abbc3cd434f9", "f9b11b014e9ba299ddd804d076b6f7fc32ce36b18ff39e1a3b2aded0", "e9258f343e98e052ca3233b2d48d497fd27dd02ac8d652315a78e6f4", "833245f724674f8bab5f4ac1322bd80a3501d8acccd5d46e93e7b9c6", "e3e9f9ac74552d96d0320ddc6aea8f4af4442db5e018e11992f8fb59", "5b60e30ee0ec4fb5e8b2ac881cd5cc73893f2359723d6dec31ad4a13", "9cfbbaa5f9d32a76012b60f1f78a3d25e3cd83ba2284b544ec8a870c", "5668206cf1d3bc11552fbf7f3c7c2eef48b41a8866d8bc7fb91f1fd4"
       ]
@@ -416,10 +419,10 @@ class AboutHandler(tornado.web.RequestHandler):
     shadings = ["empty", "shaded", "solid"]
     numbers = ["one", "two", "three"]
     colours = ["red", "green", "blue"]
-    for shape in xrange(3):
-      for shading in xrange(3):
-        for number in xrange(3):
-          for colour in xrange(3):
+    for shape in range(3):
+      for shading in range(3):
+        for number in range(3):
+          for colour in range(3):
             offset = 80 * (shape * 27 + shading * 9 + number * 3 + colour)
             cards[(shapes[shape], shadings[shading], numbers[number], colours[colour])] = "<div class=\"realCard unselectedCard regularTau\" style=\"background-position: -%dpx 0px; display:inline-block;\"></div>" % offset
 
@@ -427,9 +430,9 @@ class AboutHandler(tornado.web.RequestHandler):
     chess_shapes = ["", "pawn", "knight", "rook"]
     astro_shapes = ["", "sun", "star", "meteors"]
     suit_shapes = ["", "club", "heart", "diamond"]
-    for chess_shape in xrange(4):
-      for astro_shape in xrange(4):
-        for suit_shape in xrange(4):
+    for chess_shape in range(4):
+      for astro_shape in range(4):
+        for suit_shape in range(4):
           if not any([chess_shape, astro_shape, suit_shape]): continue
           offset = 80 * (chess_shape + astro_shape * 4 + suit_shape * 16 - 1)
           projcards[(chess_shapes[chess_shape], astro_shapes[astro_shape], suit_shapes[suit_shape])] = '<div class="realCard unselectedCard projectiveTauNew"  style="background-position: -%dpx 0px; display:inline-block;"></div>' % offset
@@ -438,9 +441,9 @@ class AboutHandler(tornado.web.RequestHandler):
     shapes = ["circle", "square", "triangle", "diamond"]
     numbers = ["one", "two", "three", "four"]
     colours = ["red", "yellow", "blue", "green"]
-    for shape in xrange(4):
-      for number in xrange(4):
-        for colour in xrange(4):
+    for shape in range(4):
+      for number in range(4):
+        for colour in range(4):
           offset = 80 * (colour + number * 4 + shape * 16)
           quadcards[(shapes[shape], numbers[number], colours[colour])] = '<div class="realCard unselectedCard booleanTau" style="background-position: -%dpx 0px; display:inline-block;"></div>' % offset 
 
@@ -472,7 +475,7 @@ class GoogleHandler(tornado.web.RequestHandler,
       client = httpclient.AsyncHTTPClient()
       response = yield client.fetch(
           "https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=%s" % (token["access_token"]), 
-          use_gzip=True
+          decompress_response=True
       )
       if response.code != 200:
         self.finish()
@@ -486,7 +489,7 @@ class GoogleHandler(tornado.web.RequestHandler,
           self.redirect("/choose_name")
           return
         try:
-          set_name(user['email'], self.get_secure_cookie("name"))
+          set_name(user['email'], url_unescape(self.get_secure_cookie("name")))
           self.redirect("/")
         except:
           self.clear_cookie('name')
@@ -526,7 +529,7 @@ class TestFrameHandler(tornado.web.RequestHandler):
     game_type_to_taus = {}
     for (game_type, taus) in PRESET_TAUS.items():
       space = fingeo.get_space(game_type)
-      game_type_to_taus[game_type] = map(lambda tau: map(lambda card: space.to_client_card(card), tau), PRESET_TAUS[game_type])
+      game_type_to_taus[game_type] = [[space.to_client_card(card) for card in tau] for tau in PRESET_TAUS[game_type]]
 
     self.render(
         "testframe.html",
@@ -582,6 +585,10 @@ def parse_args():
   parser.add_argument('-r', '--preset', dest='use_preset_decks', action='store_true', help='Enable preset decks. Each game type will always use the same deck.')
   parser.add_argument('-p', '--port', dest='port', type=int, default=80, help='HTTP port.')
   parser.add_argument('-s', '--ssl_port', dest='ssl_port', type=int, default=443, help='HTTPS port.')
+  parser.add_argument('--certfile', dest='certfile', default='chained.pem',
+                      help='TLS certificate chain. Use localhost.crt for local development.')
+  parser.add_argument('--keyfile', dest='keyfile', default='domain.key',
+                      help='TLS private key. Use localhost.key for local development.')
   return parser.parse_args()
 
 class OptionalHTTPServer(tornado.httpserver.HTTPServer):
@@ -598,24 +605,30 @@ class OptionalHTTPServer(tornado.httpserver.HTTPServer):
     else:
       super(tornado.httpserver.HTTPServer, self)._handle_connection(connection, address)
 
+# The Host header carries the port the client connected to, which is the HTTP
+# port. Redirecting to it verbatim would point HTTPS at the plain HTTP
+# listener, so substitute the port we actually serve TLS on. In production
+# ssl_port is 443 and the port is left off entirely, as before.
+def https_redirect_host(host, ssl_port):
+  hostname, _ = split_host_and_port(host)
+  if ssl_port == 443:
+    return hostname
+  return '%s:%d' % (hostname, ssl_port)
+
 class HttpMainHandler(tornado.web.RequestHandler):
   def prepare(self):
     if self.request.protocol == 'http':
-      self.redirect('https://' + self.request.host, permanent=False)
+      self.redirect('https://' + https_redirect_host(self.request.host, args.ssl_port),
+                    permanent=False)
 
   def get(self):
     self.write("Hello, world")
 
-def main():
-  global args
-  args = parse_args()
-  enable_pretty_logging()
+async def run_server():
   application = create_application(args.debug)
 
   ssl_ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-  data_dir="."
-  ssl_ctx.load_cert_chain(os.path.join(data_dir, "chained.pem"),
-                          os.path.join(data_dir, "domain.key"))
+  ssl_ctx.load_cert_chain(args.certfile, args.keyfile)
 
   server = tornado.httpserver.HTTPServer(application, ssl_options=ssl_ctx)
   server.listen(args.ssl_port)
@@ -625,11 +638,22 @@ def main():
   ])
   http_application.listen(args.port)
 
-  ioloop = tornado.ioloop.IOLoop.instance()
+  ioloop = tornado.ioloop.IOLoop.current()
   if args.debug:
     set_ping(ioloop, datetime.timedelta(seconds=1))
   set_game_cleanup(ioloop, datetime.timedelta(seconds=GAME_CLEANUP_INTERVAL))
-  ioloop.start()
+
+  # Run until interrupted.
+  await asyncio.Event().wait()
+
+def main():
+  global args
+  args = parse_args()
+  enable_pretty_logging()
+  try:
+    asyncio.run(run_server())
+  except KeyboardInterrupt:
+    pass
 
 if __name__ == "__main__":
   main()

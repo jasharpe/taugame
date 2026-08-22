@@ -5,7 +5,7 @@ import hashlib
 
 def main():
   s = get_session()
-  print ", ".join(['"' + hashlib.sha224(name.email).hexdigest() + '"' for name in s.query(Name)])
+  print(", ".join(['"' + hashlib.sha224(name.email.encode('utf-8')).hexdigest() + '"' for name in s.query(Name)]))
 
   """
   for score in s.query(Score):

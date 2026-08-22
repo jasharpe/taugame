@@ -1,1 +1,1 @@
-cd /root/websockettau && python backup_to_s3.py
+cd /root/websockettau && .venv/bin/python backup_to_s3.py

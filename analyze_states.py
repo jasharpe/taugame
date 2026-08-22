@@ -32,7 +32,7 @@ def num_different(cards):
 def get_card_posn(card, board):
   idx = board.index(card)
   R = 3
-  C = len(board) / R
+  C = len(board) // R
 
   for r in range(R):
     for c in range(C):
@@ -69,7 +69,7 @@ def count_3taus(board):
     for b in cards:
       if a != b:
         ret += (negasum(a,b) in cards)
-  return ret / 6
+  return ret // 6
 
 # All times.
 all_stats = []
@@ -92,7 +92,7 @@ shared_stats = defaultdict(lambda: [])
 # Find times by how many taus are present.
 num_taus_stats = defaultdict(lambda: [])
 
-print 'Processing scores...'
+print('Processing scores...')
 S = 0
 for score in scores:
   S += 1
@@ -104,8 +104,8 @@ for score in scores:
     delta = cur_time - prev_time
     prev_time = cur_time
 
-    cards = state.cards()
-    board = state.board()
+    cards = state.cards
+    board = state.board
 
     all_stats.append(delta)
     differ_stats[num_different(cards)].append(delta)
@@ -127,71 +127,71 @@ for score in scores:
     num_taus_stats[count_3taus(board)].append(delta)
 
 
-print 'All done!'
-print '(There were %d scores.)' % S
-print
+print('All done!')
+print('(There were %d scores.)' % S)
+print()
 
-print 'Player: %s' % name
-print 'Game type: %s' % game_type
-print
+print('Player: %s' % name)
+print('Game type: %s' % game_type)
+print()
 
 def pr_deltas(deltas):
-  print '  count: %d' % len(deltas)
+  print('  count: %d' % len(deltas))
   # To get something meaningful from the mean, the data will need to be cleaned.
   #print '  mean: %.3lf' % np.mean(deltas)
-  print '  25%%:    %6.3lf' % np.percentile(deltas, 25.)
-  print '  median: %6.3lf' % np.median(deltas)
-  print '  75%%:    %6.3lf' % np.percentile(deltas, 75.)
-  print
+  print('  25%%:    %6.3lf' % np.percentile(deltas, 25.))
+  print('  median: %6.3lf' % np.median(deltas))
+  print('  75%%:    %6.3lf' % np.percentile(deltas, 75.))
+  print()
 
 def pr_hr():
-  print 60*'*'
+  print(60*'*')
 
 pr_hr()
-print '*** Number of differing properties'
+print('*** Number of differing properties')
 for x in sorted(differ_stats):
   deltas = differ_stats[x]
 
-  print '# differing properties = %d' % x
+  print('# differing properties = %d' % x)
   pr_deltas(deltas)
 
 pr_hr()
-print '*** Area of card bounding box'
+print('*** Area of card bounding box')
 for a in sorted(posn_stats):
   deltas = posn_stats[a]
 
-  print 'Bounding box area = %d' % a
+  print('Bounding box area = %d' % a)
   pr_deltas(deltas)
 
 pr_hr()
-print '*** Property that is the same'
+print('*** Property that is the same')
 PROP_NAMES = ['colour', 'number', 'fill', 'shape']
 for i in sorted(same_stats):
   deltas = same_stats[i]
 
-  print 'Has same property = %s' % PROP_NAMES[i]
+  print('Has same property = %s' % PROP_NAMES[i])
   pr_deltas(deltas)
 
 pr_hr()
-print '*** Different-property vector'
+print('*** Different-property vector')
 for v in sorted(diffvec_stats, key=sum):
   deltas = diffvec_stats[v]
 
-  print 'Different properties = %s' % ', '.join(PROP_NAMES[i] for i in range(NUM_PROP) if v[i])
+  print('Different properties = %s' % ', '.join(PROP_NAMES[i] for i in range(NUM_PROP) if v[i]))
   pr_deltas(deltas)
 
 pr_hr()
-print '*** Shared card positions'
+print('*** Shared card positions')
 for x in sorted(shared_stats):
   deltas = shared_stats[x]
 
-  print '# shared positions = %d' % x
+  print('# shared positions = %d' % x)
   pr_deltas(deltas)
 
 pr_hr()
-print '*** Number taus present'
+print('*** Number taus present')
 for x in sorted(num_taus_stats):
   deltas = num_taus_stats[x]
 
-  print '# taus = %d' % x
+  print('# taus = %d' % x)
   pr_deltas(deltas)

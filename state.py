@@ -1,6 +1,6 @@
 from db import Base, get_session
 from sqlalchemy import Column, Integer, BigInteger, String, DateTime, ForeignKey, Float, Text, Table, Boolean, distinct, func, or_, and_, text
-from sqlalchemy.orm import relationship, backref, joinedload
+from sqlalchemy.orm import relationship, backref, joinedload, aliased
 from sqlalchemy.sql.expression import desc, asc
 import datetime
 import json
@@ -17,7 +17,8 @@ def rdefaultdict(): return defaultdict(rdefaultdict)
 def get_score(score_id):
   session = get_session()
   try:
-    return session.query(Score).filter_by(id=score_id).options(joinedload('game.states.player')).first()
+    return session.query(Score).filter_by(id=score_id).options(
+        joinedload(Score.game).joinedload(DBGame.states).joinedload(State.player)).first()
   except:
     return None
 
@@ -37,7 +38,7 @@ filter_map = {
 }
 
 def filter_for_players(players, query):
-  return query.join((DBPlayer, Score.players)).filter(or_(*[DBPlayer.name == player for player in players]))
+  return query.join(DBPlayer, Score.players).filter(or_(*[DBPlayer.name == player for player in players]))
 
 def base_score_query(leaderboard_type, query):
   time_filter = filter_map[leaderboard_type]()
@@ -90,7 +91,9 @@ def get_all_high_games(num_results, leaderboard_type, players, conjunction):
       query = filter_for_players(players, query).group_by(Score.id)
     if conjunction == "and":
       query = and_query(players, query)
-    results = list(query.from_self(Score, func.count().label("num_games"), func.sum(Score.elapsed_time)).group_by(Score.team_id).order_by(text('num_games desc')).limit(num_results))
+    subquery = query.subquery()
+    score_alias = aliased(Score, subquery)
+    results = list(session.query(score_alias, func.count().label("num_games"), func.sum(score_alias.elapsed_time)).group_by(score_alias.team_id).order_by(text('num_games desc')).limit(num_results))
     if results:
       ret[game_type][number] = results
   return ret
@@ -106,7 +109,7 @@ def get_or_create_dbplayer(session, name):
 
 # players is a list of DBPlayers
 def get_or_create_team(session, players):
-  team = session.query(Team).join((DBPlayer, Team.players)).filter(or_(*[DBPlayer.id == player.id for player in players])).group_by(Team.id).having(func.count(distinct(DBPlayer.id)) == len(players)).first()
+  team = session.query(Team).join(DBPlayer, Team.players).filter(or_(*[DBPlayer.id == player.id for player in players])).group_by(Team.id).having(func.count(distinct(DBPlayer.id)) == len(players)).first()
   if team:
     return team
   else:
@@ -130,7 +133,7 @@ def get_rank(elapsed_time, leaderboard_type, num_players, game_type, leaderboard
 
   num_better_scores = simple_query(leaderboard_type, num_players, game_type, session.query(Score))
   if leaderboard != "all":
-    num_better_scores = simple_query(leaderboard_type, num_players, game_type, session.query(Score)).join((DBPlayer, Score.players)).filter(DBPlayer.name == player_name)
+    num_better_scores = simple_query(leaderboard_type, num_players, game_type, session.query(Score)).join(DBPlayer, Score.players).filter(DBPlayer.name == player_name)
   if close == "close":
     better = num_better_than_query(elapsed_time - CLOSE_THRESHOLD, num_better_scores)
   else:
@@ -191,7 +194,7 @@ def save_game(game, training):
     state = State(elapsed_time, board, cards, db_player)
     db_game.states.append(state)
     last_elapsed_time = elapsed_time
-  players = name_to_player_map.values()
+  players = list(name_to_player_map.values())
   team = get_or_create_team(session, players)
   score = Score(last_elapsed_time, datetime.datetime.utcnow(), db_game, players, team, player_to_score_map)
   if training:
@@ -328,7 +331,7 @@ class Name(Base):
     self.name = name
 
   def __repr__(self):
-    return "<Name(%s, %s)>" % (email, name)
+    return "<Name(%s, %s)>" % (self.email, self.name)
 
 # Represents the state just before a tau is taken, and
 # the tau that was taken.

@@ -2,7 +2,7 @@ import os
 import sqlalchemy as sa
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 
 if 'db' in os.environ and os.environ['db'] == 'mysql':
     password = os.environ['mysql_password']

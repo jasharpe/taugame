@@ -60,7 +60,7 @@ type_to_min_board_size = {
   'sbqtau': 9,
 }
 
-game_types = type_to_size_map.keys()
+game_types = list(type_to_size_map.keys())
 
 Z3TAU_COUNT = 6
 
@@ -80,7 +80,7 @@ class Game(object):
     if seed:
       self.seed = seed
     else:
-      self.seed = random.randint(0, sys.maxint)
+      self.seed = random.randint(0, sys.maxsize)
     self.rand = random.Random(self.seed)
     try:
       self.size = type_to_size_map[type]
@@ -181,10 +181,10 @@ class Game(object):
       self.board.pop()
 
     # add new cards to fill in gaps
-    while len(filter(None, self.board)) < self.min_number or (self.type not in ['g3tau', '4tau'] and self.no_subset_is_tau(filter(None, self.board), self.size)):
+    while len(list(filter(None, self.board))) < self.min_number or (self.type not in ['g3tau', '4tau'] and self.no_subset_is_tau(list(filter(None, self.board)), self.size)):
       if not self.deck:
         break
-      num_cards_on_board = len(filter(None, self.board))
+      num_cards_on_board = len(list(filter(None, self.board)))
       if num_cards_on_board > self.min_number - 3 and num_cards_on_board < self.min_number:
         to_add = self.min_number - num_cards_on_board
       else:
@@ -304,18 +304,18 @@ class Game(object):
 
     # For Insane 3 Tau and Easy 3 Tau, the initial positions of cards must be
     # randomized, because the first 3 dealt cards always form a Tau.
-    if self.type in ['i3tau', 'e3tau', 'm3tau', 'i93tau'] and len(filter(None, self.board)) + len(self.deck) == type_to_deck_size_map[self.type]:
+    if self.type in ['i3tau', 'e3tau', 'm3tau', 'i93tau'] and len(list(filter(None, self.board))) + len(self.deck) == type_to_deck_size_map[self.type]:
       # For Master 3 Tau, the positions of the last 3 cards dealt are chosen
       # to be hard, so don't mess them up.
-      if self.type != 'm3tau' or len(filter(None, self.board)) <= 9:
+      if self.type != 'm3tau' or len(list(filter(None, self.board))) <= 9:
         self.rand.shuffle(self.board)
 
   def get_wrong_property(self, board):
-    no_nones = filter(None, board)
+    no_nones = list(filter(None, board))
     if len(no_nones) < self.size:
       return None
     counts = []
-    for i in xrange(0, 4):
+    for i in range(0, 4):
       count = self.count_tau_subsets(no_nones, 3, wrong_property=i)
       if count > 0:
         counts.append((i, count))
@@ -326,7 +326,7 @@ class Game(object):
     return self.rand.choice(counts)[0]
 
   def get_random_target(self, board):
-      no_nones = filter(None, board)
+      no_nones = list(filter(None, board))
       if len(no_nones) < self.size:
         return []
       else:
@@ -337,19 +337,19 @@ class Game(object):
     if self.type == 'z3tau':
       return len(self.taus) == self.count_taus()
     else:
-      return len(self.deck) == 0 and self.no_subset_is_tau(filter(None, self.board), self.size)
+      return len(self.deck) == 0 and self.no_subset_is_tau(list(filter(None, self.board)), self.size)
 
   def get_all_taus(self, wrong_property=None):
     taus = []
-    for card_subset in itertools.combinations(filter(None, self.board), self.size):
+    for card_subset in itertools.combinations(list(filter(None, self.board)), self.size):
       if self.is_tau(card_subset, wrong_property=wrong_property):
         taus.append(card_subset)
     return taus
 
   def get_all_client_taus(self):
-    taus =  [map(self.space.to_client_card, tau) for tau in self.get_all_taus(wrong_property=self.wrong_property)]
+    taus =  [list(map(self.space.to_client_card, tau)) for tau in self.get_all_taus(wrong_property=self.wrong_property)]
     if self.type == 'z3tau':
-      return (filter(lambda cards: self.old_found_puzzle_tau_index(cards) is None, taus), filter(lambda cards: self.old_found_puzzle_tau_index(cards) is not None, taus))
+      return (list(filter(lambda cards: self.old_found_puzzle_tau_index(cards) is None, taus)), list(filter(lambda cards: self.old_found_puzzle_tau_index(cards) is not None, taus)))
     return (taus, None)
 
   def count_taus(self):
@@ -400,7 +400,7 @@ class Game(object):
 
   def old_found_puzzle_tau_index(self, cards):
     cards = frozenset(cards)
-    found = map(frozenset, self.get_found_puzzle_taus())
+    found = list(map(frozenset, self.get_found_puzzle_taus()))
     
     try:
       return found.index(cards)
@@ -416,13 +416,13 @@ class Game(object):
     server_taus = self.get_found_puzzle_taus()
     if server_taus is None:
       return None
-    return [map(self.space.to_client_card, cards) for cards in server_taus]
+    return [list(map(self.space.to_client_card, cards)) for cards in server_taus]
 
   def is_tau_basic(self, cards):
     return not any(self.space.sum_cards(cards))
 
   def is_n3tau(self, cards, wrong_property):
-    correct_properties = map(lambda x: 1 if x else 0, self.space.sum_cards(cards))
+    correct_properties = list(map(lambda x: 1 if x else 0, self.space.sum_cards(cards)))
     if wrong_property is not None:
       return sum(correct_properties) == 1 and correct_properties[wrong_property] == 1
     else:
@@ -438,9 +438,9 @@ class Game(object):
     elif len(cards) == 4 and self.type in ['4tau']:
       return self.space.sum_cards(cards) == self.target_tau
     elif len(cards) == 4 and self.type in ['4otau']:
-      for i in xrange(1, 4):
+      for i in range(1, 4):
         this_pair = [cards[0], cards[i]]
-        that_pair = map(lambda j: cards[j], [j for j in xrange(1, 4) if not j in [0, i]])
+        that_pair = list(map(lambda j: cards[j], [j for j in range(1, 4) if not j in [0, i]]))
         if self.space.sum_cards(this_pair) == self.space.sum_cards(that_pair):
           return True
       return False
@@ -470,7 +470,7 @@ class Game(object):
     # more than a single set, then we don't iterate through choices of a
     # third card. (The straightforward approach was tested and found to be
     # too slow.)
-    candidate_board = filter(None, self.board)
+    candidate_board = list(filter(None, self.board))
 
     def rec(start, to_add):
       if to_add == 0:
@@ -499,14 +499,14 @@ class Game(object):
     if not tau:
       return 0
 
-    return self.compute_spreadness(map(self.board.index, tau))
+    return self.compute_spreadness(list(map(self.board.index, tau)))
 
   def compute_spreadness(self, ixs):
     # Return some measure of how spread out cards are.
     # Higher values indicate more spread out.
     # For now, uses the area of the bounding box.
 
-    posns = map(self.board_index_to_position, ixs)
+    posns = list(map(self.board_index_to_position, ixs))
 
     mnr = min(p[0] for p in posns)
     mxr = max(p[0] for p in posns)
@@ -516,7 +516,7 @@ class Game(object):
     return (mxr-mnr+1) * (mxc-mnc+1)
 
   def find_m3tau_new_cards(self):
-    no_nones = filter(None, self.board)
+    no_nones = list(filter(None, self.board))
 
     # Group remaining cards by whether they complete a tau with the current
     # board.
@@ -595,7 +595,7 @@ class Game(object):
     assert self.deck
 
     # Figure out how many taus are completed by each card.
-    existing_cards = filter(None, self.board)
+    existing_cards = list(filter(None, self.board))
     completion_map = {}
     for a,b in itertools.combinations(existing_cards, 2):
       key = tuple(self.space.negasum(a,b))
@@ -619,15 +619,15 @@ class Game(object):
     return best_card
 
   def get_client_board(self):
-    return map(self.space.to_client_card, self.board)
+    return list(map(self.space.to_client_card, self.board))
 
   def get_client_target_tau(self):
     return self.space.to_client_card(self.target_tau)
 
   def submit_client_tau(self, cards, player):
-    server_cards = map(self.space.from_client_card, cards)
+    server_cards = list(map(self.space.from_client_card, cards))
     return self.submit_tau(server_cards, player)
 
   def get_client_hint(self):
     server_tau = self.get_hint()
-    return map(self.space.to_client_card, server_tau)
+    return list(map(self.space.to_client_card, server_tau))

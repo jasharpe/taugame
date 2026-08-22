@@ -1,28 +1,51 @@
 *** Requirements
-Python 2.7 (for argparse module)
+Python 3 (developed and verified against 3.13)
 http://www.python.org/
 
-Tornado Web Server
+Tornado Web Server 6.x
 http://www.tornadoweb.org/
 
-SQLAlchemy
+SQLAlchemy 2.x
 http://www.sqlalchemy.org/
 
-**** Install requirements with MacPorts
+**** Install requirements in a virtualenv
 
-  sudo port install python27 py27-tornado py27-sqlalchemy
+  python3 -m venv .venv
+  .venv/bin/pip install -r requirements.txt
 
 *** Running
 
 Before running the first time, to set up necessary files run:
 
-  python2.7 setup.py
+  .venv/bin/python setup.py
 
-Then edit secrets.py to add the missing fields.
+This writes secrets.py and generates a self-signed localhost.crt /
+localhost.key pair. Then edit secrets.py to add the missing fields
+(client_id and client_secret are only needed for Google sign-in; the game
+itself runs fine with them left empty).
 
 Then, to run locally for development:
 
-  sudo python2.7 tau.py --debug --port=8000 --ssl_port=8001
+  .venv/bin/python tau.py --debug --port=8000 --ssl_port=8001 \
+      --certfile=localhost.crt --keyfile=localhost.key
+
+and open https://localhost:8001/ (note: https, and the ssl_port). Because
+localhost.crt is self-signed, the browser shows a certificate warning the
+first time; choose Advanced -> Proceed to accept it.
+
+http://localhost:8000/ also works: the HTTP port serves nothing but a
+redirect to HTTPS on the ssl_port. Note that http://localhost:8001/ does
+not work, and logs an 'SSL Error ... http request' warning, because 8001
+speaks TLS only.
+
+--certfile/--keyfile default to the production chained.pem/domain.key, so
+deployments do not need to pass them. Pass them explicitly when running
+locally, since the production certificate is issued for taugame.com (and
+expired in 2020).
+
+To run the tests:
+
+  .venv/bin/python test_fast_board.py
 
 To build and run with Docker (experimental):
 
@@ -45,7 +68,7 @@ Root access is required to bind to port 80 which is the default, so using ports 
 
 For other options, type:
 
-  python2.7 tau.py --help
+  .venv/bin/python tau.py --help
 
 *** Adding a new game type (as of July 15, 2012)
 - Implement the rules in game.py.
@@ -65,23 +88,8 @@ $ yum install git
 $ yum install python
 $ yum install gcc-c++
 $ git clone https://github.com/jasharpe/websockettau.git
-# install tornado
-$ wget https://pypi.python.org/packages/source/t/tornado/tornado-4.0.2.tar.gz
-$ tar xvzf tornado-4.0.2.tar.gz
-$ cd tornado-4.0.2
-$ python setup.py build
-$ sudo python setup.py install
-# install backports
-$ cd ~ && wget https://pypi.python.org/packages/source/b/backports.ssl_match_hostname/backports.ssl_match_hostname-3.4.0.2.tar.gz
-$ tar -zxvf backports.ssl_match_hostname-3.4.0.2.tar.gz
-$ cd backports.ssl_match_hostname-3.4.0.2
-$ python setup.py install
-# install pip
-$ sudo yum install python-pip
-# install certifi
-$ pip-python install certifi
-# install sqlalchemy
-$ yum install python-sqlalchemy
+# install python dependencies
+$ cd ~/websockettau && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 # create secrets.py
 # Get google client id and secret from https://console.developers.google.com/project/apps~tau-game/apiui/credential
 $ cd ~/websockettau && cat > secrets.py
