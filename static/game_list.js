@@ -21,13 +21,71 @@ $(function() {
 $(function() {
   var start = (("" + window.location).indexOf("https") == 0) ? "wss" : "ws";
   console.log("Using " + start);
-  var ws = new WebSocket(start + "://" + window.location.host + "/gamelistwebsocket/" + see_more_ended);
+  // Reconnect tuning.
+  var RECONNECT_MIN_DELAY = 1000;
+  var RECONNECT_MAX_DELAY = 30000;
+  // A socket that stayed open at least this long counts as a healthy
+  // connection, so the next drop starts retrying quickly again. A socket that
+  // closes immediately keeps backing off instead of spinning.
+  var STABLE_CONNECTION = 5000;
 
-  ws.onopen = function() {
-    ws.send(JSON.stringify({
-        'type' : 'update'
-    }));
-  };
+  var ws = null;
+  var reconnect_delay = RECONNECT_MIN_DELAY;
+  var reconnect_timer = null;
+  var connected_at = 0;
+
+  function connect() {
+    reconnect_timer = null;
+    ws = new WebSocket(start + "://" + window.location.host + "/gamelistwebsocket/" + see_more_ended);
+    ws.onopen = on_ws_open;
+    ws.onmessage = on_ws_message;
+    ws.onclose = on_ws_close;
+  }
+
+  // Anything sent while the socket is down (or still opening) is dropped
+  // rather than throwing. Reconnecting re-requests the full state, so the only
+  // thing lost is the action itself.
+  function send(message) {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(message));
+      return true;
+    }
+    return false;
+  }
+
+  function on_ws_close() {
+    if (connected_at && new Date().getTime() - connected_at >= STABLE_CONNECTION) {
+      reconnect_delay = RECONNECT_MIN_DELAY;
+    }
+    connected_at = 0;
+    show_disconnected();
+    if (reconnect_timer === null) {
+      // Jitter stops every client retrying in lockstep after a server restart.
+      reconnect_timer = setTimeout(connect,
+          reconnect_delay + Math.floor(Math.random() * 500));
+      reconnect_delay = Math.min(reconnect_delay * 2, RECONNECT_MAX_DELAY);
+    }
+  }
+
+  function show_disconnected() {
+    if (!$("#disconnected").length) {
+      $("<div id=\"disconnected\">Connection lost \u2014 reconnecting\u2026 " +
+        "<a href=\"javascript:location.reload(true)\">refresh now</a></div>")
+          .prependTo("body");
+    }
+  }
+
+  function hide_disconnected() {
+    $("#disconnected").remove();
+  }
+
+  function on_ws_open() {
+    connected_at = new Date().getTime();
+    hide_disconnected();
+    send({'type' : 'update'});
+  }
+
+  connect();
 
   function add_games(section, games) {
     section.find(".games_list").html('');
@@ -79,7 +137,7 @@ $(function() {
     }
   }
 
-  ws.onmessage = function (e) {
+  function on_ws_message(e) {
     var data = JSON.parse(e.data);
     if (data.type == "players") {
       // TODO: Show players in lobby.
@@ -88,10 +146,5 @@ $(function() {
       add_games($("#startedgames"), data.started_games);
       add_games($("#endedgames"), data.ended_games);
     }
-  };
-
-  ws.onclose = function() {
-    $("body").prepend($("<span>DISCONNECTED - <a href=\"javascript:location.reload(true)\">REFRESH</a> (if you can't connect at all, <a href=\"" + window.location.href.replace("http:", "https:") + "\">try https</a> (ignore any warnings you see, my certificate is not good))</span>"));
-    $("body").css("background-color", "red");
-  };
+  }
 });

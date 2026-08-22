@@ -183,6 +183,21 @@ table {
   display:block;
 }
 
+/* Shown while the websocket is down and the client is retrying. Replaces the
+   old behaviour of turning the whole page red. */
+#disconnected {
+  background-color:#c00;
+  color:white;
+  font-weight:bold;
+  padding:6px 10px;
+  margin-bottom:8px;
+}
+
+#disconnected a {
+  color:white;
+  text-decoration:underline;
+}
+
 #chat {
   border-top: 1px solid #CCC;
   padding-top: 2px;

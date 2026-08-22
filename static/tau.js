@@ -124,7 +124,7 @@ $(document).ready(function() {
   });
   
   function start() {
-    ws.send(JSON.stringify({'type' : 'start'}));
+    send({'type' : 'start'});
     waiting();
   }
 
@@ -143,21 +143,80 @@ $(document).ready(function() {
 
   var ws_type = (("" + window.location).indexOf("https") == 0) ? "wss" : "ws";
   console.log("Using " + ws_type);
-  var ws = new WebSocket(ws_type + "://" + window.location.host + "/websocket/" + game_id);
-  ws.onopen = function() {
+  // Reconnect tuning.
+  var RECONNECT_MIN_DELAY = 1000;
+  var RECONNECT_MAX_DELAY = 30000;
+  // A socket that stayed open at least this long counts as a healthy
+  // connection, so the next drop starts retrying quickly again. A socket that
+  // closes immediately keeps backing off instead of spinning.
+  var STABLE_CONNECTION = 5000;
+
+  var ws = null;
+  var reconnect_delay = RECONNECT_MIN_DELAY;
+  var reconnect_timer = null;
+  var connected_at = 0;
+
+  function connect() {
+    reconnect_timer = null;
+    ws = new WebSocket(ws_type + "://" + window.location.host + "/websocket/" + game_id);
+    ws.onopen = on_ws_open;
+    ws.onmessage = on_ws_message;
+    ws.onclose = on_ws_close;
+  }
+
+  // Anything sent while the socket is down (or still opening) is dropped
+  // rather than throwing. Reconnecting re-requests the full state, so the only
+  // thing lost is the action itself.
+  function send(message) {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(message));
+      return true;
+    }
+    return false;
+  }
+
+  function on_ws_close() {
+    if (connected_at && new Date().getTime() - connected_at >= STABLE_CONNECTION) {
+      reconnect_delay = RECONNECT_MIN_DELAY;
+    }
+    connected_at = 0;
+    show_disconnected();
+    if (reconnect_timer === null) {
+      // Jitter stops every client retrying in lockstep after a server restart.
+      reconnect_timer = setTimeout(connect,
+          reconnect_delay + Math.floor(Math.random() * 500));
+      reconnect_delay = Math.min(reconnect_delay * 2, RECONNECT_MAX_DELAY);
+    }
+  }
+
+  function show_disconnected() {
+    if (!$("#disconnected").length) {
+      $("<div id=\"disconnected\">Connection lost \u2014 reconnecting\u2026 " +
+        "<a href=\"javascript:location.reload(true)\">refresh now</a></div>")
+          .prependTo("body");
+    }
+  }
+
+  function hide_disconnected() {
+    $("#disconnected").remove();
+  }
+
+  function on_ws_open() {
+    connected_at = new Date().getTime();
+    hide_disconnected();
     $("#connecting").hide();
     $("#start").show();
-    ws.send(JSON.stringify({
-        'type' : 'update'
-    }));
-  };
+    send({'type' : 'update'});
+  }
+
+  connect();
 
   function submit_tau(cards) {
     if (all_tau_strings[tau_to_string(cards)]) {
-      ws.send(JSON.stringify({
+      send({
           'type' : 'submit',
           'cards' : cards
-      }));
+      });
       waiting()
       last_submit_time = new Date().getTime();
       for (i in cards) {
@@ -198,10 +257,10 @@ $(document).ready(function() {
   };
 
   function pause(pause_or_unpause) {
-    ws.send(JSON.stringify({
+    send({
         'type' : 'pause',
         'pause' : pause_or_unpause,
-    }));
+    });
   };
 
   function get_card_number(card) {
@@ -414,11 +473,11 @@ $(document).ready(function() {
         }
         property_select.change(function(e) {
           var selected = $('#property_picker option:selected');
-          ws.send(JSON.stringify({
+          send({
             'type' : 'training_option',
             'option' : 'property',
             'value' : selected.val()
-          }));
+          });
         });
         options.append($('<label for="property">Property:</label>"'));
         options.append(property_select);
@@ -801,7 +860,7 @@ $(document).ready(function() {
     }
   }
 
-  ws.onmessage = function (e) {
+  function on_ws_message(e) {
     var data = JSON.parse(e.data);
     if (data.type === "update") {
       var wrong_property = null;
@@ -846,21 +905,16 @@ $(document).ready(function() {
     }
   }
 
-  ws.onclose = function() {
-    $("body").prepend($("<span>DISCONNECTED - <a href=\"javascript:location.reload(true)\">REFRESH</a> (if you can't connect at all, <a href=\"" + window.location.href.replace("http:", "https:") + "\">try https</a> (ignore any warnings you see, my certificate is not good))</span>"));
-    $("body").css("background-color", "red");
-  };
-
   // CHAT
 
   function on_chat(e) {
     var chat_box = $("#chat_box");
     if (chat_box.val() && (e.type == "click" || e.keyCode === 13)) {
-      ws.send(JSON.stringify({
+      send({
         'type' : 'chat',
         'name' : user_name,
         'message' : chat_box.val()
-      }));
+      });
       chat_box.val("");
     }
   };
