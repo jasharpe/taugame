@@ -93,7 +93,26 @@ def get_all_high_games(num_results, leaderboard_type, players, conjunction):
       query = and_query(players, query)
     subquery = query.subquery()
     score_alias = aliased(Score, subquery)
-    results = list(session.query(score_alias, func.count().label("num_games"), func.sum(score_alias.elapsed_time)).group_by(score_alias.team_id).order_by(text('num_games desc')).limit(num_results))
+
+    # Aggregate by team, selecting nothing but aggregates. Selecting whole Score
+    # rows here while grouping by team_id is accepted by SQLite but rejected by
+    # MySQL, which runs with ONLY_FULL_GROUP_BY by default from 5.7 onwards.
+    # min(id) picks a representative row from inside the group so the template
+    # can still show who the team was.
+    totals = session.query(
+        func.min(score_alias.id).label("score_id"),
+        func.count().label("num_games"),
+        func.sum(score_alias.elapsed_time).label("total_time"),
+    ).group_by(score_alias.team_id).order_by(text('num_games desc')).limit(num_results).all()
+    if not totals:
+      continue
+
+    scores_by_id = dict(
+        (score.id, score)
+        for score in session.query(Score).filter(
+            Score.id.in_([total.score_id for total in totals])))
+    results = [(scores_by_id[total.score_id], total.num_games, total.total_time)
+               for total in totals if total.score_id in scores_by_id]
     if results:
       ret[game_type][number] = results
   return ret
@@ -178,23 +197,30 @@ def get_ranks(total_time, game_type, player_names, num_players):
 def save_game(game, training):
   session = get_session()
   db_game = DBGame(game.type, game.start_deck, game.seed)
+  # Submitted name -> DBPlayer, purely to avoid repeating the lookup.
   name_to_player_map = {}
+  # DBPlayer.name -> tau count, and DBPlayer.name -> DBPlayer. Both are keyed by
+  # the stored name rather than the submitted one. MySQL compares strings
+  # case-insensitively by default, so a player whose cookie reads "Aing2" can
+  # match a DBPlayer row stored as "aing2"; keying the counts by the submitted
+  # spelling left the leaderboard unable to find them, because it looks them up
+  # by the stored name. Keying both by DBPlayer.name also stops two spellings of
+  # one name being recorded as two separate players on the score.
   player_to_score_map = {}
+  score_players_map = {}
   last_elapsed_time = 0
   for (board, tau) in zip(game.boards, game.taus):
     (elapsed_time, total_taus, player, cards) = tau
-    if player in name_to_player_map:
-      db_player = name_to_player_map[player]
-      player_to_score_map[player] += 1
-    else:
-      db_player = get_or_create_dbplayer(session, player)
-      player_to_score_map[player] = 1
-    name_to_player_map[db_player.name] = db_player
+    if player not in name_to_player_map:
+      name_to_player_map[player] = get_or_create_dbplayer(session, player)
+    db_player = name_to_player_map[player]
+    score_players_map[db_player.name] = db_player
+    player_to_score_map[db_player.name] = player_to_score_map.get(db_player.name, 0) + 1
 
     state = State(elapsed_time, board, cards, db_player)
     db_game.states.append(state)
     last_elapsed_time = elapsed_time
-  players = list(name_to_player_map.values())
+  players = list(score_players_map.values())
   team = get_or_create_team(session, players)
   score = Score(last_elapsed_time, datetime.datetime.utcnow(), db_game, players, team, player_to_score_map)
   if training:

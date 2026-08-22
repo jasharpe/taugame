@@ -1,0 +1,24 @@
+# The build context is uploaded in full (to the daemon, or to Cloud Build), so
+# keep it to what the Dockerfile actually copies.
+.venv/
+.git/
+.gitignore
+__pycache__/
+*.pyc
+
+# Local dev database; production uses MySQL via the db_* environment variables.
+sqlite_db
+
+# Build/analysis tooling that never runs in the container.
+java/
+deal_ibqtau/
+preprocessing/
+*_migration
+migration
+drop_tables.sql
+
+# Logs and scratch.
+*.log
+log.out
+log.err
+.DS_Store

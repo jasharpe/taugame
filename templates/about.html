@@ -404,14 +404,14 @@
 
   <h3 id="rulesr4tau">4 Tau</h3>
 
-  <p>In 4 Tau you look for four cards that form a <i>rectangle</i>. Split the four cards into two pairs. They are a 4 Tau if the two pairs have the same relationship in every property, which means that for each property one of these holds:
+  <p>In 4 Tau you look for four cards that form a sort of <i>rectangle</i> in property space. If you split the four cards into two pairs of cards, they are a 4 Tau if the two pairs have the same relationship in every property, which means that for each property one of these holds:
 
   <ul>
-    <li>both pairs are constant in that property &mdash; each pair uses a single value, though the two pairs need not use the same one; or
-    <li>both pairs use exactly the same two values.
+    <li>Within each pair, the property is the same, or
+    <li>The two property values within each pair are the same
   </ul>
 
-  <p>Put another way: whatever differs between the first two cards must differ in exactly the same way between the other two, and whatever the first two share the other two must also share.
+  <p>Put another way: whatever differs between the first two cards must differ in exactly the same way between the other two, and whatever two share the other two must also share.
 
   <p>For example, these four cards are a 4 Tau:
 
@@ -422,7 +422,7 @@
   {% raw cards[('circle', 'solid', 'one', 'red')] %}
   {% raw cards[('square', 'solid', 'one', 'green')] %}
 
-  <p>Taking the top two as one pair and the bottom two as the other: both pairs go circle then square, and both go red then green, so those properties use the same two values. Both pairs are all one, and while the top pair is empty and the bottom pair is solid, each pair is constant in shading, which is what the rule asks for.
+  <p>Taking the top two as one pair and the bottom two as the other: both pairs go circle then square, and both go red then green, so those properties use the same two values. Both pairs are all one, and while the top pair is empty and the bottom pair is solid, each pair is constant in shading.
 
   <p>These four are <i>not</i> a 4 Tau:
 
@@ -433,11 +433,7 @@
   {% raw cards[('circle', 'solid', 'one', 'green')] %}
   {% raw cards[('square', 'solid', 'one', 'blue')] %}
 
-  <p>The colours have been shifted along by one, so the top pair is red and green while the bottom pair is green and blue. The change is the same size in both pairs, but the values differ, which makes this a parallelogram rather than a rectangle. Note that the pairing above is not the only one that has to fail: four cards are a 4 Tau if <i>any</i> of the three ways of splitting them into two pairs works.
-
-  <h4>Strategy</h4>
-
-  <p>Rectangles are easiest to spot by looking for two cards that share most of their properties, then hunting for a second pair that differs in the same places. Because a pair that is constant in a property can be matched by a pair constant at any value, cards that repeat a property across the whole board are especially useful.
+  <p>The top pair is red and green while the bottom pair is green and blue. This violates the rule that if one pair has two values for a property, then the other pair must have the same two values for that property.
 
   <h3 id="rules3ptau">Projective Tau</h3>
 

@@ -47,6 +47,133 @@ To run the tests:
 
   .venv/bin/python test_fast_board.py
 
+*** Releasing
+
+Docker Desktop is not required. Colima provides the docker daemon from a small
+Linux VM, and release.sh drives it for you. One-time setup:
+
+  brew install colima docker docker-buildx
+
+("docker" here is the CLI only, not Desktop.) Homebrew's buildx needs to be
+registered with the docker CLI, by adding this to ~/.docker/config.json:
+
+  "cliPluginsExtraDirs": ["/opt/homebrew/lib/docker/cli-plugins"]
+
+buildx is required because this Mac is arm64 while the GCE instances are
+x86_64, so the image has to be cross-built for linux/amd64. An arm64 image
+pushed to GCR starts and dies immediately with "exec format error", the backend
+never becomes healthy, and the load balancer serves 502 for the whole site.
+release.sh builds with --platform linux/amd64 and then refuses to go any
+further unless the built image really reports amd64, so this cannot reach
+production silently. The smoke test then runs that same amd64 image under qemu
+emulation, which colima provides; it is a little slower to start but it
+exercises the artefact that actually ships.
+
+
+Docker also needs its own credentials for the push. "gcloud auth login" only
+authenticates the gcloud CLI, so this is a separate one-time step:
+
+  gcloud auth configure-docker
+
+Without it the push fails with "Unauthenticated request ... does not have
+permission artifactregistry.repositories.uploadArtifacts", even though gcloud
+itself is logged in. release.sh checks for this before building and tells you
+to run the above.
+
+There are three modes:
+
+  ./release.sh              build, smoke test, push to GCR, cycle the instance group
+  ./release.sh --dry_run    build and smoke test only; pushes nothing
+  ./release.sh --serve      build, smoke test, then leave it running for you to
+                            poke at; Ctrl-C stops it and cleans up
+
+The smoke test runs in all three modes, so a container that does not build or
+does not serve is never pushed. It mirrors production in the two ways that have
+actually bitten:
+
+- It starts the container with the command the instance template uses,
+  "python ./tau.py" with no arguments, rather than the Dockerfile ENTRYPOINT.
+  That means no --debug and the argparse defaults of port 80 and ssl_port 443,
+  which is what really runs in production.
+
+- It runs against a throwaway MySQL container rather than SQLite, because
+  production uses Cloud SQL MySQL and SQLite is far more permissive. The
+  container is pinned to MySQL 5.7's default sql_mode, which includes
+  ONLY_FULL_GROUP_BY; that setting rejects some aggregate queries SQLite
+  accepts happily, so a leaderboard page can be perfectly fine locally and
+  return 500 in production.
+
+A couple of scores and states are seeded before the checks run. Without rows in
+the database the leaderboard queries short-circuit and never execute, so the
+aggregate that ONLY_FULL_GROUP_BY polices would go untested.
+
+It then sets a name, walks the main pages, every leaderboard view, a graph and
+a recap, creates a game, opens the game page, and checks the container log for
+tracebacks.
+
+--dry_run never pushes and never touches the running instance, so it is safe at
+any time and is the quickest way to find out whether a change breaks the
+container. --serve is the same but leaves the container up at
+https://localhost:8401/ for manual checks; the certificate is self-signed, so
+accept the browser warning once, and use the https URL directly because the
+container only knows its own internal port and its http->https redirect will
+not point back at the mapped port.
+
+All three modes start colima if it is not already running and stop it again on
+the way out, including when the build fails. If colima was already running
+before the script started, it is left running afterwards, so it stays out of
+the way of an existing session. The smoke test binds ports 8400 and 8401 rather
+than 8000 and 8001, so a development server can keep running throughout.
+
+Useful colima commands: "colima status", "colima stop", "colima delete" to
+remove the VM, and "brew uninstall colima docker" to remove the tools.
+
+**** How the deploy reaches the running server
+
+The service runs as the zonal managed instance group tau-game-ig in
+us-central1-a, from instance template tau-game-ig-4, which declares the
+container as gcr.io/tau-game/websockettau:latest. Because the tag never
+changes, pushing a new image does not by itself change what is running; the
+group has to be cycled so the VMs pull again. release.sh does that with:
+
+  gcloud compute instance-groups managed rolling-action replace tau-game-ig \
+    --project=tau-game --zone=us-central1-a --max-unavailable=1
+
+"replace" deletes each VM and creates a fresh one from the template, so the
+docker cache is cold and the :latest tag is genuinely re-pulled. The lighter
+alternative, and the direct equivalent of the old "gcloud compute instances
+reset", is:
+
+  gcloud compute instance-groups managed rolling-action restart tau-game-ig \
+    --project=tau-game --zone=us-central1-a --max-unavailable=1
+
+That reboots in place and keeps the boot disk, which is faster but can reuse a
+cached image carrying the same tag. Prefer replace unless the extra boot time
+matters.
+
+The group holds a single instance, so --max-unavailable=1 means a short gap
+while the replacement boots. For no gap, use --max-surge=1 --max-unavailable=0
+instead, which brings the new VM up before removing the old one at the cost of
+briefly running two.
+
+Note that replace gives the new VM new internal and external IP addresses. That
+is fine behind the load balancer, which tracks the group rather than an address.
+
+**** Building without any local container runtime
+
+The image can instead be built entirely in GCP using the already-installed
+gcloud, with no VM on the Mac at all:
+
+  gcloud builds submit --tag gcr.io/tau-game/websockettau --project=tau-game
+
+That uploads the build context, builds in Cloud Build and pushes the result to
+GCR in one step, replacing the build and push halves of release.sh. It needs
+the Cloud Build API enabled on the project. Note that it pushes, so there is no
+equivalent of --local.
+
+.dockerignore keeps the uploaded context to about 10MB either way; without it
+the .venv and .git directories push it past 50MB.
+
 To build and run with Docker (experimental):
 
   docker build -t websockettau . && docker run --rm -p 8000:8000 -p 8001:8001 websockettau
@@ -122,11 +249,17 @@ $ crontab s3_crontab
 
 1. Create GCP project.
 
-2. Upload Docker image to GCR (called `gcr.io/$PROJECT/websockettau`). Probably requires enabling the GCR API:
+2. Upload Docker image to GCR (called `gcr.io/$PROJECT/websockettau`). Probably requires enabling the GCR API. Normally this is just `./release.sh`, which also restarts the instance; the underlying steps are:
 
 ```
 docker build -t gcr.io/tau-game/websockettau .
 docker push gcr.io/tau-game/websockettau
+```
+
+Or, without a local container runtime:
+
+```
+gcloud builds submit --tag gcr.io/tau-game/websockettau --project=tau-game
 ```
 
 3. Enable Stackdriver Logging API.

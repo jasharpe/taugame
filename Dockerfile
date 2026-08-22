@@ -1,4 +1,4 @@
-FROM python:3
+FROM python:3-slim
 
 COPY requirements.txt /websockettau/
 RUN pip install --no-cache-dir -r /websockettau/requirements.txt

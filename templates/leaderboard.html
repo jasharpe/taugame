@@ -139,7 +139,7 @@ $(document).ready(function() {
             <td>
               {% set processed_players = sorted(score.players, key=lambda x: x.name) %}
               {% for (i, player) in enumerate(processed_players) %}
-              <a href="/leaderboard/{{ leaderboard_object }}{{ selected_leaderboard_type }}/{{ player.name }}">{{ player.name }}</a> ({{ score.player_scores()[player.name] }}){% if i != len(score.players) - 1 %}, {% end %}
+              <a href="/leaderboard/{{ leaderboard_object }}{{ selected_leaderboard_type }}/{{ player.name }}">{{ player.name }}</a> ({{ score.player_scores().get(player.name, 0) }}){% if i != len(score.players) - 1 %}, {% end %}
               {% end %}
             </td>
             <td><a class="recap_link" href="/recap/{{ score.id }}">{{ (score.date - timedelta(minutes=time_offset)).strftime("%b %d %Y %I:%M%p") }}</a></td>
