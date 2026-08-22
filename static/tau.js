@@ -750,13 +750,14 @@ $(document).ready(function() {
     div.html('');
     var tab_index = 10;
 
-    // Builds a form that starts a new game of the given type, carrying the
-    // state of the training checkbox along with it.
-    function new_game_form(new_game_type, label, display, form_tab_index) {
+    // Builds a form that starts a new game of the given type. get_training
+    // supplies the training flag to post, so different buttons can source it
+    // from different places.
+    function new_game_form(new_game_type, label, display, form_tab_index, get_training) {
       var form = $('<form style="display:' + display + ';" name="new_game" action="/new_game/' + new_game_type + '?parent=' + game_id + '" method="post"><input type="submit" tabindex="' + form_tab_index + '" value="' + label + '" /></form>');
       form.submit(function(e) {
         var params = [
-          { 'name' : 'training', 'value' : $("#training").is(':checked') },
+          { 'name' : 'training', 'value' : get_training() },
         ];
 
         var that = $(this);
@@ -780,14 +781,21 @@ $(document).ready(function() {
         }
         elt.append(new_game_form(new_game_info[0],
                                  'New ' + new_game_info[1] + ' game',
-                                 display, tab_index));
+                                 display, tab_index, training_checkbox));
         tab_index++;
       }
     }
 
-    // Repeats the game type that just finished. Sits above the per-type
-    // buttons and takes the first tab stop in this section.
-    var play_again = new_game_form(game_type, 'Play again', 'block', 9);
+    // The per-type buttons below follow the training checkbox.
+    function training_checkbox() {
+      return $("#training").is(':checked');
+    }
+
+    // Play again repeats the game that just finished exactly: same type, and
+    // the same training mode, regardless of the checkbox below. Sits above the
+    // per-type buttons and takes the first tab stop in this section.
+    var play_again = new_game_form(game_type, 'Play again', 'block', 9,
+                                   function() { return training; });
     play_again.css('margin-bottom', '6px');
     div.append(play_again);
 
