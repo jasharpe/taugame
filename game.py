@@ -119,6 +119,8 @@ class Game(object):
     self.previous_time = 0
     self.ended = False
     self.player_ranks = {}
+    # Set once the finished game has been saved; used to link to the recap.
+    self.score_id = None
     self.paused = False
 
     if quick:

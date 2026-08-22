@@ -717,12 +717,20 @@ $(document).ready(function() {
     thing(player_rank_info.close);
   };
 
-  function update_time(time, paused, avg_number, ended, player_rank_info) {
+  function update_time(time, paused, avg_number, ended, player_rank_info, score_id) {
     last_server_time = time;
     last_server_time_browser_time = new Date().getTime() / 1000;
     $("#time").html('');
     $("#rank").html('');
-    var time_display = $("<span id=\"time_display\">");
+    var time_display;
+    if (ended && score_id !== null && score_id !== undefined) {
+      // The finished time links to this game's recap. Deliberately rendered as
+      // plain text rather than a link -- it is an unadvertised shortcut.
+      time_display = $("<a class=\"recap_time\">").attr("href", "/recap/" + score_id);
+    } else {
+      time_display = $("<span>");
+    }
+    time_display.attr("id", "time_display");
     time_display.html(format_time(get_time(ended)));
     if (ended) {
       $("#time").append($("<span>TOTAL TIME: </span>"));
@@ -820,7 +828,7 @@ $(document).ready(function() {
     div.append($('<div><input id="training" type="checkbox"/><label for="training">Training</label></div>'));
   }
 
-  function update(board, all_taus, all_stale_taus, paused, target, wrong_property, scores, time, avg_number, number, ended, hint, player_rank_info, found_puzzle_taus, new_games, training_options, is_pausable) {
+  function update(board, all_taus, all_stale_taus, paused, target, wrong_property, scores, time, avg_number, number, ended, hint, player_rank_info, found_puzzle_taus, new_games, training_options, is_pausable, score_id) {
     game_paused = paused;
     if (hint !== null && tau_to_string(hint) !== last_hint_tau_string) {
       hints_given = 0;
@@ -840,7 +848,7 @@ $(document).ready(function() {
     game_ended = ended;
     update_scores(scores, ended, is_pausable);
     
-    update_time(time, paused, avg_number, ended, player_rank_info);
+    update_time(time, paused, avg_number, ended, player_rank_info, score_id);
 
     // update board
     stale_tau_to_index_map = {};
@@ -888,7 +896,7 @@ $(document).ready(function() {
       if (data.wrong_property !== null) {
         wrong_property = parseInt(data.wrong_property);
       }
-      update(data.board, data.all_taus, data.all_stale_taus, data.paused, data.target, wrong_property, data.scores, data.time, data.avg_number, data.number, data.ended, data.hint, data.player_rank_info, data.found_puzzle_taus, data.new_games, data.training_options, data.is_pausable);
+      update(data.board, data.all_taus, data.all_stale_taus, data.paused, data.target, wrong_property, data.scores, data.time, data.avg_number, data.number, data.ended, data.hint, data.player_rank_info, data.found_puzzle_taus, data.new_games, data.training_options, data.is_pausable, data.score_id);
       ready();
     } else if (data.type === "scores") {
       update_scores(data.scores, data.ended);

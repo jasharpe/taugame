@@ -185,6 +185,13 @@ table {
 
 /* Shown while the websocket is down and the client is retrying. Replaces the
    old behaviour of turning the whole page red. */
+/* The total time on a finished game links to that game's recap. It is
+   deliberately indistinguishable from surrounding text. */
+.recap_time, .recap_time:link, .recap_time:visited, .recap_time:hover, .recap_time:active {
+  color:inherit;
+  text-decoration:none;
+}
+
 #disconnected {
   background-color:#c00;
   color:white;

@@ -55,6 +55,7 @@ class LobbyGame(object):
         if self.game.ended:
           self.lobby.send_game_list_update_to_all()
           (db_game, score, elapsed_time) = save_game(self.game, self.training)
+          self.game.score_id = score.id
           self.game.player_ranks = get_ranks(elapsed_time, db_game.game_type, list(self.game.scores.keys()), score.num_players)
         self.send_update_to_all()
       elif result.status == result.OLD_FOUND_PUZZLE:
@@ -141,7 +142,7 @@ class LobbyGame(object):
 
     is_pausable = self.game.is_pausable() and self.get_number_unique_players() < 2
 
-    socket.send_update(self.game.get_client_board(), all_taus, all_stale_taus, self.game.paused, self.game.get_client_target_tau(), self.game.wrong_property, self.get_scores(), numbers_map, self.game.count_taus(), time, self.game.get_client_hint(), self.game.ended, player_rank_info, self.game.get_client_found_puzzle_taus(), self.get_training_options(), is_pausable)
+    socket.send_update(self.game.get_client_board(), all_taus, all_stale_taus, self.game.paused, self.game.get_client_target_tau(), self.game.wrong_property, self.get_scores(), numbers_map, self.game.count_taus(), time, self.game.get_client_hint(), self.game.ended, player_rank_info, self.game.get_client_found_puzzle_taus(), self.get_training_options(), is_pausable, self.game.score_id)
 
   def send_update_to_all(self):
     for socket in self.sockets:
