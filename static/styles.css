@@ -342,9 +342,13 @@ only screen and (min-device-pixel-ratio: 1.5) {
 }
 
 .selectedCard {
-  -moz-box-shadow:2px 2px 2px #fbb;
-  -webkit-box-shadow:2px 2px 2px #fbb;
-  box-shadow:2px 2px 2px #fbb;
+  /* The red band is 2px, but only 1px of it is a real border. The second
+     pixel is painted inwards with an inset shadow so that the card keeps
+     exactly the same footprint as .unselectedCard and selecting a card
+     cannot reflow the board. */
+  -moz-box-shadow:inset 0 0 0 1px red, 2px 2px 2px #fbb;
+  -webkit-box-shadow:inset 0 0 0 1px red, 2px 2px 2px #fbb;
+  box-shadow:inset 0 0 0 1px red, 2px 2px 2px #fbb;
   border-color:red;
   border-width:1px;
   border-style:solid;
