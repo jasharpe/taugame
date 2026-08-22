@@ -114,6 +114,8 @@ $(function() {
         } else if (game_data.type == "e3tau") {
           game_type = "Easy 3 Tau";
         } else if (game_data.type == "4tau") {
+          game_type = "Generalized 4 Tau";
+        } else if (game_data.type == "r4tau") {
           game_type = "4 Tau";
         } else if (game_data.type == "3ptau") {
           game_type = "3 Projective Tau";

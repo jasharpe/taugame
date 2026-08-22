@@ -42,7 +42,7 @@
 
   <p>
   {% set first = True %}  
-  {% for (game_type, game_label) in [('3tau', '3 Tau'), ('6tau', '6 Tau'), ('g3tau', 'Generalized 3 Tau'), ('i3tau', 'Insane 3 Tau'), ('e3tau', 'Easy 3 Tau'), ('4tau', '4 Tau'), ('3ptau', 'Projective Tau'), ('z3tau', 'Puzzle 3 Tau'), ('4otau', '4 Outer Tau'), ('n3tau', 'Near 3 Tau'), ('sbqtau', 'Quad Tau'), ('bqtau', 'Large Quad Tau')] %}
+  {% for (game_type, game_label) in [('3tau', '3 Tau'), ('6tau', '6 Tau'), ('g3tau', 'Generalized 3 Tau'), ('i3tau', 'Insane 3 Tau'), ('e3tau', 'Easy 3 Tau'), ('4tau', 'Generalized 4 Tau'), ('r4tau', '4 Tau'), ('3ptau', 'Projective Tau'), ('z3tau', 'Puzzle 3 Tau'), ('4otau', '4 Outer Tau'), ('n3tau', 'Near 3 Tau'), ('sbqtau', 'Quad Tau'), ('bqtau', 'Large Quad Tau')] %}
     {% if not first %}|{% end %}
     <a href="#rules{{ game_type }}">{{ game_label }}</a>
     {% set first = False %}
@@ -357,24 +357,24 @@
 
   <p>Similar to Insane 3 Tau, except the dealer tries to make boards with a lot of Taus.
 
-  <h3 id="rules4tau">4 Tau</h3>
+  <h3 id="rules4tau">Generalized 4 Tau</h3>
 
-  <i>Thanks to ara for suggesting 4 Tau, and realizing that 4 Tau does not depend on card property value to number assignments, thus making it a purer version of Generalized 3 Tau.</i>
+  <i>Thanks to ara for suggesting Generalized 4 Tau, and realizing that Generalized 4 Tau does not depend on card property value to number assignments, thus making it a purer version of Generalized 3 Tau.</i>
 
-  <p>4 Tau is a mathematical extension of 3 Tau that is similar to Generalized 3 Tau but doesn't depend on choice of zero. In 4 Tau, you are given a target card T, and are asked to find 4 cards A, B, C, D such that A + B + C + D = T. This is equivalent to: there are cards X and Y such that A, B, X is a 3 Tau, C, D, Y is a 3 Tau, and X, Y, T is a 3 Tau.
+  <p>Generalized 4 Tau is a mathematical extension of 3 Tau that is similar to Generalized 3 Tau but doesn't depend on choice of zero. In Generalized 4 Tau, you are given a target card T, and are asked to find 4 cards A, B, C, D such that A + B + C + D = T. This is equivalent to: there are cards X and Y such that A, B, X is a 3 Tau, C, D, Y is a 3 Tau, and X, Y, T is a 3 Tau.
 
   <p>For example, suppose the target card is this:
 
   {% raw cards[('square', 'solid', 'one', 'green')] %}
 
-  <p>The following 4 cards sum up to this target card, so these 4 are a 4 Tau:
+  <p>The following 4 cards sum up to this target card, so these 4 are a Generalized 4 Tau:
 
   {% raw cards[('square', 'empty', 'two', 'green')] %}
   {% raw cards[('circle', 'shaded', 'two', 'green')] %}
   {% raw cards[('circle', 'solid', 'two', 'red')] %}
   {% raw cards[('circle', 'solid', 'one', 'blue')] %}
 
-  <p>Using the other definition, it's a 4 Tau because all of the following are 3 Taus:
+  <p>Using the other definition, it's a Generalized 4 Tau because all of the following are 3 Taus:
 
   {% raw cards[('square', 'empty', 'two', 'green')] %}
   {% raw cards[('circle', 'shaded', 'two', 'green')] %}
@@ -392,15 +392,52 @@
 
   <h4>Strategy</h4>
 
-  <p>There is a simple brutce force strategy for 4 Tau, similar to that for Generalized 3 Tau (although considerably less efficient).
+  <p>There is a simple brutce force strategy for Generalized 4 Tau, similar to that for Generalized 3 Tau (although considerably less efficient).
 
-  <p>Suppose the target card is card T. Choose any two cards A, B on the board. Compute card C, the <i>negasum</i> of A and B (so A, B, and C are a 3 Tau). Now compute D, the negasum of C and T (so D, C, and T are a 3 Tau). If there are cards E, F on the board such that E, F, D are a 3 Tau, then A, B, E, F are a 4 Tau.
+  <p>Suppose the target card is card T. Choose any two cards A, B on the board. Compute card C, the <i>negasum</i> of A and B (so A, B, and C are a 3 Tau). Now compute D, the negasum of C and T (so D, C, and T are a 3 Tau). If there are cards E, F on the board such that E, F, D are a 3 Tau, then A, B, E, F are a Generalized 4 Tau.
 
   <p>This works because C = -(A + B), and D = -(C + T), and D = -(E + F), so A + B + E + F = -C - D = -C + (C + T) = T, which is exactly what we want.
 
-  <p>It turns out that unlike the bruce force strategy for Generalized 3 Tau, this strategy is not very effective. The problem is that you have to initially choose two cards, instead of just one. This means that the chance of a correct guess is much lower. If, for example, there is only one 4 Tau on the board, then there is only a 4 / 12 * 3 / 11 chance (about 9%) that you will choose two cards out of the 4 Tau, whereas for Generalized 3 Tau there is a 25% chance of correctly choosing the first card. Plus in Generalized 3 Tau, you have to try at most 10 cards before finding one that works, but in 4 Tau, you may have to try up to 66 (11 + 10 + 9 + ... + 1).
+  <p>It turns out that unlike the bruce force strategy for Generalized 3 Tau, this strategy is not very effective. The problem is that you have to initially choose two cards, instead of just one. This means that the chance of a correct guess is much lower. If, for example, there is only one Generalized 4 Tau on the board, then there is only a 4 / 12 * 3 / 11 chance (about 9%) that you will choose two cards out of the Generalized 4 Tau, whereas for Generalized 3 Tau there is a 25% chance of correctly choosing the first card. Plus in Generalized 3 Tau, you have to try at most 10 cards before finding one that works, but in Generalized 4 Tau, you may have to try up to 66 (11 + 10 + 9 + ... + 1).
 
-  <p>A more effective long-term strategy for 4 Tau is to play it similarly to the 3-card strategy for 6 Tau. This will enable you to "see" 4 Taus, rather than relying on blind brute force.
+  <p>A more effective long-term strategy for Generalized 4 Tau is to play it similarly to the 3-card strategy for 6 Tau. This will enable you to "see" Generalized 4 Taus, rather than relying on blind brute force.
+
+  <h3 id="rulesr4tau">4 Tau</h3>
+
+  <p>In 4 Tau you look for four cards that form a <i>rectangle</i>. Split the four cards into two pairs. They are a 4 Tau if the two pairs have the same relationship in every property, which means that for each property one of these holds:
+
+  <ul>
+    <li>both pairs are constant in that property &mdash; each pair uses a single value, though the two pairs need not use the same one; or
+    <li>both pairs use exactly the same two values.
+  </ul>
+
+  <p>Put another way: whatever differs between the first two cards must differ in exactly the same way between the other two, and whatever the first two share the other two must also share.
+
+  <p>For example, these four cards are a 4 Tau:
+
+  {% raw cards[('circle', 'empty', 'one', 'red')] %}
+  {% raw cards[('square', 'empty', 'one', 'green')] %}
+  <br/>
+  <br/>
+  {% raw cards[('circle', 'solid', 'one', 'red')] %}
+  {% raw cards[('square', 'solid', 'one', 'green')] %}
+
+  <p>Taking the top two as one pair and the bottom two as the other: both pairs go circle then square, and both go red then green, so those properties use the same two values. Both pairs are all one, and while the top pair is empty and the bottom pair is solid, each pair is constant in shading, which is what the rule asks for.
+
+  <p>These four are <i>not</i> a 4 Tau:
+
+  {% raw cards[('circle', 'empty', 'one', 'red')] %}
+  {% raw cards[('square', 'empty', 'one', 'green')] %}
+  <br/>
+  <br/>
+  {% raw cards[('circle', 'solid', 'one', 'green')] %}
+  {% raw cards[('square', 'solid', 'one', 'blue')] %}
+
+  <p>The colours have been shifted along by one, so the top pair is red and green while the bottom pair is green and blue. The change is the same size in both pairs, but the values differ, which makes this a parallelogram rather than a rectangle. Note that the pairing above is not the only one that has to fail: four cards are a 4 Tau if <i>any</i> of the three ways of splitting them into two pairs works.
+
+  <h4>Strategy</h4>
+
+  <p>Rectangles are easiest to spot by looking for two cards that share most of their properties, then hunting for a second pair that differs in the same places. Because a pair that is constant in a property can be matched by a pair constant at any value, cards that repeat a property across the whole board are especially useful.
 
   <h3 id="rules3ptau">Projective Tau</h3>
 

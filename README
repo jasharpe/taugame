@@ -76,6 +76,8 @@ For other options, type:
 - Add a name mapping and URL mapping to tau.py.
 - Add a name mapping to constants.py.
 - Add a rules description and name mapping to templates/about.html.
+- Add an entry to each dict in preset_decks.py, otherwise --preset crashes
+  on the new type.
 - (Sometimes applicable) Add changes to playing area in static/tau.js.
 - (If adding new cards) Make the following updates:
     static/tau.js: getImgClass(), get_card_number()

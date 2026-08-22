@@ -7,7 +7,8 @@ GAME_TYPE_INFO = [
   ("4otau", "4 Outer Tau", True, False),
   ("6tau", "6 Tau", False, True),
   ("g3tau", "Generalized 3 Tau", False, True),
-  ("4tau", "4 Tau", False, True),
+  ("4tau", "Generalized 4 Tau", False, True),
+  ("r4tau", "4 Tau", False, True),
 
   ("3ptau", "Projective Tau", False, False),
 

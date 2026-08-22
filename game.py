@@ -18,6 +18,7 @@ type_to_deck_size_map = {
   'm3tau': 81,
   'e3tau': 81,
   '4tau': 81,
+  'r4tau': 81,
   '3ptau': 63,
   'z3tau': 81,
   '4otau': 81,
@@ -35,6 +36,7 @@ type_to_size_map = {
   'm3tau': 3,
   'e3tau': 3,
   '4tau': 4,
+  'r4tau': 4,
   '3ptau': 3,
   'z3tau': 3,
   '4otau': 4,
@@ -52,6 +54,7 @@ type_to_min_board_size = {
   'm3tau': 12,
   'e3tau': 12,
   '4tau': 12,
+  'r4tau': 12,
   '3ptau': 12,
   'z3tau': 12,
   '4otau': 9,
@@ -286,7 +289,7 @@ class Game(object):
           break
         self.board[i] = self.deck.pop()
 
-    # compute a new target tau for Generalized 3 Tau and 4 Tau
+    # compute a new target tau for the target-based game types
     if self.type in ['g3tau', '4tau']:
       # Must compute this first for random number generator to remain
       # in consistent state.
@@ -430,6 +433,31 @@ class Game(object):
     else:
       return sum(correct_properties) == 1
 
+  # Four cards form a rectangle when they split into two pairs with the same
+  # relationship, property by property: where one pair holds a property
+  # constant the other pair must hold it constant too (possibly at a
+  # different value), and where one pair uses two different values the other
+  # pair must use those same two values. Requiring the same two values, and
+  # not merely the same difference, is what makes this a rectangle rather
+  # than a parallelogram.
+  def pair_relationships_match(self, a, b, c, d):
+    for i in range(len(a)):
+      if a[i] == b[i]:
+        if c[i] != d[i]:
+          return False
+      elif sorted((a[i], b[i])) != sorted((c[i], d[i])):
+        return False
+    return True
+
+  def is_rectangle(self, cards):
+    # The cards arrive unordered, so try all three ways of pairing them up.
+    for i in range(1, 4):
+      a, b = cards[0], cards[i]
+      c, d = [cards[j] for j in range(1, 4) if j != i]
+      if self.pair_relationships_match(a, b, c, d):
+        return True
+    return False
+
   def is_tau(self, cards, wrong_property=None):
     if len(cards) == 3 and self.type in ["3tau", "6tau", "i3tau", "i93tau", "m3tau", "e3tau", "3ptau", "z3tau"]:
       return self.is_tau_basic(cards)
@@ -439,6 +467,8 @@ class Game(object):
       return self.space.sum_cards(cards) == self.target_tau
     elif len(cards) == 4 and self.type in ['4tau']:
       return self.space.sum_cards(cards) == self.target_tau
+    elif len(cards) == 4 and self.type in ['r4tau']:
+      return self.is_rectangle(cards)
     elif len(cards) == 4 and self.type in ['4otau']:
       for i in range(1, 4):
         this_pair = [cards[0], cards[i]]
