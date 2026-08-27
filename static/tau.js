@@ -151,18 +151,75 @@ $(document).ready(function() {
   // closes immediately keeps backing off instead of spinning.
   var STABLE_CONNECTION = 5000;
 
+  // A dropped connection is usually momentary, so the first few retries go out
+  // straight away rather than waiting for a backoff that is almost always
+  // longer than the outage itself.
+  var IMMEDIATE_RECONNECTS = 3;
+
   var ws = null;
+  // The tau awaiting acknowledgement, or null.
+  var pending_tau = null;
   var reconnect_delay = RECONNECT_MIN_DELAY;
   var reconnect_timer = null;
+  var reconnect_attempts = 0;
   var connected_at = 0;
 
   function connect() {
-    reconnect_timer = null;
+    if (reconnect_timer !== null) {
+      clearTimeout(reconnect_timer);
+      reconnect_timer = null;
+    }
+    if (ws) {
+      // Detach the old socket first. Without this its onclose fires later and
+      // schedules a second reconnect, leaving two sockets open at once.
+      ws.onopen = null;
+      ws.onmessage = null;
+      ws.onclose = null;
+      try { ws.close(); } catch (e) {}
+    }
     ws = new WebSocket(ws_type + "://" + window.location.host + "/websocket/" + game_id);
     ws.onopen = on_ws_open;
     ws.onmessage = on_ws_message;
     ws.onclose = on_ws_close;
   }
+
+  function reset_reconnect_backoff() {
+    reconnect_attempts = 0;
+    reconnect_delay = RECONNECT_MIN_DELAY;
+  }
+
+  function schedule_reconnect() {
+    if (reconnect_timer !== null) {
+      return;
+    }
+    var delay = 0;
+    if (reconnect_attempts >= IMMEDIATE_RECONNECTS) {
+      // Jitter stops every client retrying in lockstep after a server restart.
+      delay = reconnect_delay + Math.floor(Math.random() * 500);
+      reconnect_delay = Math.min(reconnect_delay * 2, RECONNECT_MAX_DELAY);
+    }
+    reconnect_attempts++;
+    reconnect_timer = setTimeout(connect, delay);
+  }
+
+  // Coming back to a page that was hidden, or restoring it from the back
+  // forward cache, should reconnect at once rather than sitting out whatever
+  // backoff had built up while nobody was looking.
+  function reconnect_now_if_down() {
+    if (ws && (ws.readyState === WebSocket.OPEN ||
+               ws.readyState === WebSocket.CONNECTING)) {
+      return;
+    }
+    reset_reconnect_backoff();
+    connect();
+  }
+
+  $(document).on("visibilitychange", function() {
+    if (!document.hidden) {
+      reconnect_now_if_down();
+    }
+  });
+  $(window).on("pageshow", reconnect_now_if_down);
 
   // Anything sent while the socket is down (or still opening) is dropped
   // rather than throwing. Reconnecting re-requests the full state, so the only
@@ -177,16 +234,14 @@ $(document).ready(function() {
 
   function on_ws_close() {
     if (connected_at && new Date().getTime() - connected_at >= STABLE_CONNECTION) {
-      reconnect_delay = RECONNECT_MIN_DELAY;
+      // The connection was healthy, so this is a fresh outage: allow immediate
+      // retries again. A socket that closes straight after opening keeps its
+      // backoff instead, so a game that no longer exists does not spin.
+      reset_reconnect_backoff();
     }
     connected_at = 0;
     show_disconnected();
-    if (reconnect_timer === null) {
-      // Jitter stops every client retrying in lockstep after a server restart.
-      reconnect_timer = setTimeout(connect,
-          reconnect_delay + Math.floor(Math.random() * 500));
-      reconnect_delay = Math.min(reconnect_delay * 2, RECONNECT_MAX_DELAY);
-    }
+    schedule_reconnect();
   }
 
   function show_disconnected() {
@@ -206,6 +261,12 @@ $(document).ready(function() {
     hide_disconnected();
     $("#connecting").hide();
     $("#start").show();
+    // A tau submitted just before the connection dropped may never have
+    // reached the server. Replaying it is safe: if it did get through, those
+    // cards are no longer on the board and the server ignores the repeat.
+    if (pending_tau !== null) {
+      send({'type' : 'submit', 'cards' : pending_tau});
+    }
     send({'type' : 'update'});
   }
 
@@ -213,6 +274,9 @@ $(document).ready(function() {
 
   function submit_tau(cards) {
     if (all_tau_strings[tau_to_string(cards)]) {
+      // Held until the server answers with an update, which is the only
+      // acknowledgement the protocol offers.
+      pending_tau = cards;
       send({
           'type' : 'submit',
           'cards' : cards
@@ -892,6 +956,9 @@ $(document).ready(function() {
   function on_ws_message(e) {
     var data = JSON.parse(e.data);
     if (data.type === "update") {
+      // An update is the server's acknowledgement that it processed the board,
+      // so any tau we were holding has been resolved one way or the other.
+      pending_tau = null;
       var wrong_property = null;
       if (data.wrong_property !== null) {
         wrong_property = parseInt(data.wrong_property);
