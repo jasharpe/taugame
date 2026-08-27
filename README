@@ -26,6 +26,16 @@ itself runs fine with them left empty).
 
 Then, to run locally for development:
 
+  ./local.sh
+
+which runs the server straight from the working tree, with no container
+involved, and prints the address to open. It creates the virtualenv on first
+run, checks the ports are free, and passes any extra arguments through to
+tau.py, so "./local.sh --hints" works. Code changes need a restart; anything
+under static/ or templates/ needs only a browser reload.
+
+The equivalent by hand is:
+
   .venv/bin/python tau.py --debug --port=8000 --ssl_port=8001 \
       --certfile=localhost.crt --keyfile=localhost.key
 

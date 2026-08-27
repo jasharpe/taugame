@@ -38,7 +38,8 @@
   {% end %}
 </details>
 <div>
-  <input id="training" type="checkbox"/><label for="training">Training</label>
+  <div><input id="training" type="checkbox"/><label for="training">Training</label></div>
+  <div><label for="take_delay">Take delay</label> <input id="take_delay" type="number" min="0" max="60" step="1" value="0" style="width:3.5em;"/> <span class="hint_text">seconds a taken tau stays on screen, 0 to clear at once</span></div>
 </div>
 
 <div id="game_panel">

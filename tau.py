@@ -31,6 +31,9 @@ GAME_EXPIRY = 1200
 # The number of seconds between game cleanup sweeps.
 GAME_CLEANUP_INTERVAL = 600
 
+# Upper bound on the per-game take delay, in seconds.
+MAX_TAKE_DELAY = 60
+
 SETTINGS = {
     "template_path" : os.path.join(os.path.dirname(__file__), "templates"),
     "static_path" : os.path.join(os.path.dirname(__file__), "static"),
@@ -128,7 +131,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
         'message_type' : message_type,
     }))
 
-  def send_update(self, board, all_taus, all_stale_taus, paused, target, wrong_property, scores, avg_number, number, time, hint, ended, player_rank_info, found_puzzle_taus, training_options, is_pausable, score_id):
+  def send_update(self, board, all_taus, all_stale_taus, paused, target, wrong_property, scores, avg_number, number, time, hint, ended, player_rank_info, found_puzzle_taus, training_options, is_pausable, score_id, pending_taus):
     self.write_message(json.dumps({
         'type' : 'update',
         'board' : board,
@@ -149,6 +152,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
         'training_options' : training_options,
         'is_pausable' : is_pausable,
         'score_id' : score_id,
+        'pending_taus' : pending_taus,
     }))
 
   def send_old_found_puzzle_tau_index(self, index):
@@ -301,10 +305,17 @@ class NewGameHandler(tornado.web.RequestHandler):
     except:
       training = False
 
+    # Seconds a taken tau stays visible before it is cleared. Capped so a typo
+    # cannot wedge a game for hours.
+    try:
+      take_delay = min(MAX_TAKE_DELAY, max(0, int(self.get_argument("take_delay"))))
+    except:
+      take_delay = 0
+
     name = url_unescape(self.get_secure_cookie("name"))
 
     try:
-      game = lobby.new_game(type, name, parent, args.quick, args.use_preset_decks, training)
+      game = lobby.new_game(type, name, parent, args.quick, args.use_preset_decks, training, take_delay)
     except InvalidGameType:
       self.redirect('/')
       return
@@ -330,7 +341,8 @@ class GameHandler(tornado.web.RequestHandler):
         debug=int(self.get_argument('debug', default=0)),
         game=game.game,
         game_type_info=GAME_TYPE_INFO,
-        training=game.training)
+        training=game.training,
+        take_delay=game.game.take_delay)
 
 class TimeHandler(tornado.web.RequestHandler):
   def post(self):

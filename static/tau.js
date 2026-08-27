@@ -495,7 +495,7 @@ $(document).ready(function() {
   var prev_board = [];
   var card_to_board_map = {}
   var game_paused = false;
-  function update_board(board, paused, target, wrong_property, number, hint, ended, found_puzzle_taus, training_options) {
+  function update_board(board, paused, target, wrong_property, number, hint, ended, found_puzzle_taus, training_options, pending_taus) {
     var string = "";
     $.each(board, function(i, tau) {
       string += "[" + tau + "]";
@@ -507,6 +507,16 @@ $(document).ready(function() {
     if (hint !== null) {
       for (var card_index in hint) {
         processed_hint.push(get_card_number(hint[card_index]));
+      }
+    }
+
+    // Cards belonging to a tau somebody has taken, still shown while its
+    // take delay runs down.
+    var pending_card_numbers = [];
+    for (var tau_index in pending_taus) {
+      var pending_tau = pending_taus[tau_index];
+      for (var pending_index in pending_tau) {
+        pending_card_numbers.push(get_card_number(pending_tau[pending_index]));
       }
     }
 
@@ -579,7 +589,9 @@ $(document).ready(function() {
           card_index_to_div_map[card_index] = div;
           card_index_to_card_map[card_index] = card;
 
-          if (!training && processed_hint.indexOf(get_card_number(card)) != -1) {
+          if (pending_card_numbers.indexOf(get_card_number(card)) != -1) {
+            div.addClass("pendingTau");
+          } else if (!training && processed_hint.indexOf(get_card_number(card)) != -1) {
             div.addClass("hint");
           } else if (training && processed_hint.indexOf(get_card_number(card)) != -1) {
             hint_cards.push(div);
@@ -825,11 +837,12 @@ $(document).ready(function() {
     // Builds a form that starts a new game of the given type. get_training
     // supplies the training flag to post, so different buttons can source it
     // from different places.
-    function new_game_form(new_game_type, label, display, form_tab_index, get_training) {
+    function new_game_form(new_game_type, label, display, form_tab_index, get_training, get_take_delay) {
       var form = $('<form style="display:' + display + ';" name="new_game" action="/new_game/' + new_game_type + '?parent=' + game_id + '" method="post"><input type="submit" tabindex="' + form_tab_index + '" value="' + label + '" /></form>');
       form.submit(function(e) {
         var params = [
           { 'name' : 'training', 'value' : get_training() },
+          { 'name' : 'take_delay', 'value' : get_take_delay() },
         ];
 
         var that = $(this);
@@ -853,21 +866,26 @@ $(document).ready(function() {
         }
         elt.append(new_game_form(new_game_info[0],
                                  'New ' + new_game_info[1] + ' game',
-                                 display, tab_index, training_checkbox));
+                                 display, tab_index, training_checkbox, take_delay_input));
         tab_index++;
       }
     }
 
-    // The per-type buttons below follow the training checkbox.
+    // The per-type buttons below follow the controls underneath them.
     function training_checkbox() {
       return $("#training").is(':checked');
+    }
+
+    function take_delay_input() {
+      return $("#take_delay").val();
     }
 
     // Play again repeats the game that just finished exactly: same type, and
     // the same training mode, regardless of the checkbox below. Sits above the
     // per-type buttons and takes the first tab stop in this section.
     var play_again = new_game_form(game_type, 'Play again', 'block', 9,
-                                   function() { return training; });
+                                   function() { return training; },
+                                   function() { return take_delay; });
     play_again.css('margin-bottom', '6px');
     div.append(play_again);
 
@@ -890,9 +908,10 @@ $(document).ready(function() {
     div.append(obscure_variants);
 
     div.append($('<div><input id="training" type="checkbox"/><label for="training">Training</label></div>'));
+    div.append($('<div><label for="take_delay">Take delay</label> <input id="take_delay" type="number" min="0" max="60" step="1" value="0" style="width:3.5em;"/> <span class="hint_text">seconds a taken tau stays on screen, 0 to clear at once</span></div>'));
   }
 
-  function update(board, all_taus, all_stale_taus, paused, target, wrong_property, scores, time, avg_number, number, ended, hint, player_rank_info, found_puzzle_taus, new_games, training_options, is_pausable, score_id) {
+  function update(board, all_taus, all_stale_taus, paused, target, wrong_property, scores, time, avg_number, number, ended, hint, player_rank_info, found_puzzle_taus, new_games, training_options, is_pausable, score_id, pending_taus) {
     game_paused = paused;
     if (hint !== null && tau_to_string(hint) !== last_hint_tau_string) {
       hints_given = 0;
@@ -922,7 +941,7 @@ $(document).ready(function() {
       j++;
     }
     
-    update_board(board, paused, target, wrong_property, number, hint, ended, found_puzzle_taus, training_options);
+    update_board(board, paused, target, wrong_property, number, hint, ended, found_puzzle_taus, training_options, pending_taus);
     update_buttons(ended, paused, is_pausable);
 
     if (ended) {
@@ -963,7 +982,7 @@ $(document).ready(function() {
       if (data.wrong_property !== null) {
         wrong_property = parseInt(data.wrong_property);
       }
-      update(data.board, data.all_taus, data.all_stale_taus, data.paused, data.target, wrong_property, data.scores, data.time, data.avg_number, data.number, data.ended, data.hint, data.player_rank_info, data.found_puzzle_taus, data.new_games, data.training_options, data.is_pausable, data.score_id);
+      update(data.board, data.all_taus, data.all_stale_taus, data.paused, data.target, wrong_property, data.scores, data.time, data.avg_number, data.number, data.ended, data.hint, data.player_rank_info, data.found_puzzle_taus, data.new_games, data.training_options, data.is_pausable, data.score_id, data.pending_taus);
       ready();
     } else if (data.type === "scores") {
       update_scores(data.scores, data.ended);

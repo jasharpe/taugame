@@ -78,7 +78,7 @@ class SubmitTauResult(object):
     self.index = index
 
 class Game(object):
-  def __init__(self, type, quick=False, deck=None, targets=None, seed=None, wrong_properties=None):
+  def __init__(self, type, quick=False, deck=None, targets=None, seed=None, wrong_properties=None, take_delay=0):
     self.type = type
     if seed:
       self.seed = seed
@@ -115,6 +115,11 @@ class Game(object):
     # in n3tau.
     self.wrong_property = None
     self.wrong_property_preference = None
+    # Seconds a taken tau stays on the board, highlighted, before it is
+    # cleared. Zero removes it immediately, which is the original behaviour.
+    self.take_delay = take_delay
+    # (expiry timestamp, cards) for taus taken but not yet cleared.
+    self.pending_taus = []
     self.compress_and_fill_board()
     self.started = False
     self.start_time = 0
@@ -339,17 +344,75 @@ class Game(object):
         return self.space.sum_cards(all_card_subsets[self.rand.randint(0, len(all_card_subsets) - 1)])
 
   def is_over(self):
+    # A tau still counting down is on its way off the board, so the game
+    # cannot be finished yet.
+    if self.pending_taus:
+      return False
     if self.type == 'z3tau':
       return len(self.taus) == self.count_taus()
     else:
       return len(self.deck) == 0 and self.no_subset_is_tau(list(filter(None, self.board)), self.size)
 
   def get_all_taus(self, wrong_property=None):
+    locked = self.pending_cards()
     taus = []
     for card_subset in itertools.combinations(list(filter(None, self.board)), self.size):
-      if self.is_tau(card_subset, wrong_property=wrong_property):
+      # locked is normally empty, and the recap rebuilds boards from JSON,
+      # whose cards are lists rather than tuples. Skip the lookup entirely
+      # when nothing is locked, and normalise when it is not.
+      if self.is_tau(card_subset, wrong_property=wrong_property) and \
+         not (locked and any(tuple(card) in locked for card in card_subset)):
         taus.append(card_subset)
     return taus
+
+  # Cards belonging to a tau that has been taken but whose take delay has not
+  # elapsed yet. They are on their way off the board, so nothing may use them:
+  # a delayed game offers exactly the same taus an undelayed one would, the
+  # spent cards just stay visible for a while.
+  def pending_cards(self):
+    locked = set()
+    for (expiry, cards) in self.pending_taus:
+      locked.update(cards)
+    return locked
+
+  def uses_pending_card(self, cards):
+    if not self.pending_taus:
+      return False
+    locked = self.pending_cards()
+    return any(tuple(card) in locked for card in cards)
+
+  def get_client_pending_taus(self):
+    return [list(map(self.space.to_client_card, cards))
+            for (expiry, cards) in self.pending_taus]
+
+  # Clears any tau whose delay has elapsed. Returns True if the board changed,
+  # so the caller knows to tell the clients.
+  def expire_pending_taus(self):
+    if not self.pending_taus:
+      return False
+    now = time.time()
+    expired = [cards for (expiry, cards) in self.pending_taus if expiry <= now]
+    if not expired:
+      return False
+    self.pending_taus = [(expiry, cards) for (expiry, cards) in self.pending_taus
+                         if expiry > now]
+    for cards in expired:
+      self.remove_cards(cards)
+    self.compress_and_fill_board()
+    self.check_over()
+    return True
+
+  # Seconds until the next tau needs clearing, or None if none are pending.
+  def seconds_until_next_expiry(self):
+    if not self.pending_taus:
+      return None
+    return max(0, min(expiry for (expiry, cards) in self.pending_taus) - time.time())
+
+  def check_over(self):
+    if not self.ended and self.is_over():
+      self.total_time = self.get_total_time()
+      self.target_tau = None
+      self.ended = True
 
   def get_all_client_taus(self):
     taus =  [list(map(self.space.to_client_card, tau)) for tau in self.get_all_taus(wrong_property=self.wrong_property)]
@@ -380,6 +443,10 @@ class Game(object):
 
   def submit_tau(self, cards, player):
     if not self.ended and len(cards) == self.size and self.board_contains(cards) and self.is_tau(cards, wrong_property=self.wrong_property):
+      # These cards belong to a tau somebody already took; they are only
+      # still visible because its take delay has not run out.
+      if self.uses_pending_card(cards):
+        return SubmitTauResult(SubmitTauResult.INVALID)
       if self.type == 'z3tau':
         index = self.old_found_puzzle_tau_index(cards)
         if index is not None:
@@ -391,14 +458,15 @@ class Game(object):
       self.boards.append(list(self.board))
       self.taus.append((self.get_total_time(), self.count_taus(), player, cards))
 
+      # Puzzle 3 Tau never clears cards, so a take delay means nothing there.
       if self.type != 'z3tau':
-        self.remove_cards(cards)
-        self.compress_and_fill_board()
+        if self.take_delay > 0:
+          self.pending_taus.append((time.time() + self.take_delay, tuple(cards)))
+        else:
+          self.remove_cards(cards)
+          self.compress_and_fill_board()
 
-      if self.is_over():
-        self.total_time = self.get_total_time()
-        self.target_tau = None
-        self.ended = True
+      self.check_over()
       return SubmitTauResult(SubmitTauResult.SUCCESS)
     else:
       return SubmitTauResult(SubmitTauResult.INVALID)

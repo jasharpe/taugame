@@ -2,6 +2,7 @@ $(function() {
   $(".new_game_form").submit(function(e) {
     var params = [
       { 'name' : 'training', 'value' : $("#training").is(':checked') },
+      { 'name' : 'take_delay', 'value' : $("#take_delay").val() },
       { 'name' : 'classic_cards', 'value' : $("#classic_cards").is(':checked') },
       { 'name' : 'colour_blind', 'value' : $("#colour_blind").is(':checked') }
     ];

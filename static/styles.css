@@ -231,6 +231,12 @@ table {
   background-color:#EFE !important;
 }
 
+/* A tau that has been taken but is still on the board while its take delay
+   runs down. Nobody can take it again. Same green as .hint above. */
+.pendingTau {
+  background-color:#EFE !important;
+}
+
 .name, .status {
   color: #999;
 }

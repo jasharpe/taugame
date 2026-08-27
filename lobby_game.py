@@ -1,6 +1,7 @@
 from state import save_game, get_ranks
 import time
 from tornado.escape import xhtml_escape
+from tornado.ioloop import IOLoop
 
 TAU_PROPERTIES = ["colour", "number", "shading", "shape"]
 
@@ -15,6 +16,8 @@ class LobbyGame(object):
     self.sockets = []
     self.messages = []
     self.hidden = False
+    # Pending call_later that clears taus once their take delay elapses.
+    self.expiry_handle = None
     self.activity()
 
   def set_training_option(self, option, value):
@@ -52,14 +55,39 @@ class LobbyGame(object):
       result = self.game.submit_client_tau(list(map(tuple, cards)), socket.name)
 
       if result.status == result.SUCCESS:
-        if self.game.ended:
-          self.lobby.send_game_list_update_to_all()
-          (db_game, score, elapsed_time) = save_game(self.game, self.training)
-          self.game.score_id = score.id
-          self.game.player_ranks = get_ranks(elapsed_time, db_game.game_type, list(self.game.scores.keys()), score.num_players)
+        self.finish_if_ended()
+        self.schedule_pending_expiry()
         self.send_update_to_all()
       elif result.status == result.OLD_FOUND_PUZZLE:
         socket.send_old_found_puzzle_tau_index(result.index)
+
+  # Saves the game the first time it is seen to have finished. With a take delay
+  # the finish can happen when a tau expires rather than when it is submitted,
+  # so this is called from both places.
+  def finish_if_ended(self):
+    if self.game.ended and self.game.score_id is None:
+      self.lobby.send_game_list_update_to_all()
+      (db_game, score, elapsed_time) = save_game(self.game, self.training)
+      self.game.score_id = score.id
+      self.game.player_ranks = get_ranks(elapsed_time, db_game.game_type, list(self.game.scores.keys()), score.num_players)
+
+  # A tau taken with a take delay stays on the board, so something has to come
+  # back later and clear it.
+  def schedule_pending_expiry(self):
+    if self.expiry_handle is not None:
+      return
+    delay = self.game.seconds_until_next_expiry()
+    if delay is None:
+      return
+    self.expiry_handle = IOLoop.current().call_later(delay, self.on_pending_expiry)
+
+  def on_pending_expiry(self):
+    self.expiry_handle = None
+    if self.game.expire_pending_taus():
+      self.finish_if_ended()
+      self.send_update_to_all()
+    # More taus may still be counting down behind this one.
+    self.schedule_pending_expiry()
 
   def start_game(self):
     if not self.game.started:
@@ -142,7 +170,7 @@ class LobbyGame(object):
 
     is_pausable = self.game.is_pausable() and self.get_number_unique_players() < 2
 
-    socket.send_update(self.game.get_client_board(), all_taus, all_stale_taus, self.game.paused, self.game.get_client_target_tau(), self.game.wrong_property, self.get_scores(), numbers_map, self.game.count_taus(), time, self.game.get_client_hint(), self.game.ended, player_rank_info, self.game.get_client_found_puzzle_taus(), self.get_training_options(), is_pausable, self.game.score_id)
+    socket.send_update(self.game.get_client_board(), all_taus, all_stale_taus, self.game.paused, self.game.get_client_target_tau(), self.game.wrong_property, self.get_scores(), numbers_map, self.game.count_taus(), time, self.game.get_client_hint(), self.game.ended, player_rank_info, self.game.get_client_found_puzzle_taus(), self.get_training_options(), is_pausable, self.game.score_id, self.game.get_client_pending_taus())
 
   def send_update_to_all(self):
     for socket in self.sockets:
