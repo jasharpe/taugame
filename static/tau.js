@@ -678,7 +678,8 @@ $(document).ready(function() {
         for (var j in found_puzzle_taus[i]) {
           card = found_puzzle_taus[i][j];
           var card_number = get_card_number(card);
-          var offset = card_number * 40;
+          // Matches the 36px slot width set by .smallCard in styles.css.
+          var offset = card_number * 36;
           var card_div = $('<div class="smallCard ' + getSmallImgClass() + ' ' + getForceLowResClass() + '">');
           card_div.css("background-position", "-" + offset + "px 0");
           tau_div.append(card_div);

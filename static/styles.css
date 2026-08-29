@@ -274,14 +274,17 @@ table {
 
 .smallRegularTau {
   background:url('/static/smallcards.png?v=5') no-repeat scroll 0 0 white;
+  background-size:2916px 54px;
 }
 
 .smallClassicTau {
   background:url('/static/smallclassiccards.png?v=3') no-repeat scroll 0 0 white;
+  background-size:2916px 54px;
 }
 
 .smallColourBlindClassicTau {
   background:url('/static/smallcolourblindclassiccards.png?v=3') no-repeat scroll 0 0 white;
+  background-size:2916px 54px;
 }
 
 .projectiveTau {
@@ -330,17 +333,17 @@ only screen and (min-device-pixel-ratio: 1.5) {
 
 .smallRegularTau:not(.forceLowRes) {
   background:url('/static/smallcards@2x.png?v=7') no-repeat scroll 0 0 white;
-  background-size:3240px 60px;
+  background-size:2916px 54px;
 }
 
 .smallClassicTau:not(.forceLowRes) {
   background:url('/static/smallclassiccards@2x.png?v=3') no-repeat scroll 0 0 white;
-  background-size:3240px 60px;
+  background-size:2916px 54px;
 }
 
 .smallColourBlindClassicTau:not(.forceLowRes) {
   background:url('/static/smallcolourblindclassiccards@2x.png?v=3') no-repeat scroll 0 0 white;
-  background-size:3240px 60px;
+  background-size:2916px 54px;
 }
 
 .projectiveTauNew:not(.forceLowRes) {
@@ -392,12 +395,15 @@ only screen and (min-device-pixel-ratio: 1.5) {
 }
 
 .smallCard {
-  height:60px;
-  width:40px;
+  /* Sized so six rows of found taus come to exactly the board's height:
+     six times (54 + 2 border + 5 margin) is 366, plus 10 padding and 2 border
+     makes 378, which is the height of a three row board. */
+  height:54px;
+  width:36px;
   -webkit-border-radius:2.5px;
   -moz-border-radius:2.5px;
   margin-right:3px;
-  margin-bottom:3px;
+  margin-bottom:5px;
   -moz-box-shadow:1px 1px 1px #ddd;
   -webkit-box-shadow:1px 1px 1px #ddd;
   box-shadow:1px 1px 1px #ddd;
@@ -407,11 +413,18 @@ only screen and (min-device-pixel-ratio: 1.5) {
   display:inline-block;
 }
 
+/* The cards inside a row are inline-block, so the line box would otherwise add
+   descender space beneath each one and six rows would overshoot the board. */
+.found_puzzle_tau {
+  line-height:0;
+}
+
 #found_puzzle_taus {
   margin-left:20px;
   padding:5px 2px 5px 5px;
-  height:396px;
-  width:135px;
+  /* Matches the board exactly: see the note on .smallCard. */
+  height:366px;
+  width:123px;
   border:1px solid #CCC;
   -webkit-border-radius:5px;
   -moz-border-radius:5px;
@@ -440,5 +453,61 @@ details form {
   /* CSS specific to iOS devices */
   .realCard {
     zoom: 101%;
+  }
+}
+
+/* Narrow screens, where the found taus wrap underneath the board rather than
+   sitting beside it. Each tau is turned on its side, so its three cards stack
+   downwards, and the six taus sit in a single row filling from the left.
+
+   The bar matches the width the board's cards actually occupy. The table is
+   352 wide, but its last column carries a 6px right margin that shows as empty
+   space, so the cards themselves span 346: that is 334 of content plus 5px of
+   padding either side and 1px of border.
+
+   The cards are scaled to nine tenths so six of them, plus the gaps between,
+   fit that width: 6 x 50.4 + 5 x 6 is 332.4. Scaling has to be done with a
+   transform rather than by setting a smaller width, because each card's sprite
+   offset is an inline style written by tau.js and a media query cannot reach
+   it. */
+@media only screen and (max-width: 540px) {
+  #found_puzzle_taus {
+    margin-left:0;
+    margin-top:20px;
+    padding:5px;
+    width:334px;
+    height:auto;
+    /* Hold full height while empty, so the bar does not start as a sliver and
+       then jump as taus are found. Three cards at a 37.2 pitch, less the 3px
+       gap that the last one does not need, is 108.6. */
+    min-height:108.6px;
+    display:flex;
+    justify-content:flex-start;
+    align-items:flex-start;
+    gap:6px;
+  }
+
+  .found_puzzle_tau {
+    /* One column, as wide as a scaled card lying on its side. Flex rather than
+       plain blocks, because the cards carry negative vertical margins and block
+       margins would collapse into each other. */
+    width:50.4px;
+    display:flex;
+    flex-direction:column;
+  }
+
+  .smallCard {
+    /* Lay the card on its side and shrink it. A transform does not affect
+       layout, so the margins trade the 38x56 layout box for the 50.4x34.2 the
+       transform actually paints, leaving 3px of gap below each card. */
+    display:block;
+    transform:rotate(90deg) scale(0.9);
+    margin:-10.9px 6.2px -7.9px 6.2px;
+  }
+
+  .found_puzzle_tau .smallCard:last-child {
+    /* No gap after the last card, otherwise it lands on top of the padding and
+       the bar looks bottom heavy. */
+    margin-bottom:-10.9px;
   }
 }
