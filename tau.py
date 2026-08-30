@@ -320,7 +320,7 @@ class NewGameHandler(tornado.web.RequestHandler):
     name = url_unescape(self.get_secure_cookie("name"))
 
     try:
-      game = lobby.new_game(type, name, parent, args.quick, args.use_preset_decks, training, take_delay)
+      game = lobby.new_game(type, name, parent, args.quick, args.use_preset_decks, training, take_delay, args.decks)
     except InvalidGameType:
       self.redirect('/')
       return
@@ -582,6 +582,35 @@ def set_game_cleanup(ioloop, timeout):
   lobby.cleanup_games()
   ioloop.add_timeout(timeout, lambda: set_game_cleanup(ioloop, timeout))
 
+def parse_deck(spec):
+  """Parse one --deck TYPE:CARDS value into (game_type, deck).
+
+  Cards are written in the order they are dealt, so the first cards listed are
+  the ones that make up the opening board. A card is one digit per coordinate:
+  0120 in the standard F_3^4 space, 010110 in the boolean quad spaces.
+  """
+  game_type, separator, card_text = spec.partition(':')
+  if not separator:
+    raise ValueError('expected TYPE:CARDS, got %r' % spec)
+  if game_type not in [info[0] for info in GAME_TYPE_INFO]:
+    raise ValueError('unknown game type %r' % game_type)
+  valid_cards = set(fingeo.get_space(game_type).all_points())
+  deck = []
+  for token in card_text.replace(',', ' ').split():
+    if not token.isdigit():
+      raise ValueError('card %r is not a string of digits' % token)
+    card = tuple(int(digit) for digit in token)
+    if card not in valid_cards:
+      raise ValueError('%r is not a card in %s' % (token, game_type))
+    if card in deck:
+      raise ValueError('card %r is listed twice' % token)
+    deck.append(card)
+  if not deck:
+    raise ValueError('no cards given for %s' % game_type)
+  # The game deals with pop(), so its deck is stored dealt-card-last.
+  deck.reverse()
+  return game_type, deck
+
 def parse_args():
   parser = argparse.ArgumentParser(description='Run Tau server.')
   parser.add_argument('--hints', dest='hints', action='store_true',
@@ -596,7 +625,23 @@ def parse_args():
                       help='TLS certificate chain. Use localhost.crt for local development.')
   parser.add_argument('--keyfile', dest='keyfile', default='domain.key',
                       help='TLS private key. Use localhost.key for local development.')
-  return parser.parse_args()
+  parser.add_argument('--deck', dest='decks', action='append', default=[],
+                      metavar='TYPE:CARDS',
+                      help='Force the deck used by one game type, to reproduce a particular '
+                           'board. Cards are listed in the order they are dealt, so the first '
+                           'ones listed form the opening board, e.g. --deck=r4tau:0000,0121,2011 '
+                           '(a card is one digit per coordinate). Every new game of that type '
+                           'uses the deck. Repeat the flag to set several game types.')
+  parsed_args = parser.parse_args()
+  decks = {}
+  for spec in parsed_args.decks:
+    try:
+      (game_type, deck) = parse_deck(spec)
+    except ValueError as e:
+      parser.error('--deck: %s' % e)
+    decks[game_type] = deck
+  parsed_args.decks = decks
+  return parsed_args
 
 class OptionalHTTPServer(tornado.httpserver.HTTPServer):
   def __init__(self, port, *args, **kwargs):

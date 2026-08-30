@@ -15,13 +15,16 @@ class Lobby(object):
 
     self.game_list_sockets = []
 
-  def new_game(self, game_type, name, parent, quick, use_preset_decks, training, take_delay=0):
+  def new_game(self, game_type, name, parent, quick, use_preset_decks, training, take_delay=0, decks=None):
     if len(self.games) == 0:
       next_id = 0
     else:
       next_id = max(self.game_id_to_game.keys()) + 1
 
-    if use_preset_decks:
+    if decks and game_type in decks:
+      # A deck forced with --deck, so that a particular board can be reproduced.
+      game = Game(game_type, quick=quick, deck=decks[game_type], take_delay=take_delay)
+    elif use_preset_decks:
       game = Game(game_type, quick=quick, deck=PRESET_DECKS[game_type], targets=PRESET_TARGETS[game_type], seed=PRESET_SEEDS[game_type], wrong_properties=PRESET_WRONG_PROPERTIES[game_type], take_delay=take_delay)
     else:  
       game = Game(game_type, quick=quick, take_delay=take_delay)

@@ -6,6 +6,14 @@
 #   ./local.sh              run on the default ports
 #   ./local.sh --hints      any extra arguments are passed through to tau.py
 #
+# Arguments are forwarded to tau.py, so --deck works here to force the deck of
+# one game type and reproduce a specific board:
+#
+#   ./local.sh --deck=r4tau:1121,2102,1221,...
+#
+# Cards are listed in the order they are dealt, one digit per coordinate, so
+# the first cards listed are the opening board. See tau.py --help.
+#
 # To test the packaged container instead, use ./release.sh --serve.
 set -euo pipefail
 
