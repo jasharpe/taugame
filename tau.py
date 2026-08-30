@@ -168,6 +168,11 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
     }))
 
   def on_message(self, message_json):
+    # open() closes the socket without setting self.game when the game no
+    # longer exists, which happens to every reconnecting client after a
+    # restart. Messages can still arrive before that close completes.
+    if not self.opened:
+      return
     message = json.loads(message_json)
     if message['type'] == 'start':
       self.game.start_game()

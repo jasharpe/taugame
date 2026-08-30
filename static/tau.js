@@ -562,7 +562,10 @@ $(document).ready(function() {
     playing_area.append($('<div style="clear:both;"/>'));
     var table = $('<table id="playing_area_table" style="display:block; float:left;">');
     var max_row = 3;
-    var max_col = board.length / max_row;
+    // The board is not always a multiple of three: 4 Tau takes four cards at
+    // a time, so a row can be left part filled. Round up and let the spare
+    // slots render as gaps, rather than running off the end of the array.
+    var max_col = Math.ceil(board.length / max_row);
     var hints_printed = 0;
     card_number_to_div_map = {};
     card_index_to_div_map = {};
@@ -578,7 +581,8 @@ $(document).ready(function() {
         var card_index = row_index + col_index * max_row;
         var card = board[card_index];
         var col = $('<td>');
-        if (card === null) {
+        // undefined means the last row is short; treat it like an empty slot.
+        if (card === null || card === undefined) {
           var div = $('<div class="fakeCard">');
           col.append(div);
         } else {
