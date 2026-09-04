@@ -157,6 +157,9 @@ $(document).ready(function() {
   var IMMEDIATE_RECONNECTS = 3;
 
   var ws = null;
+  // Set while the page is being left or frozen, to stop the socket being
+  // reopened on the way out.
+  var leaving = false;
   // The tau awaiting acknowledgement, or null.
   var pending_tau = null;
   var reconnect_delay = RECONNECT_MIN_DELAY;
@@ -189,7 +192,7 @@ $(document).ready(function() {
   }
 
   function schedule_reconnect() {
-    if (reconnect_timer !== null) {
+    if (leaving || reconnect_timer !== null) {
       return;
     }
     var delay = 0;
@@ -206,6 +209,8 @@ $(document).ready(function() {
   // forward cache, should reconnect at once rather than sitting out whatever
   // backoff had built up while nobody was looking.
   function reconnect_now_if_down() {
+    // Whatever brought us back, the page is being looked at again.
+    leaving = false;
     if (ws && (ws.readyState === WebSocket.OPEN ||
                ws.readyState === WebSocket.CONNECTING)) {
       return;
@@ -213,6 +218,26 @@ $(document).ready(function() {
     reset_reconnect_backoff();
     connect();
   }
+
+  // Leaving the page has to close the socket here and now. "Back to games", a
+  // refresh or the back button freezes this page into the back forward cache
+  // rather than tearing it down, and while it is frozen the browser answers
+  // the server's pings without waking any of this code, so the server would go
+  // on counting us as being in the game until the tab itself was closed.
+  // pagehide covers being frozen as well as real unload; pageshow undoes it.
+  $(window).on("pagehide", function() {
+    leaving = true;
+    if (reconnect_timer !== null) {
+      clearTimeout(reconnect_timer);
+      reconnect_timer = null;
+    }
+    if (ws) {
+      // Detached so the close does not trip the reconnect or flash the
+      // "connection lost" banner over a page that is on its way out.
+      ws.onclose = null;
+      try { ws.close(); } catch (e) {}
+    }
+  });
 
   $(document).on("visibilitychange", function() {
     if (!document.hidden) {
@@ -744,7 +769,10 @@ $(document).ready(function() {
     if (paused) {
       pause_button.text("Unpause");
     }
-    if (ended || (!paused && !is_pausable)) {
+    // is_pausable says whether this player may work the button as it stands,
+    // so it covers unpausing too: only the game's creator can restart a game
+    // they paused, unless they have left.
+    if (ended || !is_pausable) {
       pause_button.attr('disabled', 'disabled');
     }
     pause_button.click(function() {

@@ -42,6 +42,14 @@ SETTINGS = {
       "key" : client_id,
       "secret" : client_secret,
     },
+    # A client that disappears without closing its socket -- a sleeping laptop,
+    # a phone changing networks, a killed tab -- otherwise stays "in" the game
+    # indefinitely, which shows them on the scoreboard and stops the players who
+    # are still there from pausing. Pinging drops those sockets within about
+    # fifteen seconds. A live client that misses a ping simply reconnects.
+    # The timeout cannot be longer than the interval.
+    "websocket_ping_interval" : 10,
+    "websocket_ping_timeout" : 5,
 }
 
 lobby = Lobby(GAME_EXPIRY)
@@ -181,7 +189,7 @@ class TauWebSocketHandler(tornado.websocket.WebSocketHandler):
     elif message['type'] == 'chat':
       self.game.add_chat(xhtml_unescape(message['name']), message['message'], "chat")
     elif message['type'] == 'pause':
-      self.game.pause(message['pause'])
+      self.game.pause(self, message['pause'])
     elif message['type'] == 'submit':
       self.game.submit_tau(self, message['cards'])
     elif message['type'] == 'training_option':

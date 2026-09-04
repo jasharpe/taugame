@@ -7,11 +7,14 @@ TAU_PROPERTIES = ["colour", "number", "shading", "shape"]
 
 class LobbyGame(object):
 
-  def __init__(self, id, game, lobby, training):
+  def __init__(self, id, game, lobby, training, creator=None):
     self.id = id
     self.game = game
     self.lobby = lobby
     self.training = training
+    # Whoever started the game can always pause it, even once other players
+    # have joined.
+    self.creator = creator
 
     self.sockets = []
     self.messages = []
@@ -95,14 +98,44 @@ class LobbyGame(object):
       self.lobby.send_game_list_update_to_all()
       self.send_update_to_all()
 
-  def pause(self, pause):
+  def pause(self, socket, pause):
     if self.game.is_pausable():
-      if pause == "pause" and not self.game.paused and self.get_number_unique_players() < 2:
+      if pause == "pause" and not self.game.paused and self.can_pause(socket):
         self.game.pause()
         self.send_update_to_all()
-      elif pause != "pause" and self.game.paused:
+      elif pause != "pause" and self.game.paused and self.can_unpause(socket):
         self.game.unpause()
         self.send_update_to_all()
+
+  # Pausing is meant to be for solo games only. Sockets are pinged, so anyone
+  # still listed really is here, whether or not they have taken a tau yet.
+  def can_pause(self, socket):
+    if socket.name == self.creator:
+      return True
+    return self.get_number_unique_players() < 2
+
+  # The creator paused the game, so the creator decides when it resumes.
+  # Otherwise a game they paused and walked away from would be stuck for
+  # everyone else, so once they are gone anyone may start it again.
+  def can_unpause(self, socket):
+    if socket.name == self.creator:
+      return True
+    return not self.creator_present()
+
+  def creator_present(self):
+    return any([socket.name == self.creator for socket in self.sockets])
+
+  # What the pause button does next for this player, which is what decides
+  # whether it is offered to them at all.
+  def can_use_pause_button(self, socket):
+    if self.game.paused:
+      return self.can_unpause(socket)
+    return self.can_pause(socket)
+
+  # Called when the last socket goes away, which no player is around to ask for.
+  def pause_when_empty(self):
+    if self.game.is_pausable() and not self.game.paused:
+      self.game.pause()
 
   def request_update(self, socket):
     if self.game.started:
@@ -138,7 +171,7 @@ class LobbyGame(object):
     self.lobby.send_game_list_update_to_all()
     
     if not self.get_number_unique_players():
-      self.pause("pause")
+      self.pause_when_empty()
 
   def add_chat(self, name, message, message_type):
     self.messages.append((name, message, message_type))
@@ -168,7 +201,7 @@ class LobbyGame(object):
 
     (all_taus, all_stale_taus) = self.game.get_all_client_taus()
 
-    is_pausable = self.game.is_pausable() and self.get_number_unique_players() < 2
+    is_pausable = self.game.is_pausable() and self.can_use_pause_button(socket)
 
     socket.send_update(self.game.get_client_board(), all_taus, all_stale_taus, self.game.paused, self.game.get_client_target_tau(), self.game.wrong_property, self.get_scores(), numbers_map, self.game.count_taus(), time, self.game.get_client_hint(), self.game.ended, player_rank_info, self.game.get_client_found_puzzle_taus(), self.get_training_options(), is_pausable, self.game.score_id, self.game.get_client_pending_taus())
 
@@ -183,8 +216,9 @@ class LobbyGame(object):
   def send_scores_update_to_all(self):
     scores = self.get_scores()
     ended = self.game.ended
-    is_pausable = self.game.is_pausable() and self.get_number_unique_players() < 2
     for socket in self.sockets:
+      # Per player, because the creator alone can pause and unpause at will.
+      is_pausable = self.game.is_pausable() and self.can_use_pause_button(socket)
       socket.send_scores_update(scores, ended, is_pausable)
 
   def get_scores(self):

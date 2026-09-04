@@ -28,7 +28,7 @@ class Lobby(object):
       game = Game(game_type, quick=quick, deck=PRESET_DECKS[game_type], targets=PRESET_TARGETS[game_type], seed=PRESET_SEEDS[game_type], wrong_properties=PRESET_WRONG_PROPERTIES[game_type], take_delay=take_delay)
     else:  
       game = Game(game_type, quick=quick, take_delay=take_delay)
-    lobby_game = LobbyGame(next_id, game, self, training)
+    lobby_game = LobbyGame(next_id, game, self, training, name)
     self.games.append(lobby_game)
     self.game_id_to_game[next_id] = lobby_game
 
